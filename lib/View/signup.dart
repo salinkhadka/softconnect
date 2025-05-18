@@ -13,7 +13,7 @@ class _SignupPageState extends State<SignupPage> {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
-  String selectedCourse = 'Bsc hons computing';
+  String selectedCourse = 'Bsc hons computingzz';
   bool isTransportProvider = false;
 
   final List<String> courses = [
