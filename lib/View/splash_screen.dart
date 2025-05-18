@@ -24,7 +24,7 @@ class SplashScreenView extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.done) {
           return AnimatedSplashScreen(
             splash: Lottie.asset('assets/animations/softConnect.json', height: 200),
-            splashIconSize: 400,
+            splashIconSize: 500,
             backgroundColor: Colors.white,
             splashTransition: SplashTransition.fadeTransition,
             duration: 2500,

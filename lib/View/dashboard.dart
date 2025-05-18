@@ -13,7 +13,7 @@ class Dashboard extends StatelessWidget {
       appBar: AppBar(
           title: Text("Dashboard"),
           centerTitle: true,
-          backgroundColor: const Color.fromARGB(255, 218, 183, 183)),
+          backgroundColor: const Color.fromARGB(255, 202, 86, 86)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
