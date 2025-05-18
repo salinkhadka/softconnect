@@ -10,7 +10,7 @@ class Dashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppBar(sdfa
           title: Text("Dashboard"),
           centerTitle: true,
           backgroundColor: const Color.fromARGB(255, 202, 86, 86)),
