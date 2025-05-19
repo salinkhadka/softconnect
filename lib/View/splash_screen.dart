@@ -28,7 +28,7 @@ class SplashScreenView extends StatelessWidget {
             backgroundColor: Colors.white,
             splashTransition: SplashTransition.fadeTransition,
             duration: 2500,
-            nextScreen: LoginPage(), // Your login screen
+            nextScreen: , // Your login screen
             pageTransitionType: PageTransitionType.bottomToTop,
           );
         } else {
