@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:softconnect/View/dashboard.dart';
 import 'package:softconnect/View/homepage.dart';
 import 'package:softconnect/View/signup.dart';
 
