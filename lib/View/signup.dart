@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:softconnect/View/login.dart';
 
 class SignupPage extends StatefulWidget {
@@ -22,6 +23,77 @@ class _SignupPageState extends State<SignupPage> {
     'Bsc hons business computing',
   ];
 
+  final RegExp emailRegExp = RegExp(
+    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+  );
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _submitForm() {
+    String fullName = fullNameController.text.trim();
+    String email = emailController.text.trim();
+    String studentId = studentIdController.text.trim();
+    String password = passwordController.text;
+    String confirmPassword = confirmPasswordController.text;
+
+    if (fullName.isEmpty ||
+        email.isEmpty ||
+        studentId.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty) {
+      _showError('All fields are required');
+      return;
+    }
+
+    if (!emailRegExp.hasMatch(email)) {
+      _showError('Please enter a valid email address');
+      return;
+    }
+
+    if (password.length < 6) {
+      _showError('Password must be at least 6 characters long');
+      return;
+    }
+
+    if (password != confirmPassword) {
+      _showError('Passwords do not match');
+      return;
+    }
+
+    // If all validations pass
+    print('--- Signup Form Submitted ---');
+    print('Full Name: $fullName');
+    print('Email: $email');
+    print('Student ID: $studentId');
+    print('Course: $selectedCourse');
+    print('Password: $password');
+    print('Confirm Password: $confirmPassword');
+    print('Transport Service Provider: $isTransportProvider');
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Signup successful!'),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,7 +109,6 @@ class _SignupPageState extends State<SignupPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header Box
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -63,7 +134,6 @@ class _SignupPageState extends State<SignupPage> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 24),
 
               // Full Name
@@ -86,9 +156,11 @@ class _SignupPageState extends State<SignupPage> {
               ),
               const SizedBox(height: 12),
 
-              // Student ID
+              // Student ID (only numbers)
               TextField(
                 controller: studentIdController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: const InputDecoration(
                   hintText: 'Student Id',
                   border: OutlineInputBorder(),
@@ -138,7 +210,7 @@ class _SignupPageState extends State<SignupPage> {
               ),
               const SizedBox(height: 20),
 
-              // Transport Provider Checkbox Row
+              // Checkbox
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -163,16 +235,7 @@ class _SignupPageState extends State<SignupPage> {
 
               // Signup Button
               ElevatedButton(
-                onPressed: () {
-                   print('--- Signup Form Submitted ---');
-  print('Full Name: ${fullNameController.text}');
-  print('Email: ${emailController.text}');
-  print('Student ID: ${studentIdController.text}');
-  print('Course: $selectedCourse');
-  print('Password: ${passwordController.text}');
-  print('Confirm Password: ${confirmPasswordController.text}');
-  print('Transport Service Provider: $isTransportProvider');
-                },
+                onPressed: _submitForm,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
                   minimumSize: const Size(double.infinity, 48),
@@ -182,16 +245,14 @@ class _SignupPageState extends State<SignupPage> {
                 ),
                 child: const Text('Signup', style: TextStyle(color: Colors.white)),
               ),
-
               const SizedBox(height: 10),
 
-              // Already have an account
               OutlinedButton(
                 onPressed: () {
-                   Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => LoginPage()),
-    );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  );
                 },
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 48),

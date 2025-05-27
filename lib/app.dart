@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:softconnect/View/homepage.dart';
 
 import 'package:softconnect/View/login.dart';
 import 'package:softconnect/View/splash_screen.dart';
@@ -9,7 +10,7 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(home: SplashScreenView());
+    return MaterialApp(home: SoftConnectHomepage());
 
 
 
