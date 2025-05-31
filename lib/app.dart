@@ -4,13 +4,14 @@ import 'package:softconnect/View/homepage.dart';
 
 import 'package:softconnect/View/login.dart';
 import 'package:softconnect/View/splash_screen.dart';
+import 'package:softconnect/theme/my_theme.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(home: SoftConnectHomepage());
+    return MaterialApp(home: SplashScreenView(),theme: getApplicationTheme(),debugShowCheckedModeBanner: false);
 
 
 

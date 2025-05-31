@@ -30,7 +30,7 @@ class _LoginPageState extends State<LoginPage> {
       if (username == 'admin' && password == 'admin') {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => SoftConnectHomepage()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
