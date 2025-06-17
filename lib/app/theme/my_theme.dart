@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:softconnect/colors/themecolor.dart';
+import 'package:softconnect/app/theme/colors/themecolor.dart';
 ThemeData getApplicationTheme() {
   final themecolor=new Themecolor();
   return ThemeData(
