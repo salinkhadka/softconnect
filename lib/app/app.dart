@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:softconnect/app/service_locator/service_locator.dart';
-import 'package:softconnect/features/auth/presentation/view/View/login.dart';
-import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_viewmodel.dart';
+import 'package:softconnect/features/splash/presentation/view/SplashScreenView.dart';
+import 'package:softconnect/features/splash/presentation/view_model/splash_viewmodel.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -12,9 +11,9 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: BlocProvider<LoginViewModel>(
-        create: (_) => serviceLocator<LoginViewModel>(),
-        child: LoginScreen(),
+      home: BlocProvider<SplashViewModel>(
+        create: (_) => serviceLocator<SplashViewModel>(),
+        child: SplashScreenView(),
       ),
     );
   }

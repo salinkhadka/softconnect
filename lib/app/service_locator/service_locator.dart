@@ -5,16 +5,20 @@ import 'package:softconnect/features/auth/data/data_source/user_data_source.dart
 import 'package:softconnect/features/auth/data/repository/local_repository/user_local_repository.dart';
 import 'package:softconnect/features/auth/domain/repository/user_repository.dart';
 import 'package:softconnect/features/auth/domain/use_case/user_login_usecase.dart';
-import 'package:softconnect/features/auth/domain/use_case/user_register_usecase.dart';  // import register use case
+import 'package:softconnect/features/auth/domain/use_case/user_register_usecase.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_viewmodel.dart';
-import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_viewmodel.dart'; // import signup VM
+import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_viewmodel.dart';
+import 'package:softconnect/features/home/presentation/view_model/homepage_viewmodel.dart';
+import 'package:softconnect/features/splash/presentation/view_model/splash_viewmodel.dart';  // import splash VM
+// import 'package:softconnect/features/home/presentation/view_model/home_page_viewmodel.dart';  // import home VM
 
 final serviceLocator = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
   await _initHiveService();
-
+  await _initSplashModule();
   await _initAuthModule();
+  await _initHomeModule();
 }
 
 Future<void> _initHiveService() async {
@@ -22,19 +26,16 @@ Future<void> _initHiveService() async {
 }
 
 Future<void> _initAuthModule() async {
-  // Register data source implementation using the initialized HiveService
   serviceLocator.registerLazySingleton<IUserDataSource>(
     () => UserHiveDataSource(hiveService: serviceLocator<HiveService>()),
   );
 
-  // Register repository implementation
   serviceLocator.registerLazySingleton<IUserRepository>(
     () => UserLocalRepository(
       dataSource: serviceLocator<IUserDataSource>(),
     ),
   );
 
-  // Register use cases
   serviceLocator.registerLazySingleton<UserLoginUsecase>(
     () => UserLoginUsecase(
       userRepository: serviceLocator<IUserRepository>(),
@@ -47,7 +48,6 @@ Future<void> _initAuthModule() async {
     ),
   );
 
-  // Register view models
   serviceLocator.registerFactory<LoginViewModel>(
     () => LoginViewModel(
       userLoginUsecase: serviceLocator<UserLoginUsecase>(),
@@ -58,5 +58,19 @@ Future<void> _initAuthModule() async {
     () => SignupViewModel(
       userRegisterUsecase: serviceLocator<UserRegisterUsecase>(),
     ),
+  );
+}
+
+Future<void> _initSplashModule() async {
+  // If SplashViewModel has dependencies, inject them here
+  serviceLocator.registerFactory<SplashViewModel>(
+    () => SplashViewModel(),
+  );
+}
+
+Future<void> _initHomeModule() async {
+  // If HomePageViewModel has dependencies, inject them here
+  serviceLocator.registerFactory<HomeViewModel>(
+    () => HomeViewModel(),
   );
 }
