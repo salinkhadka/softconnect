@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.salin.firstproject.softconnect"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
