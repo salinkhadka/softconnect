@@ -39,8 +39,11 @@ class UserHiveDataSource implements IUserDataSource {
     throw UnimplementedError("Upload profile picture not implemented yet");
   }
 
+
+
+  //to do
   @override
-  Future<UserEntity> getCurrentUser() async {
+  Future<UserEntity> getCurrentUser(String id) async {
     final users = await _hiveService.getAllUsers();
     if (users.isNotEmpty) {
       return users.first.toEntity(); // You might update logic later

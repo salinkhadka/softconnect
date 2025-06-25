@@ -7,5 +7,5 @@ abstract interface class IUserDataSource {
 
   Future<String> uploadProfilePicture(String filePath);
 
-  Future<UserEntity> getCurrentUser();
+  Future<UserEntity> getCurrentUser(String id);
 }
