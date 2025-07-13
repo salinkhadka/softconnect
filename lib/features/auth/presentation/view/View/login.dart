@@ -7,7 +7,7 @@ import 'package:softconnect/features/auth/presentation/view_model/login_viewmode
 
 class LoginScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();  // changed from usernameController
   final TextEditingController passwordController = TextEditingController();
 
   void _showSnackBar(BuildContext context, String message, {bool isError = false}) {
@@ -61,13 +61,13 @@ class LoginScreen extends StatelessWidget {
                       child: Column(
                         children: [
                           TextFormField(
-                            controller: usernameController,
+                            controller: emailController,
                             decoration: const InputDecoration(
-                              labelText: 'Student Id',
+                              labelText: 'Email',
                               border: OutlineInputBorder(),
                             ),
-                            validator: (val) => val == null || !isValidStudentId(val)
-                                ? 'Enter valid Student ID'
+                            validator: (val) => val == null || !isValidEmail(val)
+                                ? 'Enter valid email'
                                 : null,
                           ),
                           const SizedBox(height: 16),
@@ -80,7 +80,7 @@ class LoginScreen extends StatelessWidget {
                             ),
                             validator: (val) => val == null || val.isEmpty
                                 ? 'Enter Password'
-                                : null,  // or use isValidPassword(val)
+                                : null,
                           ),
                           const SizedBox(height: 16),
                           SizedBox(
@@ -96,7 +96,7 @@ class LoginScreen extends StatelessWidget {
                                       if (_formKey.currentState!.validate()) {
                                         context.read<LoginViewModel>().add(
                                               LoginUserEvent(
-                                                username: usernameController.text.trim(),
+                                                username: emailController.text.trim(), // pass email here
                                                 password: passwordController.text,
                                                 context: context,
                                               ),
