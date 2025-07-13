@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:softconnect/core/utils/validators.dart'; // <-- import here
 import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_event.dart';
 import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_state.dart';
 import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_viewmodel.dart';
@@ -32,7 +33,6 @@ class SignupScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       body: BlocBuilder<SignupViewModel, SignupState>(
         builder: (context, state) {
-          // Show snackbar only when message is not null
           if (state.message != null) {
             Future.microtask(() {
               final color = state.isSuccess ? Colors.green : Colors.red;
@@ -65,9 +65,7 @@ class SignupScreen extends StatelessWidget {
                           backgroundImage: state.profilePhotoPath != null
                               ? FileImage(File(state.profilePhotoPath!))
                               : null,
-                          child: state.profilePhotoPath == null
-                              ? const Icon(Icons.camera_alt)
-                              : null,
+                          child: state.profilePhotoPath == null ? const Icon(Icons.camera_alt) : null,
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -80,14 +78,14 @@ class SignupScreen extends StatelessWidget {
                       TextFormField(
                         controller: emailController,
                         decoration: const InputDecoration(labelText: 'Email Address', border: OutlineInputBorder()),
-                        validator: (val) => val == null || val.isEmpty ? 'Enter email' : null,
+                        validator: (val) => val == null || !isValidEmail(val) ? 'Enter a valid email' : null,
                       ),
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: studentIdController,
                         decoration: const InputDecoration(labelText: 'Student ID', border: OutlineInputBorder()),
                         keyboardType: TextInputType.number,
-                        validator: (val) => val == null || val.isEmpty ? 'Enter student ID' : null,
+                        validator: (val) => val == null || !isValidStudentId(val) ? 'Enter valid 6-digit student ID' : null,
                       ),
                       const SizedBox(height: 10),
                       DropdownButtonFormField<String>(
@@ -108,14 +106,14 @@ class SignupScreen extends StatelessWidget {
                         controller: passwordController,
                         obscureText: true,
                         decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
-                        validator: (val) => val == null || val.length < 6 ? 'Password too short' : null,
+                        validator: (val) => val == null || !isValidPassword(val) ? 'Password must be at least 6 characters' : null,
                       ),
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: confirmPasswordController,
                         obscureText: true,
                         decoration: const InputDecoration(labelText: 'Confirm Password', border: OutlineInputBorder()),
-                        validator: (val) => val != passwordController.text ? 'Passwords do not match' : null,
+                        validator: (val) => val == null || !doPasswordsMatch(val, passwordController.text) ? 'Passwords do not match' : null,
                       ),
                       const SizedBox(height: 10),
                       Row(

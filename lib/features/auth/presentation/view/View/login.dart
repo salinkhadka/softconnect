@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:softconnect/core/utils/validators.dart';  // <-- import validators here
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_event.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_state.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_viewmodel.dart';
@@ -42,7 +43,7 @@ class LoginScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(30),
                       decoration: BoxDecoration(
-                        color: Color(0xFF4B228D),
+                        color: const Color(0xFF4B228D),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Column(
@@ -65,7 +66,9 @@ class LoginScreen extends StatelessWidget {
                               labelText: 'Student Id',
                               border: OutlineInputBorder(),
                             ),
-                            validator: (val) => val == null || val.isEmpty ? 'Enter Student ID' : null,
+                            validator: (val) => val == null || !isValidStudentId(val)
+                                ? 'Enter valid Student ID'
+                                : null,
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
@@ -75,14 +78,16 @@ class LoginScreen extends StatelessWidget {
                               labelText: 'Password',
                               border: OutlineInputBorder(),
                             ),
-                            validator: (val) => val == null || val.isEmpty ? 'Enter Password' : null,
+                            validator: (val) => val == null || val.isEmpty
+                                ? 'Enter Password'
+                                : null,  // or use isValidPassword(val)
                           ),
                           const SizedBox(height: 16),
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFF4B228D),
+                                backgroundColor: const Color(0xFF4B228D),
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                               ),
                               onPressed: state.isLoading
@@ -100,7 +105,7 @@ class LoginScreen extends StatelessWidget {
                                     },
                               child: state.isLoading
                                   ? const CircularProgressIndicator(color: Colors.white)
-                                  : const Text('Login',style: TextStyle(color: Colors.white),),
+                                  : const Text('Login', style: TextStyle(color: Colors.white)),
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -132,4 +137,3 @@ class LoginScreen extends StatelessWidget {
     );
   }
 }
-
