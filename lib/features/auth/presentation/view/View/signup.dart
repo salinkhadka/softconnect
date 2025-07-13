@@ -1,4 +1,3 @@
-// signup_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -33,6 +32,19 @@ class SignupScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       body: BlocBuilder<SignupViewModel, SignupState>(
         builder: (context, state) {
+          // Show snackbar only when message is not null
+          if (state.message != null) {
+            Future.microtask(() {
+              final color = state.isSuccess ? Colors.green : Colors.red;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message!),
+                  backgroundColor: color,
+                ),
+              );
+            });
+          }
+
           return Padding(
             padding: const EdgeInsets.all(20),
             child: Center(
@@ -53,7 +65,9 @@ class SignupScreen extends StatelessWidget {
                           backgroundImage: state.profilePhotoPath != null
                               ? FileImage(File(state.profilePhotoPath!))
                               : null,
-                          child: state.profilePhotoPath == null ? const Icon(Icons.camera_alt) : null,
+                          child: state.profilePhotoPath == null
+                              ? const Icon(Icons.camera_alt)
+                              : null,
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -134,7 +148,6 @@ class SignupScreen extends StatelessWidget {
                                             studentId: int.parse(studentIdController.text.trim()),
                                             password: passwordController.text.trim(),
                                             role: selectedProgram,
-                                            context: context,
                                           ),
                                         );
                                   }

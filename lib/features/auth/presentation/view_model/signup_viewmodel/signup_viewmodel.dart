@@ -1,7 +1,5 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:softconnect/core/utils/mysnackbar.dart';
 import 'package:softconnect/features/auth/domain/use_case/user_register_usecase.dart';
 import 'signup_event.dart';
 import 'signup_state.dart';
@@ -26,7 +24,7 @@ class SignupViewModel extends Bloc<SignupEvent, SignupState> {
   }
 
   Future<void> _onSignupButtonPressed(SignupButtonPressed event, Emitter<SignupState> emit) async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(isLoading: true, message: null));
 
     final result = await _userRegisterUsecase.call(RegisterUserParams(
       email: event.email,
@@ -40,20 +38,18 @@ class SignupViewModel extends Bloc<SignupEvent, SignupState> {
 
     result.fold(
       (failure) {
-        emit(state.copyWith(isLoading: false, isSuccess: false));
-        showMySnackBar(
-          context: event.context,
-          message: failure.message,
-          color: Colors.red,
-        );
+        emit(state.copyWith(
+          isLoading: false,
+          isSuccess: false,
+          message: failure.message, // Pass message to state
+        ));
       },
       (_) {
-        emit(state.copyWith(isLoading: false, isSuccess: true));
-        showMySnackBar(
-          context: event.context,
+        emit(state.copyWith(
+          isLoading: false,
+          isSuccess: true,
           message: "Signup successful!",
-          color: Colors.green,
-        );
+        ));
       },
     );
   }

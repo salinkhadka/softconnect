@@ -14,7 +14,7 @@ class SignupButtonPressed extends SignupEvent {
   final int studentId;
   final String password;
   final String role;
-  final BuildContext context;
+  // final BuildContext context;
 
   const SignupButtonPressed({
     required this.email,
@@ -22,11 +22,11 @@ class SignupButtonPressed extends SignupEvent {
     required this.studentId,
     required this.password,
     required this.role,
-    required this.context,
+    // required this.context,
   });
 
   @override
-  List<Object?> get props => [email, username, studentId, password, role, context];
+  List<Object?> get props => [email, username, studentId, password, role];
 }
 
 class ProfilePhotoChanged extends SignupEvent {
