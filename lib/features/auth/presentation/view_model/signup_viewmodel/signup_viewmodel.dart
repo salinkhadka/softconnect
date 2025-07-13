@@ -1,23 +1,31 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:softconnect/core/utils/mysnackbar.dart';
-// import 'package:softconnect/core/common/snackbar/my_snackbar.dart'; // your snackbar util
 import 'package:softconnect/features/auth/domain/use_case/user_register_usecase.dart';
-// import 'package:softconnect/features/auth/domain/usecase/user_register_usecase.dart';
 import 'signup_event.dart';
 import 'signup_state.dart';
 
 class SignupViewModel extends Bloc<SignupEvent, SignupState> {
   final UserRegisterUsecase _userRegisterUsecase;
 
-   SignupViewModel({required UserRegisterUsecase userRegisterUsecase})
+  SignupViewModel({required UserRegisterUsecase userRegisterUsecase})
       : _userRegisterUsecase = userRegisterUsecase,
         super(SignupState.initial()) {
     on<SignupButtonPressed>(_onSignupButtonPressed);
+    on<ProfilePhotoChanged>(_onProfilePhotoChanged);
+    on<AgreedToTermsToggled>(_onAgreedToTermsToggled);
   }
 
-  Future<void> _onSignupButtonPressed(
-      SignupButtonPressed event, Emitter<SignupState> emit) async {
+  void _onProfilePhotoChanged(ProfilePhotoChanged event, Emitter<SignupState> emit) {
+    emit(state.copyWith(profilePhotoPath: event.filePath));
+  }
+
+  void _onAgreedToTermsToggled(AgreedToTermsToggled event, Emitter<SignupState> emit) {
+    emit(state.copyWith(agreedToTerms: event.value));
+  }
+
+  Future<void> _onSignupButtonPressed(SignupButtonPressed event, Emitter<SignupState> emit) async {
     emit(state.copyWith(isLoading: true));
 
     final result = await _userRegisterUsecase.call(RegisterUserParams(
@@ -25,7 +33,7 @@ class SignupViewModel extends Bloc<SignupEvent, SignupState> {
       username: event.username,
       studentId: event.studentId,
       password: event.password,
-      profilePhoto: null,
+      profilePhoto: state.profilePhotoPath,
       bio: null,
       role: event.role,
     ));
@@ -50,4 +58,3 @@ class SignupViewModel extends Bloc<SignupEvent, SignupState> {
     );
   }
 }
-

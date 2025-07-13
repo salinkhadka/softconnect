@@ -1,34 +1,34 @@
+// signup_screen.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:softconnect/features/auth/domain/use_case/user_register_usecase.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_event.dart';
 import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_state.dart';
 import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_viewmodel.dart';
 
-class SignupScreen extends StatefulWidget {
-  @override
-  _SignupScreenState createState() => _SignupScreenState();
-}
+class SignupScreen extends StatelessWidget {
+  SignupScreen({Key? key}) : super(key: key);
 
-class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final usernameController = TextEditingController();
   final studentIdController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
-  String selectedProgram = "Bsc hons computing";
-  bool agreedToTerms = false;
 
   final List<String> programs = [
-    "Bsc hons computing",
-    "BIBM",
-    "CSSE",
-    "BIT",
+    "Student",
+    "Teaching Assistant",
+    "Marketing Department",
+    "Others",
   ];
 
   @override
   Widget build(BuildContext context) {
+    String selectedProgram = programs[0];
+    final ImagePicker _picker = ImagePicker();
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: BlocBuilder<SignupViewModel, SignupState>(
@@ -41,22 +41,22 @@ class _SignupScreenState extends State<SignupScreen> {
                   key: _formKey,
                   child: Column(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF4B228D),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          children: const [
-                            Text("Create Your SoftConnect Account",
-                                style: TextStyle(color: Colors.white, fontSize: 16)),
-                            Text("Join the Softwarica student community",
-                                style: TextStyle(color: Colors.white70, fontSize: 12)),
-                          ],
+                      GestureDetector(
+                        onTap: () async {
+                          final picked = await _picker.pickImage(source: ImageSource.gallery);
+                          if (picked != null) {
+                            context.read<SignupViewModel>().add(ProfilePhotoChanged(picked.path));
+                          }
+                        },
+                        child: CircleAvatar(
+                          radius: 40,
+                          backgroundImage: state.profilePhotoPath != null
+                              ? FileImage(File(state.profilePhotoPath!))
+                              : null,
+                          child: state.profilePhotoPath == null ? const Icon(Icons.camera_alt) : null,
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10),
                       TextFormField(
                         controller: usernameController,
                         decoration: const InputDecoration(labelText: 'Full Name', border: OutlineInputBorder()),
@@ -85,9 +85,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           );
                         }).toList(),
                         onChanged: (value) {
-                          setState(() {
-                            selectedProgram = value!;
-                          });
+                          if (value != null) selectedProgram = value;
                         },
                         decoration: const InputDecoration(border: OutlineInputBorder()),
                       ),
@@ -109,19 +107,23 @@ class _SignupScreenState extends State<SignupScreen> {
                       Row(
                         children: [
                           Checkbox(
-                            value: agreedToTerms,
-                            onChanged: (val) => setState(() => agreedToTerms = val!),
+                            value: state.agreedToTerms,
+                            onChanged: (val) {
+                              if (val != null) {
+                                context.read<SignupViewModel>().add(AgreedToTermsToggled(val));
+                              }
+                            },
                           ),
                           const Expanded(
-                            child: Text("I agree to terms and conditions of softconnect"),
-                          )
+                            child: Text("I agree to terms and conditions of SoftConnect"),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 10),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: state.isLoading || !agreedToTerms
+                          onPressed: state.isLoading || !state.agreedToTerms
                               ? null
                               : () {
                                   if (_formKey.currentState!.validate()) {
@@ -130,7 +132,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                             email: emailController.text.trim(),
                                             username: usernameController.text.trim(),
                                             studentId: int.parse(studentIdController.text.trim()),
-                                            password: passwordController.text,
+                                            password: passwordController.text.trim(),
                                             role: selectedProgram,
                                             context: context,
                                           ),
@@ -138,12 +140,12 @@ class _SignupScreenState extends State<SignupScreen> {
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF4B228D),
+                            backgroundColor: const Color(0xFF4B228D),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           child: state.isLoading
                               ? const CircularProgressIndicator(color: Colors.white)
-                              : const Text('Signup',style: TextStyle(color: Colors.white),),
+                              : const Text('Signup', style: TextStyle(color: Colors.white)),
                         ),
                       ),
                       TextButton(

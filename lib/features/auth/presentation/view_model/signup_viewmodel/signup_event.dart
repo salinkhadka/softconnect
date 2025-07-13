@@ -14,7 +14,7 @@ class SignupButtonPressed extends SignupEvent {
   final int studentId;
   final String password;
   final String role;
-  final BuildContext context; // pass context for snackbar
+  final BuildContext context;
 
   const SignupButtonPressed({
     required this.email,
@@ -27,4 +27,22 @@ class SignupButtonPressed extends SignupEvent {
 
   @override
   List<Object?> get props => [email, username, studentId, password, role, context];
+}
+
+class ProfilePhotoChanged extends SignupEvent {
+  final String filePath;
+
+  const ProfilePhotoChanged(this.filePath);
+
+  @override
+  List<Object?> get props => [filePath];
+}
+
+class AgreedToTermsToggled extends SignupEvent {
+  final bool value;
+
+  const AgreedToTermsToggled(this.value);
+
+  @override
+  List<Object?> get props => [value];
 }
