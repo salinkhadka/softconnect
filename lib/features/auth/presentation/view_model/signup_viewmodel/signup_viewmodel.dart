@@ -24,14 +24,25 @@ class SignupViewModel extends Bloc<SignupEvent, SignupState> {
   }
 
   Future<void> _onSignupButtonPressed(SignupButtonPressed event, Emitter<SignupState> emit) async {
-    emit(state.copyWith(isLoading: true, message: null));
+  emit(state.copyWith(isLoading: true, message: null));
 
+  try {
+    String? uploadedImageFilename;
+
+    if (state.profilePhotoPath != null && state.profilePhotoPath!.isNotEmpty) {
+      final file = File(state.profilePhotoPath!);
+
+      // Upload image file first and get server filename
+      uploadedImageFilename = await _userRegisterUsecase.uploadProfilePicture(file);
+    }
+
+    // Register user with uploaded image filename (or null if no photo)
     final result = await _userRegisterUsecase.call(RegisterUserParams(
       email: event.email,
       username: event.username,
       studentId: event.studentId,
       password: event.password,
-      profilePhoto: state.profilePhotoPath,
+      profilePhoto: uploadedImageFilename,
       bio: null,
       role: event.role,
     ));
@@ -41,7 +52,7 @@ class SignupViewModel extends Bloc<SignupEvent, SignupState> {
         emit(state.copyWith(
           isLoading: false,
           isSuccess: false,
-          message: failure.message, // Pass message to state
+          message: failure.message,
         ));
       },
       (_) {
@@ -52,5 +63,13 @@ class SignupViewModel extends Bloc<SignupEvent, SignupState> {
         ));
       },
     );
+  } catch (e) {
+    emit(state.copyWith(
+      isLoading: false,
+      isSuccess: false,
+      message: 'Unexpected error: $e',
+    ));
   }
+}
+
 }

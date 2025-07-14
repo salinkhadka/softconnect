@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:softconnect/app/use_case/use_case.dart';
@@ -60,5 +62,13 @@ class UserRegisterUsecase
       role: params.role,
     );
     return _userRepository.registerUser(user);
+  }
+   Future<String> uploadProfilePicture(File file) async {
+    final result = await _userRepository.uploadProfilePicture(file);
+
+    return result.fold(
+      (failure) => throw Exception(failure.message),
+      (filename) => filename,
+    );
   }
 }
