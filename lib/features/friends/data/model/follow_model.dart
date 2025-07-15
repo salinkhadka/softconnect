@@ -1,16 +1,34 @@
-// data/model/follow_model.dart
 import 'package:json_annotation/json_annotation.dart';
 import 'package:softconnect/features/friends/domain/entity/follow_entity.dart';
 
 part 'follow_model.g.dart';
 
 @JsonSerializable()
+class FolloweeModel {
+  @JsonKey(name: '_id')
+  final String id;
+  final String username;
+  final String? profilePhoto;
+
+  FolloweeModel({
+    required this.id,
+    required this.username,
+    this.profilePhoto,
+  });
+
+  factory FolloweeModel.fromJson(Map<String, dynamic> json) =>
+      _$FolloweeModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$FolloweeModelToJson(this);
+}
+
+@JsonSerializable()
 class FollowModel {
   @JsonKey(name: '_id')
   final String? id;
 
-  final String follower;
-  final String followee;
+  final String follower; // Assuming follower is still string ID
+  final FolloweeModel followee;
 
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -23,30 +41,27 @@ class FollowModel {
     required this.updatedAt,
   });
 
-  /// From JSON
   factory FollowModel.fromJson(Map<String, dynamic> json) =>
       _$FollowModelFromJson(json);
 
-  /// To JSON
   Map<String, dynamic> toJson() => _$FollowModelToJson(this);
 
-  /// Convert to Entity
   FollowEntity toEntity() {
     return FollowEntity(
       id: id,
       followerId: follower,
-      followeeId: followee,
+      followeeId: followee.id, // only keep id for entity
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
   }
 
-  /// Convert from Entity
   factory FollowModel.fromEntity(FollowEntity entity) {
+    // Since entity only has followeeId, cannot construct full FolloweeModel here
     return FollowModel(
       id: entity.id,
       follower: entity.followerId,
-      followee: entity.followeeId,
+      followee: FolloweeModel(id: entity.followeeId, username: '', profilePhoto: null),
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     );

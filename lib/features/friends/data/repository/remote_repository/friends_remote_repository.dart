@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:softconnect/core/error/failure.dart';
+import 'package:softconnect/core/network/api_service.dart';
 import 'package:softconnect/features/friends/data/data_source/friends_data_source.dart';
 import 'package:softconnect/features/friends/data/model/follow_model.dart';
 import 'package:softconnect/features/friends/domain/entity/follow_entity.dart';
@@ -8,7 +9,7 @@ import 'package:softconnect/features/friends/domain/repository/friends_repositor
 class FriendsRemoteRepository implements IFriendsRepository {
   final IFriendsDataSource _friendsDataSource;
 
-  FriendsRemoteRepository({required IFriendsDataSource friendsDataSource})
+  FriendsRemoteRepository({required IFriendsDataSource friendsDataSource, required ApiService apiService})
       : _friendsDataSource = friendsDataSource;
 
   @override
