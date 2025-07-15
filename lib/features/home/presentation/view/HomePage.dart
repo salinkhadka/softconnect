@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Add this import
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -81,20 +82,25 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// Home tab with static posts
-class _HomeTab extends StatelessWidget {
+// Home tab with static posts + display username from shared preferences
+class _HomeTab extends StatefulWidget {
+  @override
+  State<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<_HomeTab> {
+  String _username = 'Unknown';
+
   final List<Map<String, String>> posts = [
     {
       'username': 'John Doe',
       'time': '2 hrs ago',
       'description': 'Enjoying a beautiful day at the park!',
-      // 'postImage': 'assets/images/post1.jpg',
     },
     {
       'username': 'Jane Smith',
       'time': '5 hrs ago',
       'description': 'Just baked this delicious cake 🍰',
-      // 'postImage': 'assets/images/post2.jpg',
     },
     {
       'username': 'Alex Johnson',
@@ -104,15 +110,40 @@ class _HomeTab extends StatelessWidget {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadUsername();
+  }
+
+  Future<void> _loadUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedUsername = prefs.getString('username') ?? 'Unknown';
+    setState(() {
+      _username = savedUsername;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ListView.separated(
       padding: const EdgeInsets.all(12),
-      itemCount: posts.length,
+      itemCount: posts.length + 1, // +1 for username header
       separatorBuilder: (_, __) => SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final post = posts[index];
+        if (index == 0) {
+          // Show logged in username on top
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+            child: Text(
+              'Welcome, $_username',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          );
+        }
+        final post = posts[index - 1];
         return Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 3,
           child: Padding(
             padding: const EdgeInsets.all(12.0),
@@ -150,15 +181,6 @@ class _HomeTab extends StatelessWidget {
                 // Description
                 Text(post['description'] ?? ''),
 
-                // Post Image (if available)
-                // if (post['postImage'] != null) ...[
-                //   SizedBox(height: 10),
-                //   ClipRRect(
-                //     borderRadius: BorderRadius.circular(8),
-                //     child: Image.asset(post['postImage']!, fit: BoxFit.cover),
-                //   ),
-                // ],
-
                 SizedBox(height: 10),
 
                 // Action Buttons
@@ -167,7 +189,6 @@ class _HomeTab extends StatelessWidget {
                   children: [
                     _buildPostButton(Icons.thumb_up_alt_outlined, 'Like'),
                     _buildPostButton(Icons.comment_outlined, 'Comment'),
-                    // _buildPostButton(Icons.share_outlined, 'Share'),
                   ],
                 )
               ],

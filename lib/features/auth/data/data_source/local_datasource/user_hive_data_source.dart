@@ -10,11 +10,17 @@ class UserHiveDataSource implements IUserDataSource {
       : _hiveService = hiveService;
 
   @override
-  Future<String> loginUser(String username, String password) async {
+  Future<Map<String, dynamic>> loginUser(String username, String password) async {
     try {
       final userData = await _hiveService.login(username, password);
       if (userData != null && userData.password == password) {
-        return "Login successful";
+        // Simulate a token for local login, or generate one if needed
+        final token = "local_dummy_token";
+
+        return {
+          'token': token,
+          'user': userData.toEntity(),
+        };
       } else {
         throw Exception("Invalid username or password");
       }
@@ -38,17 +44,25 @@ class UserHiveDataSource implements IUserDataSource {
     // You can add actual file upload logic if needed
     throw UnimplementedError("Upload profile picture not implemented yet");
   }
-
-
-
-  //to do
+  
   @override
-  Future<UserEntity> getCurrentUser(String id) async {
-    final users = await _hiveService.getAllUsers();
-    if (users.isNotEmpty) {
-      return users.first.toEntity(); // You might update logic later
-    } else {
-      throw Exception("No user found in Hive.");
-    }
+  Future<UserEntity> getCurrentUser(String id) {
+    // TODO: implement getCurrentUser
+    throw UnimplementedError();
   }
+
+  // @override
+  // Future<UserEntity> getCurrentUser(String id) async {
+  //   final users = await _hiveService.getAllUsers();
+  //   if (users.isNotEmpty) {
+  //     // Optionally, filter by id here
+  //     final user = users.firstWhere(
+  //       (u) => u.id == id,
+  //       orElse: () => throw Exception("User not found with id $id"),
+  //     );
+  //     return user.toEntity();
+  //   } else {
+  //     throw Exception("No user found in Hive.");
+  //   }
+  // }
 }

@@ -23,10 +23,10 @@ class UserRemoteRepository implements IUserRepository {
   }
 
   @override
-  Future<Either<Failure, String>> loginUser(String username, String password) async {
+  Future<Either<Failure, Map<String, dynamic>>> loginUser(String username, String password) async {
     try {
-      final token = await _remoteDataSource.loginUser(username, password);
-      return Right(token);
+      final Map<String, dynamic> result = await _remoteDataSource.loginUser(username, password);
+      return Right(result);
     } catch (e) {
       return Left(RemoteDatabaseFailure(message: e.toString()));
     }

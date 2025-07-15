@@ -7,7 +7,8 @@ import 'package:softconnect/features/auth/domain/entity/user_entity.dart';
 abstract interface class IUserRepository {
   Future<Either<Failure, void>> registerUser(UserEntity user);
 
-  Future<Either<Failure, String>> loginUser(
+  // Updated to return token + user map
+  Future<Either<Failure, Map<String, dynamic>>> loginUser(
     String username,
     String password,
   );

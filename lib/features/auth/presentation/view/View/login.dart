@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:softconnect/core/utils/validators.dart';  // <-- import validators here
+import 'package:softconnect/core/utils/validators.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_event.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_state.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_viewmodel.dart';
 
 class LoginScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController emailController = TextEditingController();  // changed from usernameController
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+
+  LoginScreen({super.key}); // Added key for best practice
 
   void _showSnackBar(BuildContext context, String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -48,10 +50,23 @@ class LoginScreen extends StatelessWidget {
                       ),
                       child: Column(
                         children: const [
-                          Text("SC", style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold)),
+                          Text(
+                            "SC",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 40,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           SizedBox(height: 10),
-                          Text("SoftConnect", style: TextStyle(color: Colors.white, fontSize: 18)),
-                          Text("Building Bridges at Softwarica", style: TextStyle(color: Colors.white70)),
+                          Text(
+                            "SoftConnect",
+                            style: TextStyle(color: Colors.white, fontSize: 18),
+                          ),
+                          Text(
+                            "Building Bridges at Softwarica",
+                            style: TextStyle(color: Colors.white70),
+                          ),
                         ],
                       ),
                     ),
@@ -66,6 +81,7 @@ class LoginScreen extends StatelessWidget {
                               labelText: 'Email',
                               border: OutlineInputBorder(),
                             ),
+                            keyboardType: TextInputType.emailAddress,
                             validator: (val) => val == null || !isValidEmail(val)
                                 ? 'Enter valid email'
                                 : null,
@@ -96,7 +112,7 @@ class LoginScreen extends StatelessWidget {
                                       if (_formKey.currentState!.validate()) {
                                         context.read<LoginViewModel>().add(
                                               LoginUserEvent(
-                                                username: emailController.text.trim(), // pass email here
+                                                username: emailController.text.trim(),
                                                 password: passwordController.text,
                                                 context: context,
                                               ),
@@ -111,7 +127,7 @@ class LoginScreen extends StatelessWidget {
                           const SizedBox(height: 10),
                           TextButton(
                             onPressed: () {
-                              // Forgot password handler
+                              // TODO: Implement forgot password
                             },
                             child: const Text("Forgot password?"),
                           ),
@@ -123,7 +139,7 @@ class LoginScreen extends StatelessWidget {
                                   );
                             },
                             child: const Text("Create an account"),
-                          )
+                          ),
                         ],
                       ),
                     ),

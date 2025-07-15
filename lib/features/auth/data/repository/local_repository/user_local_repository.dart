@@ -15,40 +15,38 @@ class UserLocalRepository implements IUserRepository {
   @override
   Future<Either<Failure, UserEntity>> getCurrentUser(String id) async {
     try {
-      final user = await _dataSource.getCurrentUser( id);
+      final user = await _dataSource.getCurrentUser(id);
       return Right(user);
     } catch (e) {
       return Left(LocalDatabaseFailure(message: e.toString()));
     }
   }
 
+  // Note the return type now matches the interface: Map<String, dynamic>
   @override
-  Future<Either<Failure, String>> loginUser(String username, String password) async {
+  Future<Either<Failure, Map<String, dynamic>>> loginUser(
+      String username, String password) async {
     try {
-      final message = await _dataSource.loginUser(username, password);
-      return Right(message);
+      final result = await _dataSource.loginUser(username, password);
+      return Right(result);
     } catch (e) {
       return Left(LocalDatabaseFailure(message: e.toString()));
-    };
     }
-    
-      @override
-      Future<Either<Failure, void>> registerUser(UserEntity user) async{
+  }
+
+  @override
+  Future<Either<Failure, void>> registerUser(UserEntity user) async {
     try {
       await _dataSource.registerUser(user);
       return const Right(null);
     } catch (e) {
       return Left(LocalDatabaseFailure(message: e.toString()));
     }
-      }
-    
-      @override
-      Future<Either<Failure, String>> uploadProfilePicture(File file) {
-    // TODO: implement uploadProfilePicture
-    throw UnimplementedError();
-      }
-    
-    
   }
 
-
+  @override
+  Future<Either<Failure, String>> uploadProfilePicture(File file) {
+    // TODO: implement uploadProfilePicture
+    throw UnimplementedError();
+  }
+}
