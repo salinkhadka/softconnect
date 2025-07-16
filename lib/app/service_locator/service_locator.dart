@@ -8,15 +8,31 @@ import 'package:softconnect/core/network/hive_service.dart';
 import 'package:softconnect/features/auth/data/data_source/local_datasource/user_hive_data_source.dart';
 import 'package:softconnect/features/auth/data/data_source/remote_dataSource/user_remote_data_source.dart';
 import 'package:softconnect/features/auth/data/data_source/user_data_source.dart';
-import 'package:softconnect/features/auth/data/repository/local_repository/user_local_repository.dart';
 import 'package:softconnect/features/auth/data/repository/remote_repository/user_remote_repository.dart';
 import 'package:softconnect/features/auth/domain/repository/user_repository.dart';
 import 'package:softconnect/features/auth/domain/use_case/user_login_usecase.dart';
 import 'package:softconnect/features/auth/domain/use_case/user_register_usecase.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_viewmodel.dart';
 import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_viewmodel.dart';
+import 'package:softconnect/features/friends/domain/use_case/get_following_usecase.dart';
+import 'package:softconnect/features/friends/presentation/view_model/follow_viewmodel.dart';
 
 // Home imports
+import 'package:softconnect/features/home/data/data_source/remote_dataSource/comment_remote_datasource.dart';
+import 'package:softconnect/features/home/data/data_source/remote_dataSource/like_remote_datasource.dart';
+import 'package:softconnect/features/home/data/data_source/remote_dataSource/post_remote_datasource.dart';
+import 'package:softconnect/features/home/data/repository/remote_repository/comment_remote_repository.dart';
+
+import 'package:softconnect/features/home/data/repository/remote_repository/like_remote_repository.dart';
+import 'package:softconnect/features/home/data/repository/remote_repository/post_remote_repository.dart';
+import 'package:softconnect/features/home/domain/repository/comment_repository.dart';
+import 'package:softconnect/features/home/domain/repository/like_repository.dart';
+import 'package:softconnect/features/home/domain/repository/post_repository.dart';
+import 'package:softconnect/features/home/domain/use_case/getCommentsUseCase.dart';
+import 'package:softconnect/features/home/domain/use_case/getLikesUseCase.dart';
+import 'package:softconnect/features/home/domain/use_case/getPostsUseCase.dart';
+import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
+// import 'package:softconnect/features/home/presentation/view_model/feed_view_model/feed_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/homepage_viewmodel.dart';
 
 // Splash imports
@@ -26,12 +42,10 @@ import 'package:softconnect/features/splash/presentation/view_model/splash_viewm
 import 'package:softconnect/features/friends/data/data_source/remote_dataSource/friends_api_datasource.dart';
 import 'package:softconnect/features/friends/data/repository/remote_repository/friends_remote_repository.dart';
 import 'package:softconnect/features/friends/domain/repository/friends_repository.dart';
-
 import 'package:softconnect/features/friends/domain/use_case/follow_user_usecase.dart';
-import 'package:softconnect/features/friends/domain/use_case/unfollow_user_usecase.dart';
 import 'package:softconnect/features/friends/domain/use_case/get_followers_usecase.dart';
-import 'package:softconnect/features/friends/domain/use_case/get_following_usecase.dart';
-import 'package:softconnect/features/friends/presentation/view_model/follow_viewmodel.dart';
+import 'package:softconnect/features/friends/domain/use_case/unfollow_user_usecase.dart';
+
 
 final serviceLocator = GetIt.instance;
 
@@ -54,41 +68,28 @@ Future<void> _initApiService() async {
 }
 
 Future<void> _initAuthModule() async {
-  // Local data source
+  // Data Sources
   serviceLocator.registerLazySingleton<IUserDataSource>(
-    () => UserHiveDataSource(hiveService: serviceLocator<HiveService>()),
-    instanceName: 'localDataSource',
-  );
-
-  // Remote data source
+      () => UserHiveDataSource(hiveService: serviceLocator<HiveService>()),
+      instanceName: 'localDataSource');
   serviceLocator.registerLazySingleton<UserRemoteDataSource>(
-    () => UserRemoteDataSource(apiService: serviceLocator<ApiService>()),
-  );
+      () => UserRemoteDataSource(apiService: serviceLocator<ApiService>()));
 
-  // Remote user repository
-  serviceLocator.registerLazySingleton<IUserRepository>(
-    () => UserRemoteRepository(
-      remoteDataSource: serviceLocator<UserRemoteDataSource>(),
-    ),
-  );
+  // Repository
+  serviceLocator.registerLazySingleton<IUserRepository>(() => UserRemoteRepository(
+      remoteDataSource: serviceLocator<UserRemoteDataSource>()));
 
   // Use cases
   serviceLocator.registerLazySingleton<UserLoginUsecase>(
-    () => UserLoginUsecase(userRepository: serviceLocator<IUserRepository>()),
-  );
-
-  serviceLocator.registerLazySingleton<UserRegisterUsecase>(
-    () => UserRegisterUsecase(userRepository: serviceLocator<IUserRepository>()),
-  );
+      () => UserLoginUsecase(userRepository: serviceLocator<IUserRepository>()));
+  serviceLocator.registerLazySingleton<UserRegisterUsecase>(() =>
+      UserRegisterUsecase(userRepository: serviceLocator<IUserRepository>()));
 
   // ViewModels
   serviceLocator.registerFactory<LoginViewModel>(
-    () => LoginViewModel(userLoginUsecase: serviceLocator<UserLoginUsecase>()),
-  );
-
-  serviceLocator.registerFactory<SignupViewModel>(
-    () => SignupViewModel(userRegisterUsecase: serviceLocator<UserRegisterUsecase>()),
-  );
+      () => LoginViewModel(userLoginUsecase: serviceLocator<UserLoginUsecase>()));
+  serviceLocator.registerFactory<SignupViewModel>(() =>
+      SignupViewModel(userRegisterUsecase: serviceLocator<UserRegisterUsecase>()));
 }
 
 Future<void> _initSplashModule() async {
@@ -96,46 +97,87 @@ Future<void> _initSplashModule() async {
 }
 
 Future<void> _initHomeModule() async {
-  serviceLocator.registerFactory(() => HomeViewModel());
+
+
+  // Repositories with inline data source injection
+  serviceLocator.registerLazySingleton<IPostRepository>(
+    () => PostRemoteRepository(
+      postDataSource: PostRemoteDatasource(apiService: serviceLocator<ApiService>()),
+    ),
+  );
+
+  serviceLocator.registerLazySingleton<ILikeRepository>(
+    () => LikeRemoteRepository(
+      likeDataSource: LikeRemoteDatasource(apiService: serviceLocator<ApiService>()),
+    ),
+  );
+
+  serviceLocator.registerLazySingleton<ICommentRepository>(
+    () => CommentRemoteRepository(
+      commentDataSource: CommentRemoteDatasource(apiService: serviceLocator<ApiService>()),
+    ),
+  );
+
+  // Use cases
+  serviceLocator.registerLazySingleton<GetAllPostsUsecase>(
+    () => GetAllPostsUsecase(postRepository: serviceLocator<IPostRepository>()),
+  );
+  serviceLocator.registerLazySingleton<LikePostUsecase>(
+    () => LikePostUsecase(likeRepository: serviceLocator<ILikeRepository>()),
+  );
+  serviceLocator.registerLazySingleton<UnlikePostUsecase>(
+    () => UnlikePostUsecase(likeRepository: serviceLocator<ILikeRepository>()),
+  );
+  serviceLocator.registerLazySingleton<GetLikesByPostIdUsecase>(
+    () => GetLikesByPostIdUsecase(likeRepository: serviceLocator<ILikeRepository>()),
+  );
+  serviceLocator.registerLazySingleton<GetCommentsByPostIdUsecase>(
+    () => GetCommentsByPostIdUsecase(commentRepository: serviceLocator<ICommentRepository>()),
+  );
+
+  // ViewModels
+  serviceLocator.registerFactory<FeedViewModel>(
+    () => FeedViewModel(
+      getAllPostsUseCase: serviceLocator<GetAllPostsUsecase>(),
+      likePostUseCase: serviceLocator<LikePostUsecase>(),
+      unlikePostUseCase: serviceLocator<UnlikePostUsecase>(),
+      getLikesByPostIdUsecase: serviceLocator<GetLikesByPostIdUsecase>(),
+      getCommentsByPostIdUsecase: serviceLocator<GetCommentsByPostIdUsecase>(),
+    ),
+  );
+
+  serviceLocator.registerFactory<HomeViewModel>(() => HomeViewModel());
+  print("FeedViewModel registerssed: ${serviceLocator.isRegistered<FeedViewModel>()}");
+
 }
+
 
 Future<void> _initFriendsModule() async {
-  // Register FriendsApiDatasource with ApiService injected
+  // Data source
   serviceLocator.registerLazySingleton<FriendsApiDatasource>(
-    () => FriendsApiDatasource(apiService: serviceLocator<ApiService>()),
-  );
+      () => FriendsApiDatasource(apiService: serviceLocator<ApiService>()));
 
-  // Register FriendsRemoteRepository with FriendsApiDatasource injected
-  serviceLocator.registerLazySingleton<IFriendsRepository>(
-    () => FriendsRemoteRepository(
-      friendsDataSource: serviceLocator<FriendsApiDatasource>(),
-      apiService: serviceLocator<ApiService>(),
-    ),
-  );
+  // Repository
+  serviceLocator.registerLazySingleton<IFriendsRepository>(() =>
+      FriendsRemoteRepository(
+          friendsDataSource: serviceLocator<FriendsApiDatasource>(),
+          apiService: serviceLocator<ApiService>()));
 
-  // Register use cases with the repository injected
+  // Use cases
   serviceLocator.registerLazySingleton<FollowUserUseCase>(
-    () => FollowUserUseCase(repository: serviceLocator<IFriendsRepository>()),
-  );
+      () => FollowUserUseCase(repository: serviceLocator<IFriendsRepository>()));
   serviceLocator.registerLazySingleton<UnfollowUserUseCase>(
-    () => UnfollowUserUseCase(repository: serviceLocator<IFriendsRepository>()),
-  );
+      () => UnfollowUserUseCase(repository: serviceLocator<IFriendsRepository>()));
   serviceLocator.registerLazySingleton<GetFollowersUseCase>(
-    () => GetFollowersUseCase(repository: serviceLocator<IFriendsRepository>()),
-  );
+      () => GetFollowersUseCase(repository: serviceLocator<IFriendsRepository>()));
   serviceLocator.registerLazySingleton<GetFollowingUseCase>(
-    () => GetFollowingUseCase(repository: serviceLocator<IFriendsRepository>()),
-  );
+      () => GetFollowingUseCase(repository: serviceLocator<IFriendsRepository>()));
 
-  // Register FollowViewModel with injected use cases
-  serviceLocator.registerFactory<FollowViewModel>(
-    () => FollowViewModel(
-      followUserUseCase: serviceLocator<FollowUserUseCase>(),
-      unfollowUserUseCase: serviceLocator<UnfollowUserUseCase>(),
-      getFollowersUseCase: serviceLocator<GetFollowersUseCase>(),
-      getFollowingUseCase: serviceLocator<GetFollowingUseCase>(),
-    ),
-  );
+  // ViewModel
+  serviceLocator.registerFactory<FollowViewModel>(() => FollowViewModel(
+        followUserUseCase: serviceLocator<FollowUserUseCase>(),
+        unfollowUserUseCase: serviceLocator<UnfollowUserUseCase>(),
+        getFollowersUseCase: serviceLocator<GetFollowersUseCase>(),
+        getFollowingUseCase: serviceLocator<GetFollowingUseCase>(),
+      ));
 }
-
-

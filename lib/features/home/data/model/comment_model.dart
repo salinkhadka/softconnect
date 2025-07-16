@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
-// import 'package:softconnect/features/comments/domain/entity/comment_entity.dart';
 import 'package:softconnect/features/home/domain/entity/comment_entity.dart';
+import 'package:softconnect/features/home/data/model/user_preview_model.dart';
 
 part 'comment_model.g.dart';
 
@@ -13,10 +13,9 @@ class CommentModel {
   final String postId;
 
   @JsonKey(name: 'userId')
-  final String userId;
+  final UserPreviewModel user; // Updated from String to nested UserPreviewModel
 
   final String content;
-
   final String? parentCommentId;
 
   @JsonKey(name: 'createdAt')
@@ -28,7 +27,7 @@ class CommentModel {
   CommentModel({
     required this.id,
     required this.postId,
-    required this.userId,
+    required this.user,
     required this.content,
     this.parentCommentId,
     required this.createdAt,
@@ -44,7 +43,7 @@ class CommentModel {
     return CommentEntity(
       id: id,
       postId: postId,
-      userId: userId,
+      userId: user.userId, // Extract userId from nested object
       content: content,
       parentCommentId: parentCommentId,
       createdAt: createdAt,

@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:softconnect/features/home/domain/entity/like_entity.dart';
-
+import 'package:softconnect/features/home/data/model/user_preview_model.dart';
 
 part 'like_model.g.dart';
 
@@ -13,7 +13,7 @@ class LikeModel {
   final String postId;
 
   @JsonKey(name: 'userId')
-  final String userId;
+  final UserPreviewModel user; // Nested user object like in PostModel
 
   @JsonKey(name: 'createdAt')
   final DateTime createdAt;
@@ -24,7 +24,7 @@ class LikeModel {
   LikeModel({
     required this.id,
     required this.postId,
-    required this.userId,
+    required this.user,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -38,7 +38,7 @@ class LikeModel {
     return LikeEntity(
       id: id,
       postId: postId,
-      userId: userId,
+      userId: user.userId, // Extract nested user ID
       createdAt: createdAt,
       updatedAt: updatedAt,
     );

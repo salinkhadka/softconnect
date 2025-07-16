@@ -4,7 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:softconnect/app/service_locator/service_locator.dart';
 import 'package:softconnect/features/friends/presentation/view/friends_page.dart';
 import 'package:softconnect/features/friends/presentation/view_model/follow_viewmodel.dart';
-import 'package:softconnect/features/home/presentation/view/hometab.dart';
+import 'package:softconnect/features/home/presentation/view/FeedPage.dart';
+import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
 
 class HomeState {
   final int selectedIndex;
@@ -25,7 +26,14 @@ class HomeState {
     return HomeState(
       selectedIndex: 0,
       views: [
-        const HomeTab(),
+        BlocProvider(
+          create: (_) {
+            // Just create the BLoC, don't dispatch event here
+            return serviceLocator<FeedViewModel>();
+          },
+          child: FeedPage(currentUserId: userId),
+        ),
+        
         BlocProvider(
           create: (_) => serviceLocator<FollowViewModel>(),
           child: FriendsPage(userId: userId),

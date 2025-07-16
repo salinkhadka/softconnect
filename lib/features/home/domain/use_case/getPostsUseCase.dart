@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import 'package:equatable/equatable.dart';
+// import 'package:equatable/equatable.dart';
 import 'package:softconnect/app/use_case/use_case.dart';
 import 'package:softconnect/core/error/failure.dart';
 import 'package:softconnect/features/home/domain/entity/post_entity.dart';

@@ -13,15 +13,36 @@ class PostRemoteDatasource implements IPostsDataSource {
   PostRemoteDatasource({required ApiService apiService}) : _apiService = apiService;
 
   @override
-  Future<List<PostModel>> getAllPosts() async {
-    try {
-      final response = await _apiService.dio.get(ApiEndpoints.getAllPosts);
-      final data = response.data['data'] as List;
-      return data.map((json) => PostModel.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to fetch posts: $e');
+  @override
+Future<List<PostModel>> getAllPosts() async {
+  try {
+    final response = await _apiService.dio.get(ApiEndpoints.getAllPosts);
+    final data = response.data['data'];
+
+    if (data is! List) {
+      throw Exception("Unexpected format: 'data' is not a list");
     }
+
+    final List<PostModel> posts = [];
+    for (final item in data) {
+      try {
+        if (item is Map<String, dynamic>) {
+          posts.add(PostModel.fromJson(item));
+        } else {
+          print("Skipping invalid post item: $item");
+        }
+      } catch (e) {
+        print("Failed to parse post item: $item\nError: $e");
+        // optionally continue without throwing
+      }
+    }
+
+    return posts;
+  } catch (e) {
+    throw Exception('Failed to fetch posts: $e');
   }
+}
+
 
   @override
   Future<List<PostModel>> getPostsByUserId(String userId) async {

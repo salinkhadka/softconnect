@@ -10,7 +10,7 @@ import 'package:softconnect/features/home/domain/repository/post_repository.dart
 class PostRemoteRepository implements IPostRepository {
   final IPostsDataSource _postDataSource;
 
-  PostRemoteRepository({required IPostsDataSource postDataSource, required ApiService apiService})
+  PostRemoteRepository({required IPostsDataSource postDataSource})
       : _postDataSource = postDataSource;
 
   @override

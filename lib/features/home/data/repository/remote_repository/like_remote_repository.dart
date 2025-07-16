@@ -9,7 +9,7 @@ import 'package:softconnect/features/home/domain/repository/like_repository.dart
 class LikeRemoteRepository implements ILikeRepository {
   final ILikeDataSource _likeDataSource;
 
-  LikeRemoteRepository({required ILikeDataSource likeDataSource, required ApiService apiService})
+  LikeRemoteRepository({required ILikeDataSource likeDataSource})
       : _likeDataSource = likeDataSource;
 
   @override
