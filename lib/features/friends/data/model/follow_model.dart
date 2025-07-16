@@ -4,22 +4,22 @@ import 'package:softconnect/features/friends/domain/entity/follow_entity.dart';
 part 'follow_model.g.dart';
 
 @JsonSerializable()
-class FolloweeModel {
+class FollowUserModel {
   @JsonKey(name: '_id')
   final String id;
   final String username;
   final String? profilePhoto;
 
-  FolloweeModel({
+  FollowUserModel({
     required this.id,
     required this.username,
     this.profilePhoto,
   });
 
-  factory FolloweeModel.fromJson(Map<String, dynamic> json) =>
-      _$FolloweeModelFromJson(json);
+  factory FollowUserModel.fromJson(Map<String, dynamic> json) =>
+      _$FollowUserModelFromJson(json);
 
-  Map<String, dynamic> toJson() => _$FolloweeModelToJson(this);
+  Map<String, dynamic> toJson() => _$FollowUserModelToJson(this);
 }
 
 @JsonSerializable()
@@ -27,8 +27,9 @@ class FollowModel {
   @JsonKey(name: '_id')
   final String? id;
 
-  final String follower; // Assuming follower is still string ID
-  final FolloweeModel followee;
+  /// Can be either a string or an object in the response
+  final dynamic follower;
+  final dynamic followee;
 
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -47,21 +48,38 @@ class FollowModel {
   Map<String, dynamic> toJson() => _$FollowModelToJson(this);
 
   FollowEntity toEntity() {
+    final followerObj = follower is Map<String, dynamic>
+        ? FollowUserModel.fromJson(follower as Map<String, dynamic>)
+        : null;
+
+    final followeeObj = followee is Map<String, dynamic>
+        ? FollowUserModel.fromJson(followee as Map<String, dynamic>)
+        : null;
+
+    final isFollowersList = followee is String;
+
+    final targetUser = isFollowersList ? followerObj : followeeObj;
+
     return FollowEntity(
       id: id,
-      followerId: follower,
-      followeeId: followee.id, // only keep id for entity
+      followerId: followerObj?.id ?? (follower is String ? follower : ''),
+      followeeId: followeeObj?.id ?? (followee is String ? followee : ''),
+      username: targetUser?.username,
+      profilePhoto: targetUser?.profilePhoto,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
   }
 
   factory FollowModel.fromEntity(FollowEntity entity) {
-    // Since entity only has followeeId, cannot construct full FolloweeModel here
     return FollowModel(
       id: entity.id,
-      follower: entity.followerId,
-      followee: FolloweeModel(id: entity.followeeId, username: '', profilePhoto: null),
+      follower: {
+        '_id': entity.followerId,
+        'username': entity.username ?? '',
+        'profilePhoto': entity.profilePhoto,
+      },
+      followee: entity.followeeId,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     );

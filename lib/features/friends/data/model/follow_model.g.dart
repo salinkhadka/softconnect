@@ -6,14 +6,14 @@ part of 'follow_model.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-FolloweeModel _$FolloweeModelFromJson(Map<String, dynamic> json) =>
-    FolloweeModel(
+FollowUserModel _$FollowUserModelFromJson(Map<String, dynamic> json) =>
+    FollowUserModel(
       id: json['_id'] as String,
       username: json['username'] as String,
       profilePhoto: json['profilePhoto'] as String?,
     );
 
-Map<String, dynamic> _$FolloweeModelToJson(FolloweeModel instance) =>
+Map<String, dynamic> _$FollowUserModelToJson(FollowUserModel instance) =>
     <String, dynamic>{
       '_id': instance.id,
       'username': instance.username,
@@ -22,9 +22,8 @@ Map<String, dynamic> _$FolloweeModelToJson(FolloweeModel instance) =>
 
 FollowModel _$FollowModelFromJson(Map<String, dynamic> json) => FollowModel(
       id: json['_id'] as String?,
-      follower: json['follower'] as String,
-      followee:
-          FolloweeModel.fromJson(json['followee'] as Map<String, dynamic>),
+      follower: json['follower'],
+      followee: json['followee'],
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );

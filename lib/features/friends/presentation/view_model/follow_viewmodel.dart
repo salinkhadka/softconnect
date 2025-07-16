@@ -66,34 +66,40 @@ class FollowViewModel extends Bloc<FollowEvent, FollowState> {
   }
 
   Future<void> _onUnfollowUser(
-    UnfollowUserEvent event,
-    Emitter<FollowState> emit,
-  ) async {
-    emit(state.copyWith(isLoading: true));
+  UnfollowUserEvent event,
+  Emitter<FollowState> emit,
+) async {
+  emit(state.copyWith(isLoading: true));
 
-    final result = await _unfollowUserUseCase(UnfollowUserParams(event.followeeId));
+  final result = await _unfollowUserUseCase(UnfollowUserParams(event.followeeId));
 
-    if (emit.isDone) return;
+  if (emit.isDone) return;
 
-    result.fold(
-      (failure) {
-        emit(state.copyWith(isLoading: false, errorMessage: failure.message));
-        showMySnackBar(
-          context: event.context,
-          message: failure.message,
-          color: Colors.red,
-        );
-      },
-      (_) {
-        emit(state.copyWith(isLoading: false));
-        showMySnackBar(
-          context: event.context,
-          message: "Unfollowed successfully!",
-          color: Colors.green,
-        );
-      },
-    );
-  }
+  result.fold(
+    (failure) {
+      emit(state.copyWith(isLoading: false, errorMessage: failure.message));
+      showMySnackBar(
+        context: event.context,
+        message: failure.message,
+        color: Colors.red,
+      );
+    },
+    (_) {
+      final updatedFollowing = List.of(state.following)
+        ..removeWhere((f) => f.followeeId == event.followeeId);
+
+      emit(state.copyWith(isLoading: false, following: updatedFollowing));
+
+      showMySnackBar(
+        context: event.context,
+        message: "Unfollowed successfully!",
+        color: Colors.green,
+      );
+    },
+  );
+}
+
+
 
   Future<void> _onLoadFollowers(
   LoadFollowersEvent event,
