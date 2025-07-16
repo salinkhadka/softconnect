@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:softconnect/app/service_locator/service_locator.dart';
+// import 'package:softconnect/app/service_locator/service_locator.dart';
 import 'package:softconnect/core/utils/mysnackbar.dart';
 import 'package:softconnect/features/friends/domain/use_case/follow_user_usecase.dart';
 import 'package:softconnect/features/friends/domain/use_case/get_followers_usecase.dart';
