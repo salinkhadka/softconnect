@@ -1,8 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:softconnect/core/error/failure.dart';
-import 'package:softconnect/core/network/api_service.dart';
 import 'package:softconnect/features/home/data/data_source/comment_datasource.dart';
-// import 'package:softconnect/features/home/data/model/comment_model.dart';
 import 'package:softconnect/features/home/domain/entity/comment_entity.dart';
 import 'package:softconnect/features/home/domain/repository/comment_repository.dart';
 

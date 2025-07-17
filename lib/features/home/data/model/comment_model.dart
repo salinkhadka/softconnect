@@ -13,7 +13,7 @@ class CommentModel {
   final String postId;
 
   @JsonKey(name: 'userId')
-  final UserPreviewModel user; // Updated from String to nested UserPreviewModel
+  final UserPreviewModel user;
 
   final String content;
   final String? parentCommentId;
@@ -43,7 +43,9 @@ class CommentModel {
     return CommentEntity(
       id: id,
       postId: postId,
-      userId: user.userId, // Extract userId from nested object
+      userId: user.userId,
+      username: user.username,
+      profilePhoto: user.profilePhoto,
       content: content,
       parentCommentId: parentCommentId,
       createdAt: createdAt,

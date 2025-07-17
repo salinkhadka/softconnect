@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:softconnect/app/service_locator/service_locator.dart';
+import 'package:softconnect/features/home/presentation/view/CommentModal.dart';
 import 'package:softconnect/features/home/presentation/view/post_component.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_event.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_state.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
+import 'package:softconnect/features/home/presentation/view_model/comment_view_model/comment_view_model.dart';
 
 class FeedPage extends StatefulWidget {
   final String currentUserId;
@@ -52,7 +55,9 @@ class _FeedPageState extends State<FeedPage> {
                 ElevatedButton(
                   onPressed: () {
                     // Pass currentUserId when retrying
-                    context.read<FeedViewModel>().add(LoadPostsEvent(widget.currentUserId));
+                    context
+                        .read<FeedViewModel>()
+                        .add(LoadPostsEvent(widget.currentUserId));
                   },
                   child: const Text('Retry'),
                 ),
@@ -72,7 +77,8 @@ class _FeedPageState extends State<FeedPage> {
           itemBuilder: (context, index) {
             if (index == 0) {
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
                 child: const Text(
                   'Welcome!',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -105,7 +111,17 @@ class _FeedPageState extends State<FeedPage> {
                 }
               },
               onCommentPressed: () {
-                // TODO: Implement comment modal/navigation
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider<CommentViewModel>(
+                      create: (context) => serviceLocator<CommentViewModel>(),
+                      child: CommentModal(
+                        postId: post.id,
+                        userId: widget.currentUserId,
+                      ),
+                    ),
+                  ),
+                );
               },
             );
           },

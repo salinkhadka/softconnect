@@ -32,6 +32,7 @@ import 'package:softconnect/features/home/domain/use_case/getCommentsUseCase.dar
 import 'package:softconnect/features/home/domain/use_case/getLikesUseCase.dart';
 import 'package:softconnect/features/home/domain/use_case/getPostsUseCase.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
+import 'package:softconnect/features/home/presentation/view_model/comment_view_model/comment_view_model.dart';
 // import 'package:softconnect/features/home/presentation/view_model/feed_view_model/feed_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/homepage_viewmodel.dart';
 
@@ -97,8 +98,6 @@ Future<void> _initSplashModule() async {
 }
 
 Future<void> _initHomeModule() async {
-
-
   // Repositories with inline data source injection
   serviceLocator.registerLazySingleton<IPostRepository>(
     () => PostRemoteRepository(
@@ -131,8 +130,16 @@ Future<void> _initHomeModule() async {
   serviceLocator.registerLazySingleton<GetLikesByPostIdUsecase>(
     () => GetLikesByPostIdUsecase(likeRepository: serviceLocator<ILikeRepository>()),
   );
+  
+  // Add your comment-related use cases here
   serviceLocator.registerLazySingleton<GetCommentsByPostIdUsecase>(
     () => GetCommentsByPostIdUsecase(commentRepository: serviceLocator<ICommentRepository>()),
+  );
+  serviceLocator.registerLazySingleton<CreateCommentUsecase>(
+    () => CreateCommentUsecase(commentRepository: serviceLocator<ICommentRepository>()),
+  );
+  serviceLocator.registerLazySingleton<DeleteCommentUsecase>(
+    () => DeleteCommentUsecase(commentRepository: serviceLocator<ICommentRepository>()),
   );
 
   // ViewModels
@@ -146,10 +153,20 @@ Future<void> _initHomeModule() async {
     ),
   );
 
-  serviceLocator.registerFactory<HomeViewModel>(() => HomeViewModel());
-  print("FeedViewModel registerssed: ${serviceLocator.isRegistered<FeedViewModel>()}");
+  serviceLocator.registerFactory<CommentViewModel>(
+  () => CommentViewModel(
+    createCommentUsecase: serviceLocator<CreateCommentUsecase>(),
+    getCommentsUsecase: serviceLocator<GetCommentsByPostIdUsecase>(),  // <-- match this name
+  ),
+);
 
+
+  serviceLocator.registerFactory<HomeViewModel>(() => HomeViewModel());
+
+  print("FeedViewModel registered: ${serviceLocator.isRegistered<FeedViewModel>()}");
+  print("CommentViewModel registered: ${serviceLocator.isRegistered<CommentViewModel>()}");
 }
+
 
 
 Future<void> _initFriendsModule() async {

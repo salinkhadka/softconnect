@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:softconnect/app/constants/api_endpoints.dart';
 import 'package:softconnect/core/network/api_service.dart';
 import 'package:softconnect/features/home/data/data_source/like_datasource.dart';
@@ -7,18 +8,29 @@ import 'package:softconnect/features/home/data/model/like_model.dart';
 class LikeRemoteDatasource implements ILikeDataSource {
   final ApiService _apiService;
 
-  LikeRemoteDatasource({required ApiService apiService})
-      : _apiService = apiService;
+  LikeRemoteDatasource({required ApiService apiService}) : _apiService = apiService;
+
+  Future<Options> _getAuthHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    if (token == null) {
+      throw Exception('Auth token not found');
+    }
+    return Options(headers: {'Authorization': 'Bearer $token'});
+  }
 
   @override
   Future<LikeModel> likePost({required String userId, required String postId}) async {
     try {
+      final options = await _getAuthHeaders();
+
       final response = await _apiService.dio.post(
         ApiEndpoints.likePost,
         data: {
           'userId': userId,
           'postId': postId,
         },
+        options: options,
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
@@ -34,12 +46,15 @@ class LikeRemoteDatasource implements ILikeDataSource {
   @override
   Future<void> unlikePost({required String userId, required String postId}) async {
     try {
+      final options = await _getAuthHeaders();
+
       final response = await _apiService.dio.post(
         ApiEndpoints.unlikePost,
         data: {
           'userId': userId,
           'postId': postId,
         },
+        options: options,
       );
 
       if (response.statusCode != 200) {
