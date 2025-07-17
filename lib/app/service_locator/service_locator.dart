@@ -32,7 +32,7 @@ import 'package:softconnect/features/home/domain/use_case/getCommentsUseCase.dar
 import 'package:softconnect/features/home/domain/use_case/getLikesUseCase.dart';
 import 'package:softconnect/features/home/domain/use_case/getPostsUseCase.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
-import 'package:softconnect/features/home/presentation/view_model/comment_view_model/comment_view_model.dart';
+import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_view_model.dart';
 // import 'package:softconnect/features/home/presentation/view_model/feed_view_model/feed_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/homepage_viewmodel.dart';
 

@@ -6,7 +6,7 @@ import 'package:softconnect/features/home/presentation/view/post_component.dart'
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_event.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_state.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
-import 'package:softconnect/features/home/presentation/view_model/comment_view_model/comment_view_model.dart';
+import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_view_model.dart';
 
 class FeedPage extends StatefulWidget {
   final String currentUserId;
@@ -89,41 +89,43 @@ class _FeedPageState extends State<FeedPage> {
             final post = state.posts[index - 1];
 
             return PostComponent(
-              post: post,
-              currentUserId: widget.currentUserId,
-              likeCount: state.likeCounts[post.id] ?? 0,
-              isLiked: state.isLikedMap[post.id] ?? false,
-              commentCount: state.commentCounts[post.id] ?? 0,
-              onLikePressed: () {
-                final isLiked = state.isLikedMap[post.id] ?? false;
-                final feedViewModel = context.read<FeedViewModel>();
+                post: post,
+                currentUserId: widget.currentUserId,
+                likeCount: state.likeCounts[post.id] ?? 0,
+                isLiked: state.isLikedMap[post.id] ?? false,
+                commentCount: state.commentCounts[post.id] ?? 0,
+                onLikePressed: () {
+                  final isLiked = state.isLikedMap[post.id] ?? false;
+                  final feedViewModel = context.read<FeedViewModel>();
 
-                if (isLiked) {
-                  feedViewModel.add(UnlikePostEvent(
-                    postId: post.id,
-                    userId: widget.currentUserId,
-                  ));
-                } else {
-                  feedViewModel.add(LikePostEvent(
-                    postId: post.id,
-                    userId: widget.currentUserId,
-                  ));
-                }
-              },
-              onCommentPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => BlocProvider<CommentViewModel>(
-                      create: (context) => serviceLocator<CommentViewModel>(),
+                  if (isLiked) {
+                    feedViewModel.add(UnlikePostEvent(
+                      postId: post.id,
+                      userId: widget.currentUserId,
+                    ));
+                  } else {
+                    feedViewModel.add(LikePostEvent(
+                      postId: post.id,
+                      userId: widget.currentUserId,
+                    ));
+                  }
+                },
+                onCommentPressed: () {
+                  final commentViewModel = serviceLocator<CommentViewModel>();
+
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => BlocProvider.value(
+                      value: commentViewModel,
                       child: CommentModal(
                         postId: post.id,
                         userId: widget.currentUserId,
                       ),
                     ),
-                  ),
-                );
-              },
-            );
+                  );
+                });
           },
         );
       },
