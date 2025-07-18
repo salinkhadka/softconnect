@@ -48,14 +48,14 @@ class PostRemoteRepository implements IPostRepository {
     required String userId,
     required String content,
     required String privacy,
-    String? imagePath,
+    String? imageUrl,  // updated here
   }) async {
     try {
       final model = await _postDataSource.createPost(
         userId: userId,
         content: content,
         privacy: privacy,
-        imagePath: imagePath,
+        imageUrl: imageUrl,  // updated here
       );
       return Right(model.toEntity());
     } catch (e) {
@@ -68,14 +68,14 @@ class PostRemoteRepository implements IPostRepository {
     required String postId,
     String? content,
     String? privacy,
-    String? imagePath,
+    String? imageUrl,  // updated here
   }) async {
     try {
       final model = await _postDataSource.updatePost(
         postId: postId,
         content: content,
         privacy: privacy,
-        imagePath: imagePath,
+        imageUrl: imageUrl,  // updated here
       );
       return Right(model.toEntity());
     } catch (e) {

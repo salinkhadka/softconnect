@@ -119,7 +119,7 @@ Future<void> _initHomeModule() async {
 
   // Use cases
   serviceLocator.registerLazySingleton<GetAllPostsUsecase>(
-    () => GetAllPostsUsecase(postRepository: serviceLocator<IPostRepository>()),
+    () => GetAllPostsUsecase(serviceLocator<IPostRepository>()),
   );
   serviceLocator.registerLazySingleton<LikePostUsecase>(
     () => LikePostUsecase(likeRepository: serviceLocator<ILikeRepository>()),
@@ -131,7 +131,7 @@ Future<void> _initHomeModule() async {
     () => GetLikesByPostIdUsecase(likeRepository: serviceLocator<ILikeRepository>()),
   );
   
-  // Add your comment-related use cases here
+  // Comment-related use cases
   serviceLocator.registerLazySingleton<GetCommentsByPostIdUsecase>(
     () => GetCommentsByPostIdUsecase(commentRepository: serviceLocator<ICommentRepository>()),
   );
@@ -140,6 +140,15 @@ Future<void> _initHomeModule() async {
   );
   serviceLocator.registerLazySingleton<DeleteCommentUsecase>(
     () => DeleteCommentUsecase(commentRepository: serviceLocator<ICommentRepository>()),
+  );
+
+  // === Your new use cases for post creation and image upload ===
+  serviceLocator.registerLazySingleton<CreatePostUsecase>(
+    () => CreatePostUsecase(serviceLocator<IPostRepository>()),
+  );
+
+  serviceLocator.registerLazySingleton<UploadImageUsecase>(
+    () => UploadImageUsecase(serviceLocator<IPostRepository>()),
   );
 
   // ViewModels
@@ -154,18 +163,20 @@ Future<void> _initHomeModule() async {
   );
 
   serviceLocator.registerFactory<CommentViewModel>(
-  () => CommentViewModel(
-    createCommentUsecase: serviceLocator<CreateCommentUsecase>(),
-    getCommentsUsecase: serviceLocator<GetCommentsByPostIdUsecase>(),  // <-- match this name
-  ),
-);
-
+    () => CommentViewModel(
+      createCommentUsecase: serviceLocator<CreateCommentUsecase>(),
+      getCommentsUsecase: serviceLocator<GetCommentsByPostIdUsecase>(),
+    ),
+  );
 
   serviceLocator.registerFactory<HomeViewModel>(() => HomeViewModel());
 
   print("FeedViewModel registered: ${serviceLocator.isRegistered<FeedViewModel>()}");
   print("CommentViewModel registered: ${serviceLocator.isRegistered<CommentViewModel>()}");
+  print("CreatePostUsecase registered: ${serviceLocator.isRegistered<CreatePostUsecase>()}");
+  print("UploadImageUsecase registered: ${serviceLocator.isRegistered<UploadImageUsecase>()}");
 }
+
 
 
 

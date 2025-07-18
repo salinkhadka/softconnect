@@ -1,35 +1,63 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:softconnect/app/service_locator/service_locator.dart';
+import 'package:softconnect/features/home/domain/use_case/getPostsUseCase.dart';
+import 'package:softconnect/features/home/presentation/view/CreatePostModal.dart';
 import 'package:softconnect/features/home/presentation/view_model/homepage_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/home_state.dart';
+
+// Import your usecases
+// import 'package:softconnect/features/home/domain/usecase/post_usecases.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => HomeViewModel(),
-      child: const _HomeScreen(),
+  Future<String?> _getCurrentUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userId');
+  }
+
+  void _showPostModal(BuildContext context) async {
+    final userId = await _getCurrentUserId();
+
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not logged in')),
+      );
+      return;
+    }
+
+    final createPostUsecase = serviceLocator<CreatePostUsecase>();
+    final uploadImageUsecase = serviceLocator<UploadImageUsecase>();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return CreatePostModal(
+          createPostUsecase: createPostUsecase,
+          uploadImageUsecase: uploadImageUsecase,
+          userId: userId,
+        );
+      },
     );
   }
-}
-
-class _HomeScreen extends StatelessWidget {
-  const _HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<HomeViewModel, HomeState>(
       builder: (context, state) {
-        // While the views are empty (initialSync state), show loading
         if (state.views.isEmpty) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: SafeArea(child: Center(child: CircularProgressIndicator())),
           );
         }
 
         return Scaffold(
+          resizeToAvoidBottomInset: true,
           appBar: AppBar(
             title: const Text('SoftConnect'),
             actions: [
@@ -41,18 +69,49 @@ class _HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-          body: state.views[state.selectedIndex],
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: state.selectedIndex,
-            onTap: (index) => context.read<HomeViewModel>().onTabTapped(index),
-            selectedItemColor: Theme.of(context).primaryColor,
-            unselectedItemColor: Colors.grey,
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-              BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Friends'),
-              BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Messages'),
-              BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-            ],
+          body: SafeArea(
+            child: Flex(
+              direction: Axis.vertical,
+              children: [
+                Expanded(child: state.views[state.selectedIndex]),
+              ],
+            ),
+          ),
+          bottomNavigationBar: SafeArea(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                BottomNavigationBar(
+                  currentIndex: state.selectedIndex,
+                  onTap: (index) =>
+                      context.read<HomeViewModel>().onTabTapped(index),
+                  selectedItemColor: Theme.of(context).primaryColor,
+                  unselectedItemColor: Colors.grey,
+                  items: const [
+                    BottomNavigationBarItem(
+                        icon: Icon(Icons.home), label: 'Home'),
+                    BottomNavigationBarItem(
+                        icon: Icon(Icons.group), label: 'Friends'),
+                    BottomNavigationBarItem(
+                        icon: Icon(Icons.message), label: 'Messages'),
+                    BottomNavigationBarItem(
+                        icon: Icon(Icons.person), label: 'Profile'),
+                  ],
+                  type: BottomNavigationBarType.fixed,
+                ),
+                Positioned(
+                  bottom: 20,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: FloatingActionButton(
+                      onPressed: () => _showPostModal(context),
+                      child: const Icon(Icons.add),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

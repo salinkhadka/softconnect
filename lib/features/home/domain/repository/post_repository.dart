@@ -14,17 +14,18 @@ abstract interface class IPostRepository {
     required String userId,
     required String content,
     required String privacy,
-    String? imagePath,
+    String? imageUrl,  // <-- change here
   });
 
   Future<Either<Failure, PostEntity>> updatePost({
     required String postId,
     String? content,
     String? privacy,
-    String? imagePath,
+    String? imageUrl,  // <-- change here
   });
 
   Future<Either<Failure, void>> deletePost(String postId);
 
   Future<Either<Failure, String>> uploadImage(File postImg);
 }
+

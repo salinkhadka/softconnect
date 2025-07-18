@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:softconnect/features/home/data/model/post_model.dart';
 
 abstract interface class IPostsDataSource {
@@ -12,25 +11,27 @@ abstract interface class IPostsDataSource {
   /// Fetches a single post by its ID (GET /:id)
   Future<PostModel> getPostById(String postId);
 
-  /// Creates a new post with optional image upload (POST /createPost)
-  /// You will likely pass content, privacy, and optionally an image file.
+  /// Creates a new post (POST /createPost)
+  /// Sends the content, privacy, and image URL (if available).
   Future<PostModel> createPost({
     required String userId,
     required String content,
     required String privacy,
-    String? imagePath, // local path or file reference to upload
+    String? imageUrl, // URL or filename returned from uploadImage
   });
 
-  /// Updates a post by its ID with new content/privacy/image (PUT /:id)
+  /// Updates a post by its ID (PUT /:id)
+  /// Can update content, privacy, and optionally image URL.
   Future<PostModel> updatePost({
     required String postId,
     String? content,
     String? privacy,
-    String? imagePath,
+    String? imageUrl,
   });
 
   /// Deletes a post by its ID (DELETE /:id)
   Future<void> deletePost(String postId);
 
-   Future<String> uploadImage(File postImg);
+  /// Uploads an image file to the backend and returns the image URL or filename
+  Future<String> uploadImage(File postImg);
 }
