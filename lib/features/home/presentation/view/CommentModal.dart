@@ -44,7 +44,7 @@ class _CommentModalState extends State<CommentModal> {
       postId: widget.postId,
       content: content,
     ));
-    context.read<CommentViewModel>().add(LoadComments(widget.postId));
+    // context.read<CommentViewModel>().add(LoadComments(widget.postId));
 
     _commentController.clear();
   }

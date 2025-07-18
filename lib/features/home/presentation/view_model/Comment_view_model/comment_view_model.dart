@@ -17,24 +17,40 @@ class CommentViewModel extends Bloc<CommentEvent, CommentState> {
   }
 
   Future<void> _onLoadComments(LoadComments event, Emitter<CommentState> emit) async {
-    emit(state.copyWith(isLoading: true));
-    final result = await getCommentsUsecase(GetCommentsByPostIdParams(event.postId));
-    result.fold(
-      (failure) => emit(state.copyWith(isLoading: false, error: failure.message)),
-      (comments) => emit(state.copyWith(isLoading: false, comments: comments)),
-    );
-  }
+  print("Loading comments for postId: ${event.postId}");
+  emit(state.copyWith(isLoading: true));
+  final result = await getCommentsUsecase(GetCommentsByPostIdParams(event.postId));
+  result.fold(
+    (failure) {
+      print("Load comments failed: ${failure.message}");
+      emit(state.copyWith(isLoading: false, error: failure.message));
+    },
+    (comments) {
+      print("Load comments succeeded, count: ${comments.length}");
+      emit(state.copyWith(isLoading: false, comments: comments));
+    },
+  );
+}
+
 
   Future<void> _onAddComment(AddComment event, Emitter<CommentState> emit) async {
-    final result = await createCommentUsecase(CreateCommentParams(
-      userId: event.userId,
-      postId: event.postId,
-      content: event.content,
-      parentCommentId: event.parentCommentId,
-    ));
-    result.fold(
-      (failure) => emit(state.copyWith(error: failure.message)),
-      (_) => add(LoadComments(event.postId)),
-    );
-  }
+  print("Adding comment for postId: ${event.postId}");
+  final result = await createCommentUsecase(CreateCommentParams(
+    userId: event.userId,
+    postId: event.postId,
+    content: event.content,
+    parentCommentId: event.parentCommentId,
+  ));
+  result.fold(
+    (failure) {
+      print("Add comment failed: ${failure.message}");
+      emit(state.copyWith(error: failure.message));
+    },
+    (_) {
+      print("Add comment succeeded, loading comments");
+      add(LoadComments(event.postId)); // This triggers loading updated comments
+    },
+  );
+}
+
 }

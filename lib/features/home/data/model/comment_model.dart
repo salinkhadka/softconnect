@@ -12,7 +12,7 @@ class CommentModel {
   @JsonKey(name: 'postId')
   final String postId;
 
-  @JsonKey(name: 'userId')
+  @JsonKey(name: 'userId', fromJson: _userFromJson)
   final UserPreviewModel user;
 
   final String content;
@@ -33,6 +33,23 @@ class CommentModel {
     required this.createdAt,
     required this.updatedAt,
   });
+
+  // Custom converter to handle both String and Map for userId
+  static UserPreviewModel _userFromJson(dynamic json) {
+    if (json is String) {
+      // When userId is just a string (like in create comment response)
+      return UserPreviewModel(
+        userId: json,
+        username: '', // You might want to handle this differently
+        profilePhoto: null,
+      );
+    } else if (json is Map<String, dynamic>) {
+      // When userId is a full user object (like in get comments response)
+      return UserPreviewModel.fromJson(json);
+    } else {
+      throw Exception('Invalid userId format');
+    }
+  }
 
   factory CommentModel.fromJson(Map<String, dynamic> json) =>
       _$CommentModelFromJson(json);

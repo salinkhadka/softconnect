@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:softconnect/app/constants/api_endpoints.dart';
@@ -8,9 +9,9 @@ import 'package:softconnect/features/home/data/model/comment_model.dart';
 class CommentRemoteDatasource implements ICommentDataSource {
   final ApiService _apiService;
 
-  CommentRemoteDatasource({required ApiService apiService}) : _apiService = apiService;
+  CommentRemoteDatasource({required ApiService apiService})
+      : _apiService = apiService;
 
-  // Method to get auth headers with token
   Future<Options> _getAuthHeaders() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -42,7 +43,30 @@ class CommentRemoteDatasource implements ICommentDataSource {
       );
 
       if (response.statusCode == 201) {
-        return CommentModel.fromJson(response.data['data']);
+        dynamic dataRaw = response.data['data'];
+
+        // Ensure it's parsed into a Map
+        if (dataRaw is String) {
+          dataRaw = jsonDecode(dataRaw);
+        }
+
+        if (dataRaw is Map<String, dynamic>) {
+          // Transform the data to match expected structure
+          Map<String, dynamic> transformedData = Map.from(dataRaw);
+          
+          // If userId is just a string, create a minimal user object
+          if (transformedData['userId'] is String) {
+            transformedData['userId'] = {
+              '_id': transformedData['userId'],
+              'username': 'Unknown', // You might want to fetch this from somewhere
+              'profilePhoto': null,
+            };
+          }
+          
+          return CommentModel.fromJson(transformedData);
+        } else {
+          throw Exception('Unexpected response format in "data".');
+        }
       } else {
         throw Exception("Failed to create comment: ${response.statusMessage}");
       }

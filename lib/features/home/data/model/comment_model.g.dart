@@ -9,7 +9,7 @@ part of 'comment_model.dart';
 CommentModel _$CommentModelFromJson(Map<String, dynamic> json) => CommentModel(
       id: json['_id'] as String,
       postId: json['postId'] as String,
-      user: UserPreviewModel.fromJson(json['userId'] as Map<String, dynamic>),
+      user: CommentModel._userFromJson(json['userId']),
       content: json['content'] as String,
       parentCommentId: json['parentCommentId'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
