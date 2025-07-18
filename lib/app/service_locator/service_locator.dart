@@ -163,11 +163,13 @@ Future<void> _initHomeModule() async {
   );
 
   serviceLocator.registerFactory<CommentViewModel>(
-    () => CommentViewModel(
-      createCommentUsecase: serviceLocator<CreateCommentUsecase>(),
-      getCommentsUsecase: serviceLocator<GetCommentsByPostIdUsecase>(),
-    ),
-  );
+  () => CommentViewModel(
+    createCommentUsecase: serviceLocator<CreateCommentUsecase>(),
+    getCommentsUsecase: serviceLocator<GetCommentsByPostIdUsecase>(),
+    deleteCommentUsecase: serviceLocator<DeleteCommentUsecase>(), // ✅ FIXED
+  ),
+);
+
 
   serviceLocator.registerFactory<HomeViewModel>(() => HomeViewModel());
 

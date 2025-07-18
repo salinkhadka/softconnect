@@ -17,4 +17,13 @@ class AddComment extends CommentEvent {
     required this.content,
     this.parentCommentId,
   });
+
+
 }
+class DeleteComment extends CommentEvent {
+  final String commentId;
+  final String postId; // Needed to reload comments after deletion
+
+  DeleteComment({required this.commentId, required this.postId});
+}
+

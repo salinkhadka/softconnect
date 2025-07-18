@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:softconnect/app/service_locator/service_locator.dart';
 import 'package:softconnect/core/utils/mysnackbar.dart';
-import 'package:softconnect/features/auth/domain/entity/user_entity.dart';
+// import 'package:softconnect/features/auth/domain/entity/user_entity.dart';
 import 'package:softconnect/features/auth/domain/use_case/user_login_usecase.dart';
 import 'package:softconnect/features/auth/presentation/view/View/signup.dart';
 import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_viewmodel.dart';

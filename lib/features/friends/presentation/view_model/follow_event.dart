@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 abstract class FollowEvent extends Equatable {
   const FollowEvent();
+
   @override
   List<Object?> get props => [];
 }
@@ -44,3 +45,13 @@ class LoadFollowingEvent extends FollowEvent {
   @override
   List<Object?> get props => [userId];
 }
+
+
+class ShowFollowersViewEvent extends FollowEvent {
+  const ShowFollowersViewEvent();
+}
+
+class ShowFollowingViewEvent extends FollowEvent {
+  const ShowFollowingViewEvent();
+}
+
