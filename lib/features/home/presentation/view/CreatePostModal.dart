@@ -92,7 +92,8 @@ class _CreatePostModalState extends State<CreatePostModal> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Post created successfully')),
           );
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(true); 
+
         },
       );
     } catch (e) {

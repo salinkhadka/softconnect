@@ -1,5 +1,7 @@
+// lib/features/home/data/model/user_preview_model.dart
+
 import 'package:json_annotation/json_annotation.dart';
-import 'package:softconnect/features/auth/domain/entity/user_entity.dart';
+import 'package:softconnect/features/home/domain/entity/user_preview_entity.dart';
 
 part 'user_preview_model.g.dart';
 
@@ -25,14 +27,9 @@ class UserPreviewModel {
 
   Map<String, dynamic> toJson() => _$UserPreviewModelToJson(this);
 
-  UserEntity toEntity() => UserEntity(
+  UserPreviewEntity toEntity() => UserPreviewEntity(
         userId: userId,
         username: username,
         profilePhoto: profilePhoto,
-        email: '',
-        password: '',
-        studentId: 0,
-        bio: '',
-        role: 'normal',
       );
 }

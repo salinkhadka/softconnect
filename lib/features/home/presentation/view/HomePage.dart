@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:softconnect/app/service_locator/service_locator.dart';
 import 'package:softconnect/features/home/domain/use_case/getPostsUseCase.dart';
 import 'package:softconnect/features/home/presentation/view/CreatePostModal.dart';
+import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_event.dart';
+import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/homepage_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/home_state.dart';
 
@@ -22,29 +24,36 @@ class HomePage extends StatelessWidget {
   }
 
   void _showPostModal(BuildContext context) async {
-    final userId = await _getCurrentUserId();
+  final userId = await _getCurrentUserId();
 
-    if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User not logged in')),
-      );
-      return;
-    }
-
-    final createPostUsecase = serviceLocator<CreatePostUsecase>();
-    final uploadImageUsecase = serviceLocator<UploadImageUsecase>();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return CreatePostModal(
-          createPostUsecase: createPostUsecase,
-          uploadImageUsecase: uploadImageUsecase,
-          userId: userId,
-        );
-      },
+  if (userId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('User not logged in')),
     );
+    return;
   }
+
+  final createPostUsecase = serviceLocator<CreatePostUsecase>();
+  final uploadImageUsecase = serviceLocator<UploadImageUsecase>();
+
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (context) {
+      return CreatePostModal(
+        createPostUsecase: createPostUsecase,
+        uploadImageUsecase: uploadImageUsecase,
+        userId: userId,
+      );
+    },
+  );
+
+  // 👇 Trigger refresh in FeedViewModel if post creation succeeded
+  if (result == true && context.mounted) {
+    final feedViewModel = BlocProvider.of<FeedViewModel>(context, listen: false);
+    feedViewModel.add(LoadPostsEvent(userId));
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {

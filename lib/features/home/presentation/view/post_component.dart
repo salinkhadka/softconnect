@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import 'package:softconnect/core/utils/network_image_util.dart';
 import 'package:softconnect/features/home/domain/entity/post_entity.dart';
 import 'package:softconnect/features/home/presentation/view/CommentButton.dart';
 import 'package:softconnect/features/home/presentation/view/LikeButton.dart';
@@ -42,8 +43,13 @@ class PostComponent extends StatelessWidget {
         ? '$backendBaseUrl/${post.imageUrl!.replaceAll('\\', '/')}'
         : null;
 
+    final profileImageUrl = (post.user.profilePhoto != null &&
+            post.user.profilePhoto!.isNotEmpty)
+        ? '$backendBaseUrl/${post.user.profilePhoto!.replaceAll('\\', '/')}'
+        : null;
+
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 3,
       child: Padding(
@@ -54,15 +60,37 @@ class PostComponent extends StatelessWidget {
             // Header
             Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: Colors.blueAccent,
-                  child: Text(
-                    post.user.username.isNotEmpty
-                        ? post.user.username[0].toUpperCase()
-                        : '?',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
+                profileImageUrl != null
+                    ? CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.grey[200],
+                        child: ClipOval(
+                          child: NetworkImageWidget(
+                            imageUrl: profileImageUrl,
+                            height: 40,
+                            width: 40,
+                            fit: BoxFit.cover,
+                            placeholder: const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            errorWidget: const Icon(
+                              Icons.account_circle,
+                              size: 40,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                      )
+                    : CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.blueAccent,
+                        child: Text(
+                          post.user.username.isNotEmpty
+                              ? post.user.username[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -80,38 +108,34 @@ class PostComponent extends StatelessWidget {
                 const Icon(Icons.more_horiz),
               ],
             ),
+
             const SizedBox(height: 10),
+
             // Content text
-            Text(post.content),
-            const SizedBox(height: 10),
-
-            // Image display if available
-            if (imageUrl != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    print('Loading image URL from component: $imageUrl');
-
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                (loadingProgress.expectedTotalBytes ?? 1)
-                            : null,
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(child: Text('Failed to load image'));
-                  },
-                ),
+            if (post.content.isNotEmpty)
+              Text(
+                post.content,
+                style: const TextStyle(fontSize: 15),
               ),
 
             const SizedBox(height: 10),
+
+            // Post image (if any)
+            if (imageUrl != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: NetworkImageWidget(
+                  imageUrl: imageUrl,
+                  height: 250, // Increased height
+                  width: double.infinity,
+                  fit: BoxFit.cover, // Cover the entire box
+                  placeholder: const Center(child: CircularProgressIndicator()),
+                  errorWidget: const Center(child: Text('Failed to load image')),
+                ),
+              ),
+
+            const SizedBox(height: 12),
+
             // Actions
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

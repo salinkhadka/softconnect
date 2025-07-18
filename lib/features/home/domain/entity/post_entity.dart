@@ -1,8 +1,9 @@
-import 'package:softconnect/features/auth/domain/entity/user_entity.dart';
+
+import 'package:softconnect/features/home/domain/entity/user_preview_entity.dart';
 
 class PostEntity {
   final String id;
-  final UserEntity user; // or just userId if you prefer
+  final UserPreviewEntity user; // lightweight user info for posts
   final String content;
   final String? imageUrl;
   final String privacy;

@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:softconnect/app/service_locator/service_locator.dart';
+import 'package:softconnect/core/utils/network_image_util.dart'; // Import reusable widget
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_event.dart';
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_state.dart';
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_view_model.dart';
@@ -21,6 +23,17 @@ class CommentModal extends StatefulWidget {
 
 class _CommentModalState extends State<CommentModal> {
   final TextEditingController _commentController = TextEditingController();
+
+  // Helper method to get backend URL based on platform
+  String getBackendBaseUrl() {
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:2000';
+    } else if (Platform.isIOS) {
+      return 'http://localhost:2000';
+    } else {
+      return 'http://localhost:2000';
+    }
+  }
 
   @override
   void initState() {
@@ -44,13 +57,14 @@ class _CommentModalState extends State<CommentModal> {
       postId: widget.postId,
       content: content,
     ));
-    // context.read<CommentViewModel>().add(LoadComments(widget.postId));
 
     _commentController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
+    final backendBaseUrl = getBackendBaseUrl();
+
     return DraggableScrollableSheet(
       initialChildSize: 0.5,
       minChildSize: 0.3,
@@ -86,20 +100,38 @@ class _CommentModalState extends State<CommentModal> {
                                     leading: comment.profilePhoto != null &&
                                             comment.profilePhoto!.isNotEmpty
                                         ? CircleAvatar(
-                                            backgroundImage:
-                                                NetworkImage(comment.profilePhoto!),
+                                            radius: 20,
+                                            child: ClipOval(
+                                              child: NetworkImageWidget(
+                                                imageUrl:
+                                                    '$backendBaseUrl/${comment.profilePhoto!.replaceAll('\\', '/')}',
+                                                height: 40,
+                                                width: 40,
+                                                fit: BoxFit.cover,
+                                                placeholder: const Center(
+                                                  child:
+                                                      CircularProgressIndicator(strokeWidth: 2),
+                                                ),
+                                                errorWidget: const Icon(
+                                                  Icons.account_circle,
+                                                  size: 40,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ),
                                           )
                                         : CircleAvatar(
+                                            radius: 20,
                                             child: Text(
                                               comment.username != null &&
                                                       comment.username!.isNotEmpty
                                                   ? comment.username![0].toUpperCase()
                                                   : '?',
+                                              style: const TextStyle(fontSize: 18),
                                             ),
                                           ),
                                     title: Text(comment.content),
-                                    subtitle:
-                                        Text('@${comment.username ?? 'anonymous'}'),
+                                    subtitle: Text('@${comment.username ?? 'anonymous'}'),
                                   );
                                 },
                               ),
