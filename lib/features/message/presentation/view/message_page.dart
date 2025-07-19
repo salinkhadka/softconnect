@@ -60,6 +60,29 @@ class _MessagePageState extends State<MessagePage> {
     _messageController.clear();
   }
 
+  void _confirmDelete(String messageId) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Delete Message"),
+        content: const Text("Are you sure you want to delete this message?"),
+        actions: [
+          TextButton(
+            child: const Text("Cancel"),
+            onPressed: () => Navigator.pop(context),
+          ),
+          TextButton(
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            onPressed: () {
+              context.read<MessageViewModel>().add(DeleteMessageEvent(messageId: messageId));
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   String timeAgo(DateTime dateTime) {
     final now = DateTime.now();
     final diff = now.difference(dateTime);
@@ -79,8 +102,8 @@ class _MessagePageState extends State<MessagePage> {
             SnackBar(content: Text(state.message)),
           );
         }
-        if (state is MessageSentState) {
-          // Reload messages after sending one
+        if (state is MessageSentState || state is MessageDeletedState) {
+          // Reload messages after sending or deleting one
           context.read<MessageViewModel>().add(
                 LoadMessagesEvent(currentUserId, widget.otherUserId),
               );
@@ -123,36 +146,39 @@ class _MessagePageState extends State<MessagePage> {
                               final message = messages[messages.length - 1 - index];
                               final isMe = message.sender == currentUserId;
 
-                              return Align(
-                                alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                                child: Container(
-                                  margin: const EdgeInsets.symmetric(vertical: 4),
-                                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-                                  constraints: BoxConstraints(
-                                    maxWidth: MediaQuery.of(context).size.width * 0.7,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isMe ? Colors.blueAccent : Colors.grey[300],
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        message.content,
-                                        style: TextStyle(
-                                          color: isMe ? Colors.white : Colors.black87,
+                              return GestureDetector(
+                                onLongPress: () => _confirmDelete(message.id),
+                                child: Align(
+                                  alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                                  child: Container(
+                                    margin: const EdgeInsets.symmetric(vertical: 4),
+                                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                                    constraints: BoxConstraints(
+                                      maxWidth: MediaQuery.of(context).size.width * 0.7,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isMe ? Colors.blueAccent : Colors.grey[300],
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          message.content,
+                                          style: TextStyle(
+                                            color: isMe ? Colors.white : Colors.black87,
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        timeAgo(message.createdAt.toLocal()),
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: isMe ? Colors.white70 : Colors.black54,
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          timeAgo(message.createdAt.toLocal()),
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: isMe ? Colors.white70 : Colors.black54,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );
