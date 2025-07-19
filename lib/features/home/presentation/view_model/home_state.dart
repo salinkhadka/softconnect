@@ -6,6 +6,8 @@ import 'package:softconnect/features/friends/presentation/view/friends_page.dart
 import 'package:softconnect/features/friends/presentation/view_model/follow_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view/FeedPage.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
+import 'package:softconnect/features/message/presentation/view/inbox_page.dart';
+import 'package:softconnect/features/message/presentation/view_model/inbox_viewmodel.dart';
 
 class HomeState {
   final int selectedIndex;
@@ -38,7 +40,8 @@ class HomeState {
           create: (_) => serviceLocator<FollowViewModel>(),
           child: FriendsPage(userId: userId),
         ),
-        const Center(child: Text('Messages')),
+        BlocProvider(create: (_)=>serviceLocator<MessageViewModel>(),child: MessagePage(),),
+        
         const Center(child: Text('Profile')),
       ],
     );

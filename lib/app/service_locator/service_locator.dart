@@ -35,6 +35,11 @@ import 'package:softconnect/features/home/presentation/view_model/Feed_view_mode
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_view_model.dart';
 // import 'package:softconnect/features/home/presentation/view_model/feed_view_model/feed_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/homepage_viewmodel.dart';
+import 'package:softconnect/features/message/data/data_source/remote_dataSource/message_remote_datasource.dart';
+import 'package:softconnect/features/message/data/repository/remote_repository/message_remote_repository.dart';
+import 'package:softconnect/features/message/domain/repository/message_repository.dart';
+import 'package:softconnect/features/message/domain/use_case/inbox_usecase.dart';
+import 'package:softconnect/features/message/presentation/view_model/inbox_viewmodel.dart';
 
 // Splash imports
 import 'package:softconnect/features/splash/presentation/view_model/splash_viewmodel.dart';
@@ -57,6 +62,33 @@ Future<void> setupServiceLocator() async {
   await _initAuthModule();
   await _initHomeModule();
   await _initFriendsModule();
+   await _initMessageModule();
+}
+
+Future<void> _initMessageModule() async {
+  // Register data source (like FriendsApiDatasource)
+  serviceLocator.registerLazySingleton<MessageApiDataSource>(
+    () => MessageApiDataSource(apiService: serviceLocator<ApiService>()),
+  );
+
+  // Register repository (pass the data source, NOT the repo itself or ApiService)
+  serviceLocator.registerLazySingleton<IMessageRepository>(
+    () => MessageRemoteRepository(
+       dataSource: serviceLocator<MessageApiDataSource>(),
+    ),
+  );
+
+  // Register use case
+  serviceLocator.registerLazySingleton<GetInboxUseCase>(
+    () => GetInboxUseCase(repository: serviceLocator<IMessageRepository>()),
+  );
+
+  // Register view model
+  serviceLocator.registerFactory<MessageViewModel>(
+    () => MessageViewModel(serviceLocator<GetInboxUseCase>()),
+  );
+
+  print("MessageViewModel registered: ${serviceLocator.isRegistered<MessageViewModel>()}");
 }
 
 Future<void> _initHiveService() async {

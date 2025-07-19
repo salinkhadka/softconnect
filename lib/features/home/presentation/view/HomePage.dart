@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,9 +10,6 @@ import 'package:softconnect/features/home/presentation/view_model/Feed_view_mode
 import 'package:softconnect/features/home/presentation/view_model/homepage_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/home_state.dart';
 
-// Import your usecases
-// import 'package:softconnect/features/home/domain/usecase/post_usecases.dart';
-
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -24,106 +19,102 @@ class HomePage extends StatelessWidget {
   }
 
   void _showPostModal(BuildContext context) async {
-  final userId = await _getCurrentUserId();
+    final userId = await _getCurrentUserId();
 
-  if (userId == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('User not logged in')),
-    );
-    return;
-  }
-
-  final createPostUsecase = serviceLocator<CreatePostUsecase>();
-  final uploadImageUsecase = serviceLocator<UploadImageUsecase>();
-
-  final result = await showDialog<bool>(
-    context: context,
-    builder: (context) {
-      return CreatePostModal(
-        createPostUsecase: createPostUsecase,
-        uploadImageUsecase: uploadImageUsecase,
-        userId: userId,
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not logged in')),
       );
-    },
-  );
+      return;
+    }
 
-  // 👇 Trigger refresh in FeedViewModel if post creation succeeded
-  if (result == true && context.mounted) {
-    final feedViewModel = BlocProvider.of<FeedViewModel>(context, listen: false);
-    feedViewModel.add(LoadPostsEvent(userId));
+    final createPostUsecase = serviceLocator<CreatePostUsecase>();
+    final uploadImageUsecase = serviceLocator<UploadImageUsecase>();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return CreatePostModal(
+          createPostUsecase: createPostUsecase,
+          uploadImageUsecase: uploadImageUsecase,
+          userId: userId,
+        );
+      },
+    );
+
+    if (result == true && context.mounted) {
+      final feedViewModel = BlocProvider.of<FeedViewModel>(context, listen: false);
+      feedViewModel.add(LoadPostsEvent(userId));
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<HomeViewModel, HomeState>(
-      builder: (context, state) {
-        if (state.views.isEmpty) {
-          return const Scaffold(
-            body: SafeArea(child: Center(child: CircularProgressIndicator())),
-          );
-        }
+    return BlocProvider(
+      create: (_) => serviceLocator<HomeViewModel>(),
+      child: BlocBuilder<HomeViewModel, HomeState>(
+        builder: (context, state) {
+          if (state.views.isEmpty) {
+            return const Scaffold(
+              body: SafeArea(child: Center(child: CircularProgressIndicator())),
+            );
+          }
 
-        return Scaffold(
-          resizeToAvoidBottomInset: true,
-          appBar: AppBar(
-            title: const Text('SoftConnect'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.logout),
-                onPressed: () {
-                  context.read<HomeViewModel>().logout(context);
-                },
-              ),
-            ],
-          ),
-          body: SafeArea(
-            child: Flex(
-              direction: Axis.vertical,
-              children: [
-                Expanded(child: state.views[state.selectedIndex]),
+          return Scaffold(
+            resizeToAvoidBottomInset: true,
+            appBar: AppBar(
+              title: const Text('SoftConnect'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.logout),
+                  onPressed: () {
+                    context.read<HomeViewModel>().logout(context);
+                  },
+                ),
               ],
             ),
-          ),
-          bottomNavigationBar: SafeArea(
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                BottomNavigationBar(
-                  currentIndex: state.selectedIndex,
-                  onTap: (index) =>
-                      context.read<HomeViewModel>().onTabTapped(index),
-                  selectedItemColor: Theme.of(context).primaryColor,
-                  unselectedItemColor: Colors.grey,
-                  items: const [
-                    BottomNavigationBarItem(
-                        icon: Icon(Icons.home), label: 'Home'),
-                    BottomNavigationBarItem(
-                        icon: Icon(Icons.group), label: 'Friends'),
-                    BottomNavigationBarItem(
-                        icon: Icon(Icons.message), label: 'Messages'),
-                    BottomNavigationBarItem(
-                        icon: Icon(Icons.person), label: 'Profile'),
-                  ],
-                  type: BottomNavigationBarType.fixed,
-                ),
-                Positioned(
-                  bottom: 20,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: FloatingActionButton(
-                      onPressed: () => _showPostModal(context),
-                      child: const Icon(Icons.add),
+            body: SafeArea(
+              child: state.views[state.selectedIndex],
+            ),
+            bottomNavigationBar: SafeArea(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  BottomNavigationBar(
+                    currentIndex: state.selectedIndex,
+                    onTap: (index) =>
+                        context.read<HomeViewModel>().onTabTapped(index),
+                    selectedItemColor: Theme.of(context).primaryColor,
+                    unselectedItemColor: Colors.grey,
+                    items: const [
+                      BottomNavigationBarItem(
+                          icon: Icon(Icons.home), label: 'Home'),
+                      BottomNavigationBarItem(
+                          icon: Icon(Icons.group), label: 'Friends'),
+                      BottomNavigationBarItem(
+                          icon: Icon(Icons.message), label: 'Messages'),
+                      BottomNavigationBarItem(
+                          icon: Icon(Icons.person), label: 'Profile'),
+                    ],
+                    type: BottomNavigationBarType.fixed,
+                  ),
+                  Positioned(
+                    bottom: 20,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: FloatingActionButton(
+                        onPressed: () => _showPostModal(context),
+                        child: const Icon(Icons.add),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
