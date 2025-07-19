@@ -1,19 +1,19 @@
 import 'package:equatable/equatable.dart';
-import 'package:softconnect/features/message/domain/entity/message_entity.dart';
+import 'package:softconnect/features/message/domain/entity/message_inbox_entity.dart';
 // import 'package:softconnect/features/message/domain/entity/message_inbox_entity.dart';
 
-abstract class MessageState extends Equatable {
-  const MessageState();
+abstract class InboxState extends Equatable {
+  const InboxState();
 
   @override
   List<Object?> get props => [];
 }
 
-class MessageInitialState extends MessageState {}
+class MessageInitialState extends InboxState {}
 
-class MessageLoadingState extends MessageState {}
+class MessageLoadingState extends InboxState {}
 
-class MessageLoadedState extends MessageState {
+class MessageLoadedState extends InboxState {
   final List<MessageInboxEntity> inboxList;
 
   const MessageLoadedState(this.inboxList);
@@ -22,7 +22,7 @@ class MessageLoadedState extends MessageState {
   List<Object?> get props => [inboxList];
 }
 
-class MessageErrorState extends MessageState {
+class MessageErrorState extends InboxState {
   final String message;
 
   const MessageErrorState(this.message);

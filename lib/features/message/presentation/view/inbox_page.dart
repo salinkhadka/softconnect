@@ -1,33 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:softconnect/app/service_locator/service_locator.dart';
+
 import 'package:softconnect/features/message/domain/use_case/inbox_usecase.dart';
 import 'package:softconnect/features/message/presentation/view_model/inbox_event.dart';
 import 'package:softconnect/features/message/presentation/view_model/inbox_state.dart';
 import 'package:softconnect/features/message/presentation/view_model/inbox_viewmodel.dart';
+import 'package:softconnect/features/message/presentation/view_model/message_view_model/message_view_model.dart';
 
-class MessagePage extends StatelessWidget {
-  const MessagePage({super.key});
+import 'message_page.dart'; // Your MessagePage widget that uses MessageViewModel
+
+class InboxPage extends StatelessWidget {
+  const InboxPage({super.key});
 
   Future<String?> getUserIdFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('userId');
   }
 
-  // Helper: convert DateTime to "time ago" string
   String timeAgo(DateTime dateTime) {
     final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inSeconds < 60) {
-      return '${difference.inSeconds}s ago';
-    } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
-    } else {
-      return '${difference.inDays}d ago';
-    }
+    final diff = now.difference(dateTime);
+    if (diff.inSeconds < 60) return '${diff.inSeconds}s ago';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
   }
 
   @override
@@ -38,19 +36,17 @@ class MessagePage extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-
         if (!snapshot.hasData || snapshot.data == null) {
           return const Center(child: Text("User ID not found"));
         }
-
         final userId = snapshot.data!;
 
-        // Load inbox when ready
+        // Trigger inbox load event once
         context
-            .read<MessageViewModel>()
+            .read<InboxViewModel>()
             .add(LoadInboxEvent(GetInboxParams(userId)));
 
-        return BlocBuilder<MessageViewModel, MessageState>(
+        return BlocBuilder<InboxViewModel, InboxState>(
           builder: (context, state) {
             if (state is MessageLoadingState) {
               return const Center(child: CircularProgressIndicator());
@@ -64,13 +60,11 @@ class MessagePage extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final item = state.inboxList[index];
 
-                  // Build image URL safely (adjust according to your backend & path)
                   String? imageUrl;
                   if (item.profilePhoto != null &&
                       item.profilePhoto!.isNotEmpty) {
-                    // Adjust base URL as needed (see your FriendsPage logic)
                     const backendBaseUrl =
-                        'http://10.0.2.2:2000'; // or make dynamic by platform
+                        'http://10.0.2.2:2000'; // adjust as needed
                     imageUrl =
                         '$backendBaseUrl/${item.profilePhoto!.replaceAll('\\', '/')}';
                   }
@@ -78,7 +72,7 @@ class MessagePage extends StatelessWidget {
                   return ListTile(
                     tileColor: item.lastMessageIsRead == false
                         ? Colors.blue.shade50
-                        : null, // light blue background if unread
+                        : null,
                     leading: (imageUrl != null)
                         ? CircleAvatar(
                             radius: 22,
@@ -89,13 +83,11 @@ class MessagePage extends StatelessWidget {
                                 height: 44,
                                 width: 44,
                                 fit: BoxFit.cover,
-                                loadingBuilder:
-                                    (context, child, loadingProgress) {
-                                  if (loadingProgress == null) return child;
+                                loadingBuilder: (context, child, progress) {
+                                  if (progress == null) return child;
                                   return const Center(
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2),
-                                  );
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2));
                                 },
                                 errorBuilder: (context, error, stackTrace) {
                                   return const Icon(Icons.person, size: 32);
@@ -133,13 +125,28 @@ class MessagePage extends StatelessWidget {
                             : FontWeight.normal,
                       ),
                     ),
+                    onTap: () {
+                      // Navigate to MessagePage with MessageViewModel provided
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider<MessageViewModel>(
+                            create: (_) => serviceLocator<MessageViewModel>(),
+                            child: MessagePage(
+                              otherUserId: item.id,
+                              otherUserName: item.username,
+                              otherUserPhoto: imageUrl,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
               );
             } else if (state is MessageErrorState) {
               return Center(child: Text("Error: ${state.message}"));
             }
-
             return const SizedBox();
           },
         );

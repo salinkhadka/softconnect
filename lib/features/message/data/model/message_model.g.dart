@@ -6,26 +6,23 @@ part of 'message_model.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-MessageInboxModel _$MessageInboxModelFromJson(Map<String, dynamic> json) =>
-    MessageInboxModel(
+MessageModel _$MessageModelFromJson(Map<String, dynamic> json) => MessageModel(
       id: json['_id'] as String,
-      username: json['username'] as String,
-      email: json['email'] as String,
-      profilePhoto: json['profilePhoto'] as String?,
-      lastMessage: json['lastMessage'] as String,
-      lastMessageTime: DateTime.parse(json['lastMessageTime'] as String),
-      lastMessageIsRead: json['lastMessageIsRead'] as bool,
-      lastMessageSenderId: json['lastMessageSenderId'] as String,
+      sender: json['sender'] as String,
+      recipient: json['recipient'] as String,
+      content: json['content'] as String,
+      isRead: json['isRead'] as bool,
+      conversationId: json['conversationId'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
     );
 
-Map<String, dynamic> _$MessageInboxModelToJson(MessageInboxModel instance) =>
+Map<String, dynamic> _$MessageModelToJson(MessageModel instance) =>
     <String, dynamic>{
       '_id': instance.id,
-      'username': instance.username,
-      'email': instance.email,
-      'profilePhoto': instance.profilePhoto,
-      'lastMessage': instance.lastMessage,
-      'lastMessageTime': instance.lastMessageTime.toIso8601String(),
-      'lastMessageIsRead': instance.lastMessageIsRead,
-      'lastMessageSenderId': instance.lastMessageSenderId,
+      'sender': instance.sender,
+      'recipient': instance.recipient,
+      'content': instance.content,
+      'isRead': instance.isRead,
+      'conversationId': instance.conversationId,
+      'createdAt': instance.createdAt.toIso8601String(),
     };

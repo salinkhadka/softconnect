@@ -39,7 +39,9 @@ import 'package:softconnect/features/message/data/data_source/remote_dataSource/
 import 'package:softconnect/features/message/data/repository/remote_repository/message_remote_repository.dart';
 import 'package:softconnect/features/message/domain/repository/message_repository.dart';
 import 'package:softconnect/features/message/domain/use_case/inbox_usecase.dart';
+import 'package:softconnect/features/message/domain/use_case/message_usecase.dart';
 import 'package:softconnect/features/message/presentation/view_model/inbox_viewmodel.dart';
+import 'package:softconnect/features/message/presentation/view_model/message_view_model/message_view_model.dart';
 
 // Splash imports
 import 'package:softconnect/features/splash/presentation/view_model/splash_viewmodel.dart';
@@ -66,30 +68,52 @@ Future<void> setupServiceLocator() async {
 }
 
 Future<void> _initMessageModule() async {
-  // Register data source (like FriendsApiDatasource)
+  // Data source
   serviceLocator.registerLazySingleton<MessageApiDataSource>(
     () => MessageApiDataSource(apiService: serviceLocator<ApiService>()),
   );
 
-  // Register repository (pass the data source, NOT the repo itself or ApiService)
+  // Repository
   serviceLocator.registerLazySingleton<IMessageRepository>(
     () => MessageRemoteRepository(
-       dataSource: serviceLocator<MessageApiDataSource>(),
+      dataSource: serviceLocator<MessageApiDataSource>(),
     ),
   );
 
-  // Register use case
+  // Use cases
   serviceLocator.registerLazySingleton<GetInboxUseCase>(
     () => GetInboxUseCase(repository: serviceLocator<IMessageRepository>()),
   );
 
-  // Register view model
-  serviceLocator.registerFactory<MessageViewModel>(
-    () => MessageViewModel(serviceLocator<GetInboxUseCase>()),
+  serviceLocator.registerLazySingleton<GetMessagesBetweenUsersUseCase>(
+    () => GetMessagesBetweenUsersUseCase(repository: serviceLocator<IMessageRepository>()),
   );
 
+  serviceLocator.registerLazySingleton<SendMessageUseCase>(
+    () => SendMessageUseCase(repository: serviceLocator<IMessageRepository>()),
+  );
+
+  serviceLocator.registerLazySingleton<DeleteMessageUseCase>(
+    () => DeleteMessageUseCase(repository: serviceLocator<IMessageRepository>()),
+  );
+
+  // ViewModels
+  serviceLocator.registerFactory<InboxViewModel>(
+    () => InboxViewModel(serviceLocator<GetInboxUseCase>()),
+  );
+
+  serviceLocator.registerFactory<MessageViewModel>(
+    () => MessageViewModel(
+      getMessagesBetweenUsersUseCase: serviceLocator<GetMessagesBetweenUsersUseCase>(),
+      sendMessageUseCase: serviceLocator<SendMessageUseCase>(),
+      deleteMessageUseCase: serviceLocator<DeleteMessageUseCase>(),
+    ),
+  );
+
+  print("InboxViewModel registered: ${serviceLocator.isRegistered<InboxViewModel>()}");
   print("MessageViewModel registered: ${serviceLocator.isRegistered<MessageViewModel>()}");
 }
+
 
 Future<void> _initHiveService() async {
   serviceLocator.registerLazySingleton(() => HiveService());

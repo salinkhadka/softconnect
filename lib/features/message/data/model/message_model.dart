@@ -1,46 +1,56 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:softconnect/features/message/domain/entity/message_entity.dart';
-// import 'package:softconnect/features/message/domain/entity/MessageInboxEntity.dart';
-
 
 part 'message_model.g.dart';
 
 @JsonSerializable()
-class MessageInboxModel {
+class MessageModel {
   @JsonKey(name: '_id')
   final String id;
-  final String username;
-  final String email;
-  final String? profilePhoto;
-  final String lastMessage;
-  final DateTime lastMessageTime;
-  final bool lastMessageIsRead;
-  final String lastMessageSenderId;
+  final String sender;
+  final String recipient;
+  final String content;
+  final bool isRead;
+  final String conversationId;
+  final DateTime createdAt;
 
-  MessageInboxModel({
+  MessageModel({
     required this.id,
-    required this.username,
-    required this.email,
-    this.profilePhoto,
-    required this.lastMessage,
-    required this.lastMessageTime,
-    required this.lastMessageIsRead,
-    required this.lastMessageSenderId,
+    required this.sender,
+    required this.recipient,
+    required this.content,
+    required this.isRead,
+    required this.conversationId,
+    required this.createdAt,
   });
 
-  factory MessageInboxModel.fromJson(Map<String, dynamic> json) =>
-      _$MessageInboxModelFromJson(json);
+  factory MessageModel.fromJson(Map<String, dynamic> json) => _$MessageModelFromJson(json);
 
-  Map<String, dynamic> toJson() => _$MessageInboxModelToJson(this);
+  Map<String, dynamic> toJson() => _$MessageModelToJson(this);
 
-  MessageInboxEntity toEntity() => MessageInboxEntity(
-        id: id,
-        username: username,
-        email: email,
-        profilePhoto: profilePhoto,
-        lastMessage: lastMessage,
-        lastMessageTime: lastMessageTime,
-        lastMessageIsRead: lastMessageIsRead,
-        lastMessageSenderId: lastMessageSenderId,
-      );
+  /// Converts this model to the domain entity
+  MessageEntity toEntity() {
+    return MessageEntity(
+      id: id,
+      sender: sender,
+      recipient: recipient,
+      content: content,
+      isRead: isRead,
+      conversationId: conversationId,
+      createdAt: createdAt,
+    );
+  }
+
+  /// Creates this model from a domain entity
+  factory MessageModel.fromEntity(MessageEntity entity) {
+    return MessageModel(
+      id: entity.id,
+      sender: entity.sender,
+      recipient: entity.recipient,
+      content: entity.content,
+      isRead: entity.isRead,
+      conversationId: entity.conversationId,
+      createdAt: entity.createdAt,
+    );
+  }
 }

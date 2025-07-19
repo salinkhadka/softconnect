@@ -10,7 +10,7 @@ class PostModel {
   final String id;
 
   @JsonKey(name: 'userId')
-  final UserPreviewModel user;  // keep named 'user' or 'userId' for clarity
+  final UserPreviewModel user;  
 
   final String content;
   final String? imageUrl;

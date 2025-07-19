@@ -40,7 +40,7 @@ class HomeState {
           create: (_) => serviceLocator<FollowViewModel>(),
           child: FriendsPage(userId: userId),
         ),
-        BlocProvider(create: (_)=>serviceLocator<MessageViewModel>(),child: MessagePage(),),
+        BlocProvider(create: (_)=>serviceLocator<InboxViewModel>(),child: InboxPage(),),
         
         const Center(child: Text('Profile')),
       ],
