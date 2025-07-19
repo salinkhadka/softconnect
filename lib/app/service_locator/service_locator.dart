@@ -85,6 +85,10 @@ Future<void> _initMessageModule() async {
     () => GetInboxUseCase(repository: serviceLocator<IMessageRepository>()),
   );
 
+  serviceLocator.registerLazySingleton<MarkMessagesAsReadUseCase>(
+    () => MarkMessagesAsReadUseCase(repository: serviceLocator<IMessageRepository>()),
+  );
+
   serviceLocator.registerLazySingleton<GetMessagesBetweenUsersUseCase>(
     () => GetMessagesBetweenUsersUseCase(repository: serviceLocator<IMessageRepository>()),
   );
@@ -98,9 +102,13 @@ Future<void> _initMessageModule() async {
   );
 
   // ViewModels
-  serviceLocator.registerFactory<InboxViewModel>(
-    () => InboxViewModel(serviceLocator<GetInboxUseCase>()),
-  );
+serviceLocator.registerFactory<InboxViewModel>(
+  () => InboxViewModel(
+    serviceLocator<GetInboxUseCase>(),
+    serviceLocator<MarkMessagesAsReadUseCase>(),
+  ),
+);
+
 
   serviceLocator.registerFactory<MessageViewModel>(
     () => MessageViewModel(

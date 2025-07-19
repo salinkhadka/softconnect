@@ -24,3 +24,22 @@ class GetInboxUseCase implements UsecaseWithParams<List<MessageInboxEntity>, Get
     return repository.getInbox(params.userId);
   }
 }
+class MarkMessagesAsReadParams extends Equatable {
+  final String otherUserId;
+
+  const MarkMessagesAsReadParams(this.otherUserId);
+
+  @override
+  List<Object?> get props => [otherUserId];
+}
+
+class MarkMessagesAsReadUseCase implements UsecaseWithParams<void, MarkMessagesAsReadParams> {
+  final IMessageRepository repository;
+
+  MarkMessagesAsReadUseCase({required this.repository});
+
+  @override
+  Future<Either<Failure, void>> call(MarkMessagesAsReadParams params) {
+    return repository.markMessagesAsRead(params.otherUserId);
+  }
+}

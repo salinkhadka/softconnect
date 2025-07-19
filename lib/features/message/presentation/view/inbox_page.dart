@@ -42,37 +42,42 @@ class InboxPage extends StatelessWidget {
         final userId = snapshot.data!;
 
         // Trigger inbox load event once
-        context
-            .read<InboxViewModel>()
-            .add(LoadInboxEvent(GetInboxParams(userId)));
+        context.read<InboxViewModel>().add(LoadInboxEvent(GetInboxParams(userId)));
 
         return BlocBuilder<InboxViewModel, InboxState>(
           builder: (context, state) {
-            if (state is MessageLoadingState) {
+            if (state is MessageLoadingState || state is MessageMarkingReadState) {
               return const Center(child: CircularProgressIndicator());
-            } else if (state is MessageLoadedState) {
-              if (state.inboxList.isEmpty) {
+            } else if (state is MessageLoadedState || state is MessageMarkedReadState) {
+              final inboxList = (state is MessageLoadedState)
+                  ? state.inboxList
+                  : (state is MessageMarkedReadState)
+                      ? (context.read<InboxViewModel>().state is MessageLoadedState
+                          ? (context.read<InboxViewModel>().state as MessageLoadedState).inboxList
+                          : [])
+                      : [];
+
+              if (inboxList.isEmpty) {
                 return const Center(child: Text("No messages yet."));
               }
 
               return ListView.builder(
-                itemCount: state.inboxList.length,
+                itemCount: inboxList.length,
                 itemBuilder: (context, index) {
-                  final item = state.inboxList[index];
+                  final item = inboxList[index];
 
                   String? imageUrl;
-                  if (item.profilePhoto != null &&
-                      item.profilePhoto!.isNotEmpty) {
-                    const backendBaseUrl =
-                        'http://10.0.2.2:2000'; // adjust as needed
-                    imageUrl =
-                        '$backendBaseUrl/${item.profilePhoto!.replaceAll('\\', '/')}';
+                  if (item.profilePhoto != null && item.profilePhoto!.isNotEmpty) {
+                    const backendBaseUrl = 'http://10.0.2.2:2000'; // adjust as needed
+                    imageUrl = '$backendBaseUrl/${item.profilePhoto!.replaceAll('\\', '/')}';
                   }
 
+                  // Determine if text should be bold:
+                  // Bold if last message is unread AND last message sender is NOT the logged-in user
+                  final bool shouldBold = item.lastMessageIsRead == false && item.lastMessageSenderId != userId;
+
                   return ListTile(
-                    tileColor: item.lastMessageIsRead == false
-                        ? Colors.blue.shade50
-                        : null,
+                    tileColor: shouldBold ? Colors.blue.shade50 : null,
                     leading: (imageUrl != null)
                         ? CircleAvatar(
                             radius: 22,
@@ -85,9 +90,7 @@ class InboxPage extends StatelessWidget {
                                 fit: BoxFit.cover,
                                 loadingBuilder: (context, child, progress) {
                                   if (progress == null) return child;
-                                  return const Center(
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2));
+                                  return const Center(child: CircularProgressIndicator(strokeWidth: 2));
                                 },
                                 errorBuilder: (context, error, stackTrace) {
                                   return const Icon(Icons.person, size: 32);
@@ -102,17 +105,13 @@ class InboxPage extends StatelessWidget {
                     title: Text(
                       item.username,
                       style: TextStyle(
-                        fontWeight: item.lastMessageIsRead == false
-                            ? FontWeight.bold
-                            : FontWeight.normal,
+                        fontWeight: shouldBold ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                     subtitle: Text(
                       item.lastMessage,
                       style: TextStyle(
-                        fontWeight: item.lastMessageIsRead == false
-                            ? FontWeight.bold
-                            : FontWeight.normal,
+                        fontWeight: shouldBold ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                     trailing: Text(
@@ -120,12 +119,15 @@ class InboxPage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
-                        fontWeight: item.lastMessageIsRead == false
-                            ? FontWeight.bold
-                            : FontWeight.normal,
+                        fontWeight: shouldBold ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                     onTap: () {
+                      // Mark messages as read for this conversation
+                      context.read<InboxViewModel>().add(
+                            MarkMessagesReadEvent(MarkMessagesAsReadParams(item.id)),
+                          );
+
                       // Navigate to MessagePage with MessageViewModel provided
                       Navigator.push(
                         context,

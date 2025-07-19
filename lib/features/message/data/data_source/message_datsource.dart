@@ -6,4 +6,5 @@ abstract interface class IMessageDataSource {
   Future<List<MessageModel>> getMessagesBetweenUsers(String senderId, String receiverId);
   Future<MessageModel> sendMessage(String senderId, String recipientId, String content);
   Future<void> deleteMessage(String messageId);
+  Future<void> markMessagesAsRead(String otherUserId);
 }

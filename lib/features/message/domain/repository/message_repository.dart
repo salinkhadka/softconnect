@@ -11,4 +11,5 @@ abstract interface class IMessageRepository {
   Future<Either<Failure, MessageEntity>> sendMessage(String senderId, String recipientId, String content);
   
   Future<Either<Failure, void>> deleteMessage(String messageId);
+  Future<Either<Failure, void>> markMessagesAsRead(String otherUserId);
 }

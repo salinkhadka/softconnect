@@ -16,3 +16,12 @@ class LoadInboxEvent extends InboxEvent {
   @override
   List<Object?> get props => [params];
 }
+
+class MarkMessagesReadEvent extends InboxEvent {
+  final MarkMessagesAsReadParams params;
+
+  const MarkMessagesReadEvent(this.params);
+
+  @override
+  List<Object?> get props => [params];
+}

@@ -62,4 +62,13 @@ class MessageRemoteRepository implements IMessageRepository {
       return Left(RemoteDatabaseFailure(message: e.toString()));
     }
   }
+   @override
+  Future<Either<Failure, void>> markMessagesAsRead(String otherUserId) async {
+    try {
+      await _dataSource.markMessagesAsRead(otherUserId);
+      return const Right(null);
+    } catch (e) {
+      return Left(RemoteDatabaseFailure(message: e.toString()));
+    }
+  }
 }

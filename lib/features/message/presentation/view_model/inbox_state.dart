@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:softconnect/features/message/domain/entity/message_inbox_entity.dart';
-// import 'package:softconnect/features/message/domain/entity/message_inbox_entity.dart';
 
 abstract class InboxState extends Equatable {
   const InboxState();
@@ -30,3 +29,7 @@ class MessageErrorState extends InboxState {
   @override
   List<Object?> get props => [message];
 }
+
+class MessageMarkingReadState extends InboxState {}
+
+class MessageMarkedReadState extends InboxState {}

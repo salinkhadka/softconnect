@@ -33,8 +33,9 @@ class SendMessageEvent extends MessageEvent {
 class DeleteMessageEvent extends MessageEvent {
   final String messageId;
 
-  DeleteMessageEvent(this.messageId);
+  DeleteMessageEvent({required this.messageId});
 
   @override
   List<Object?> get props => [messageId];
 }
+

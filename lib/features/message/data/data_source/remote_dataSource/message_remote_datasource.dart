@@ -91,4 +91,23 @@ class MessageApiDataSource implements IMessageDataSource {
       throw Exception('Error deleting message: $e');
     }
   }
+   @override
+  Future<void> markMessagesAsRead(String otherUserId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("token");
+
+      await _apiService.dio.put(
+        ApiEndpoints.markMessagesAsRead,  // no URL params
+        data: {
+          'otherUserId': otherUserId, // send in body
+        },
+        options: Options(headers: {
+          'Authorization': 'Bearer $token',
+        }),
+      );
+    } catch (e) {
+      throw Exception('Error marking messages as read: $e');
+    }
+  }
 }
