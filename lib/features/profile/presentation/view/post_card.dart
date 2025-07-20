@@ -12,6 +12,8 @@ class PostCard extends StatelessWidget {
   final int commentCount;
   final VoidCallback onLikePressed;
   final VoidCallback onCommentPressed;
+  final VoidCallback? onDeletePressed;
+  final VoidCallback? onUpdatePressed;
 
   const PostCard({
     super.key,
@@ -22,6 +24,8 @@ class PostCard extends StatelessWidget {
     this.commentCount = 0,
     required this.onLikePressed,
     required this.onCommentPressed,
+    this.onDeletePressed,
+    this.onUpdatePressed,
   });
 
   String getFullImageUrl(String? imagePath) {
@@ -45,7 +49,7 @@ class PostCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// HEADER: User Info
+            /// HEADER: User Info + PopupMenuButton
             Row(
               children: [
                 profileImageUrl.isNotEmpty
@@ -77,7 +81,27 @@ class PostCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(Icons.more_vert, size: 20),
+                // Replace Icon with PopupMenuButton
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, size: 20),
+                  onSelected: (value) {
+                    if (value == 'delete') {
+                      if (onDeletePressed != null) onDeletePressed!();
+                    } else if (value == 'update') {
+                      if (onUpdatePressed != null) onUpdatePressed!();
+                    }
+                  },
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                    const PopupMenuItem<String>(
+                      value: 'update',
+                      child: Text('Update Post'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Text('Delete Post'),
+                    ),
+                  ],
+                ),
               ],
             ),
 

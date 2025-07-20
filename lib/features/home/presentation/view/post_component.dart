@@ -14,6 +14,10 @@ class PostComponent extends StatelessWidget {
   final VoidCallback onCommentPressed;
   final VoidCallback onLikePressed;
 
+  // Add callbacks for update and delete
+  final VoidCallback? onUpdatePressed;
+  final VoidCallback? onDeletePressed;
+
   const PostComponent({
     Key? key,
     required this.post,
@@ -23,6 +27,8 @@ class PostComponent extends StatelessWidget {
     required this.commentCount,
     required this.onCommentPressed,
     required this.onLikePressed,
+    this.onUpdatePressed,
+    this.onDeletePressed,
   }) : super(key: key);
 
   String getBackendBaseUrl() {
@@ -57,7 +63,7 @@ class PostComponent extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
+            // Header with conditional PopupMenuButton
             Row(
               children: [
                 profileImageUrl != null
@@ -105,7 +111,43 @@ class PostComponent extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(Icons.more_horiz),
+
+                // Show menu only if current user is the post owner
+                if (currentUserId == post.user.userId)
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_horiz),
+                    onSelected: (value) {
+                      if (value == 'update') {
+                        onUpdatePressed?.call();
+                      } else if (value == 'delete') {
+                        onDeletePressed?.call();
+                      }
+                    },
+                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                      const PopupMenuItem<String>(
+                        value: 'update',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit, size: 20),
+                            SizedBox(width: 8),
+                            Text('Update Post'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, size: 20, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Delete Post', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  const SizedBox(width: 24), // Placeholder so UI aligns
               ],
             ),
 
@@ -126,9 +168,9 @@ class PostComponent extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 child: NetworkImageWidget(
                   imageUrl: imageUrl,
-                  height: 250, // Increased height
+                  height: 250,
                   width: double.infinity,
-                  fit: BoxFit.cover, // Cover the entire box
+                  fit: BoxFit.cover,
                   placeholder: const Center(child: CircularProgressIndicator()),
                   errorWidget: const Center(child: Text('Failed to load image')),
                 ),

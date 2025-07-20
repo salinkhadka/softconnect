@@ -135,7 +135,6 @@ class DeletePostUsecase
   }
 }
 
-// ───────────────────────────── Upload Image ─────────────────────────────
 class UploadImageParams {
   final File postImage;
   UploadImageParams(this.postImage);

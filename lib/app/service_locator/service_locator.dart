@@ -312,6 +312,14 @@ Future<void> _initProfileModule() async {
     () => GetUserByIdUsecase(userRepository: serviceLocator<IUserRepository>()),
   );
 
+  serviceLocator.registerLazySingleton<UpdatePostUsecase>(
+    () => UpdatePostUsecase( serviceLocator<IPostRepository>()),
+  );
+
+  serviceLocator.registerLazySingleton<DeletePostUsecase>(
+    () => DeletePostUsecase( serviceLocator<IPostRepository>()),
+  );
+
   serviceLocator.registerLazySingleton<GetPostsByUserIdUsecase>(
     () => GetPostsByUserIdUsecase(serviceLocator<IPostRepository>()),
   );
@@ -326,7 +334,7 @@ Future<void> _initProfileModule() async {
       getUserById: serviceLocator<GetUserByIdUsecase>(),
       getPostsByUserId: serviceLocator<GetPostsByUserIdUsecase>(),
       updateUserProfileUsecase: serviceLocator<UpdateUserProfileUsecase>(),
-      uploadImageUsecase: serviceLocator<UploadImageUsecase>(),
+      uploadImageUsecase: serviceLocator<UploadImageUsecase>(), updatePostUsecase: serviceLocator<UpdatePostUsecase>(), deletePostUsecase: serviceLocator<DeletePostUsecase>(),
     ),
   );
 }

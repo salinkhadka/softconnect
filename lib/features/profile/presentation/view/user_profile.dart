@@ -13,6 +13,7 @@ import 'package:softconnect/features/home/presentation/view_model/Feed_view_mode
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
 import 'package:softconnect/features/profile/presentation/view_model/user_profile_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_view_model.dart';
+import 'package:softconnect/features/home/domain/entity/post_entity.dart';
 
 class UserProfilePage extends StatefulWidget {
   final String? userId;
@@ -54,6 +55,179 @@ class _UserProfilePageState extends State<UserProfilePage> {
         : '$baseUrl/${imagePath.replaceAll("\\", "/")}';
   }
 
+  // Delete post with confirmation dialog
+  Future<void> _deletePost(BuildContext context, PostEntity post) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Post'),
+          content: const Text('Are you sure you want to delete this post? This action cannot be undone.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete == true) {
+      await context.read<UserProfileViewModel>().deletePost(post.id);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Post deleted successfully')),
+        );
+      }
+    }
+  }
+
+  // Update post dialog
+  Future<void> _updatePost(BuildContext context, PostEntity post) async {
+    final TextEditingController contentController = TextEditingController(text: post.content);
+    String selectedPrivacy = post.privacy;
+    String? selectedImagePath;
+
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            Future<void> _pickImage() async {
+              final picker = ImagePicker();
+              final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+              if (pickedFile != null) {
+                setState(() {
+                  selectedImagePath = pickedFile.path;
+                });
+              }
+            }
+
+            return AlertDialog(
+              title: const Text('Update Post'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: contentController,
+                      maxLines: 5,
+                      decoration: const InputDecoration(
+                        labelText: 'Content',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: selectedPrivacy,
+                      decoration: const InputDecoration(
+                        labelText: 'Privacy',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'public', child: Text('Public')),
+                        DropdownMenuItem(value: 'private', child: Text('Private')),
+                        DropdownMenuItem(value: 'friends', child: Text('Friends Only')),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          selectedPrivacy = value!;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        if (selectedImagePath != null) ...[
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              image: DecorationImage(
+                                image: FileImage(File(selectedImagePath!)),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                        ] else if (post.imageUrl != null && post.imageUrl!.isNotEmpty) ...[
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              image: DecorationImage(
+                                image: NetworkImage(getFullImageUrl(post.imageUrl)),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                        ],
+                        TextButton.icon(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.image),
+                          label: Text(selectedImagePath != null || 
+                                      (post.imageUrl != null && post.imageUrl!.isNotEmpty) 
+                                      ? 'Change Image' : 'Add Image'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop({
+                      'content': contentController.text.trim(),
+                      'privacy': selectedPrivacy,
+                      'imagePath': selectedImagePath,
+                    });
+                  },
+                  child: const Text('Update'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result != null) {
+      final updatedPost = PostEntity(
+        id: post.id,
+        content: result['content'] as String,
+        privacy: result['privacy'] as String,
+        imageUrl: result['imagePath'] as String? ?? post.imageUrl,
+        user: post.user,
+        createdAt: post.createdAt,
+        updatedAt: DateTime.now(),
+       
+      );
+
+      await context.read<UserProfileViewModel>().updatePost(updatedPost);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Post updated successfully')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final feedViewModel = context.watch<FeedViewModel>();
@@ -66,6 +240,18 @@ class _UserProfilePageState extends State<UserProfilePage> {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
+        }
+
+        // Show error message if there's an error
+        if (profileState.error != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(profileState.error!),
+                backgroundColor: Colors.red,
+              ),
+            );
+          });
         }
 
         final posts = feedViewModel.state.posts
@@ -235,6 +421,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
                           ),
                         );
                       },
+                      // ✅ Implemented delete functionality
+                      onDeletePressed: () => _deletePost(context, post),
+                      // ✅ Implemented update functionality
+                      onUpdatePressed: () => _updatePost(context, post),
                     );
                   }).toList(),
               ],
