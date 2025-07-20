@@ -137,6 +137,7 @@ class _FeedPageState extends State<FeedPage> {
                     builder: (_) => BlocProvider.value(
                       value: commentViewModel,
                       child: CommentModal(
+                        postOwnerUserId: post.user.userId,
                         postId: post.id,
                         userId: widget.currentUserId,
                       ),

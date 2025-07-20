@@ -207,6 +207,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                           builder: (_) => BlocProvider.value(
                             value: commentVM,
                             child: CommentModal(
+                              postOwnerUserId: post.user.userId,
                               postId: post.id,
                               userId: viewingUserId,
                             ),

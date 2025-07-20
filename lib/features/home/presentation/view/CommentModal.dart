@@ -9,11 +9,13 @@ import 'package:softconnect/features/home/presentation/view_model/Comment_view_m
 class CommentModal extends StatelessWidget {
   final String postId;
   final String userId;
+  final String postOwnerUserId;
 
   const CommentModal({
     Key? key,
     required this.postId,
     required this.userId,
+    required this.postOwnerUserId,
   }) : super(key: key);
 
   String getBackendBaseUrl() {
@@ -94,12 +96,12 @@ class CommentModal extends StatelessWidget {
         ),
   title: Text(comment.content),
   subtitle: Text('@${comment.username ?? 'anonymous'}'),
-  trailing: comment.userId == userId
+  trailing: (comment.userId == userId || postOwnerUserId == userId)
     ? IconButton(
         icon: const Icon(Icons.delete, color: Colors.red),
         onPressed: () {
           context.read<CommentViewModel>().add(
-            DeleteComment(commentId: comment.id, postId: postId), // ✅ FIXED
+            DeleteComment(commentId: comment.id, postId: postId),
           );
         },
       )
