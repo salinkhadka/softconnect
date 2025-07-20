@@ -6,6 +6,10 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:softconnect/app/service_locator/service_locator.dart';
 import 'package:softconnect/core/utils/network_image_util.dart';
+import 'package:softconnect/features/friends/domain/use_case/follow_user_usecase.dart';
+import 'package:softconnect/features/friends/domain/use_case/get_followers_usecase.dart';
+import 'package:softconnect/features/friends/domain/use_case/get_following_usecase.dart';
+import 'package:softconnect/features/friends/domain/use_case/unfollow_user_usecase.dart';
 import 'package:softconnect/features/home/presentation/view/CommentModal.dart';
 import 'package:softconnect/features/home/presentation/view/post_component.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_event.dart';
@@ -15,6 +19,10 @@ import 'package:softconnect/features/message/presentation/view_model/message_vie
 import 'package:softconnect/features/profile/presentation/view_model/user_profile_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_view_model.dart';
 import 'package:softconnect/features/home/domain/entity/post_entity.dart';
+import 'package:softconnect/features/profile/presentation/view/followers_page.dart';
+import 'package:softconnect/features/profile/presentation/view/following_page.dart';
+// Add these imports for your use cases
+import 'package:softconnect/features/friends/domain/entity/follow_entity.dart';
 
 class UserProfilePage extends StatefulWidget {
   final String? userId;
@@ -27,25 +35,192 @@ class UserProfilePage extends StatefulWidget {
 
 class _UserProfilePageState extends State<UserProfilePage> {
   late String viewingUserId;
+  late String currentUserId;
   late bool isOwnProfile;
+  
+  // Follow/Unfollow state
+  bool isFollowing = false;
+  bool isLoadingFollow = false;
+  List<FollowEntity> followers = [];
+  List<FollowEntity> following = [];
+  bool isLoadingFollowData = true;
+
+  // Inject use cases
+  late final FollowUserUseCase _followUserUseCase;
+  late final UnfollowUserUseCase _unfollowUserUseCase;
+  late final GetFollowersUseCase _getFollowersUseCase;
+  late final GetFollowingUseCase _getFollowingUseCase;
 
   @override
   void initState() {
     super.initState();
+    _initializeUseCases();
     _loadUserData();
+  }
+
+  void _initializeUseCases() {
+    _followUserUseCase = serviceLocator<FollowUserUseCase>();
+    _unfollowUserUseCase = serviceLocator<UnfollowUserUseCase>();
+    _getFollowersUseCase = serviceLocator<GetFollowersUseCase>();
+    _getFollowingUseCase = serviceLocator<GetFollowingUseCase>();
   }
 
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
-    final currentUserId = prefs.getString('userId');
+    final loggedInUserId = prefs.getString('userId');
 
     setState(() {
-      viewingUserId = widget.userId ?? currentUserId!;
+      currentUserId = loggedInUserId!;
+      viewingUserId = widget.userId ?? currentUserId;
       isOwnProfile = widget.userId == null || widget.userId == currentUserId;
     });
 
+    // Load user profile
     context.read<UserProfileViewModel>().loadUserProfile(viewingUserId);
-    context.read<FeedViewModel>().add(LoadPostsEvent(viewingUserId));
+
+    if (!isOwnProfile) {
+      // Load follow data for other users
+      await _loadFollowData();
+    }
+
+    // Load posts based on follow status
+    if (isOwnProfile || isFollowing) {
+      context.read<FeedViewModel>().add(LoadPostsEvent(viewingUserId));
+    }
+  }
+
+  Future<void> _loadFollowData() async {
+    setState(() {
+      isLoadingFollowData = true;
+    });
+
+    try {
+      // Get followers of the user being visited
+      final followersResult = await _getFollowersUseCase.call(
+        GetFollowersParams(viewingUserId),
+      );
+
+      // Get following of the user being visited
+      final followingResult = await _getFollowingUseCase.call(
+        GetFollowingParams(viewingUserId),
+      );
+
+      followersResult.fold(
+        (failure) {
+          print('Error loading followers: $failure');
+        },
+        (followersList) {
+          followers = followersList;
+          // Check if current user is in the followers list of the visited user
+          isFollowing = followersList.any((follow) => follow.followerId == currentUserId);
+        },
+      );
+
+      followingResult.fold(
+        (failure) {
+          print('Error loading following: $failure');
+        },
+        (followingList) {
+          following = followingList;
+        },
+      );
+    } catch (e) {
+      print('Error in _loadFollowData: $e');
+    } finally {
+      setState(() {
+        isLoadingFollowData = false;
+      });
+    }
+  }
+
+  Future<void> _toggleFollow() async {
+    if (isLoadingFollow) return;
+
+    setState(() {
+      isLoadingFollow = true;
+    });
+
+    try {
+      if (isFollowing) {
+        // Unfollow
+        final result = await _unfollowUserUseCase.call(
+          UnfollowUserParams(viewingUserId),
+        );
+        
+        result.fold(
+          (failure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to unfollow: ${failure.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          },
+          (_) {
+            setState(() {
+              isFollowing = false;
+              // Remove current user from followers list
+              followers.removeWhere((follow) => follow.followerId == currentUserId);
+            });
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Unfollowed successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            // Reload user profile to update follower count
+            context.read<UserProfileViewModel>().loadUserProfile(viewingUserId);
+          },
+        );
+      } else {
+        // Follow
+        final result = await _followUserUseCase.call(
+          FollowUserParams(viewingUserId),
+        );
+        
+        result.fold(
+          (failure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to follow: ${failure.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          },
+          (followEntity) {
+            setState(() {
+              isFollowing = true;
+              // Add the new follow relationship to followers list
+              followers.add(followEntity);
+            });
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Followed successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            // Reload user profile to update follower count and load posts
+            context.read<UserProfileViewModel>().loadUserProfile(viewingUserId);
+            context.read<FeedViewModel>().add(LoadPostsEvent(viewingUserId));
+          },
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        isLoadingFollow = false;
+      });
+    }
   }
 
   String getFullImageUrl(String? imagePath) {
@@ -281,7 +456,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
               await context
                   .read<UserProfileViewModel>()
                   .loadUserProfile(viewingUserId);
-              context.read<FeedViewModel>().add(LoadPostsEvent(viewingUserId));
+              
+              if (!isOwnProfile) {
+                await _loadFollowData();
+              }
+              
+              if (isOwnProfile || isFollowing) {
+                context.read<FeedViewModel>().add(LoadPostsEvent(viewingUserId));
+              }
             },
             child: ListView(
               padding: const EdgeInsets.all(16),
@@ -339,9 +521,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         ],
                         _infoRow("Role", user.role),
                         const SizedBox(height: 8),
-                        _infoRow("Followers", '${user.followersCount ?? 0}'),
+                        _infoRow("Followers", '${followers.length}'),
                         const SizedBox(height: 8),
-                        _infoRow("Following", '${user.followingCount ?? 0}'),
+                        _infoRow("Following", '${following.length}'),
                       ],
                     ),
                   ),
@@ -361,40 +543,55 @@ class _UserProfilePageState extends State<UserProfilePage> {
                     ),
                   ),
 
+                // FOLLOW/UNFOLLOW AND MESSAGE BUTTONS (only for other users)
                 if (!isOwnProfile)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () => context
-                            .read<UserProfileViewModel>()
-                            .toggleFollow(viewingUserId),
-                        child: Text(
-                            profileState.isFollowing ? 'Unfollow' : 'Follow'),
-                      ),
-                      OutlinedButton(
-                        onPressed: () {
-                          final messageViewModel =
-                              serviceLocator<MessageViewModel>();
-
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BlocProvider.value(
-                                value: messageViewModel,
-                                child: MessagePage(
-                                  otherUserId: user.userId!,
-                                  otherUserName: user.username,
-                                  otherUserPhoto:
-                                      getFullImageUrl(user.profilePhoto),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: isLoadingFollowData
+                        ? const Center(child: CircularProgressIndicator())
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              ElevatedButton(
+                                onPressed: isLoadingFollow ? null : _toggleFollow,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isFollowing ? Colors.grey : Colors.blue,
                                 ),
+                                child: isLoadingFollow
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        ),
+                                      )
+                                    : Text(isFollowing ? 'Unfollow' : 'Follow'),
                               ),
-                            ),
-                          );
-                        },
-                        child: const Text('Message'),
-                      ),
-                    ],
+                              OutlinedButton(
+                                onPressed: () {
+                                  final messageViewModel =
+                                      serviceLocator<MessageViewModel>();
+
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => BlocProvider.value(
+                                        value: messageViewModel,
+                                        child: MessagePage(
+                                          otherUserId: user.userId!,
+                                          otherUserName: user.username,
+                                          otherUserPhoto:
+                                              getFullImageUrl(user.profilePhoto),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: const Text('Message'),
+                              ),
+                            ],
+                          ),
                   ),
 
                 const Divider(height: 32),
@@ -402,7 +599,28 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 Text('Posts', style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 12),
 
-                if (posts.isEmpty)
+                // Posts section with conditional visibility
+                if (!isOwnProfile && !isFollowing)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Column(
+                        children: [
+                          Icon(Icons.lock, size: 48, color: Colors.grey),
+                          SizedBox(height: 16),
+                          Text(
+                            'Follow this user to see their posts',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (posts.isEmpty)
                   const Center(child: Text('No posts available'))
                 else
                   ...posts.map((post) {
@@ -415,7 +633,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
                     return PostComponent(
                       post: post,
-                      currentUserId: viewingUserId,
+                      currentUserId: currentUserId,
                       isLiked: isLiked,
                       likeCount: likeCount,
                       commentCount: commentCount,
@@ -424,12 +642,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         if (isLiked) {
                           feedBloc.add(UnlikePostEvent(
                             postId: post.id,
-                            userId: viewingUserId,
+                            userId: currentUserId,
                           ));
                         } else {
                           feedBloc.add(LikePostEvent(
                             postId: post.id,
-                            userId: viewingUserId,
+                            userId: currentUserId,
                           ));
                         }
                       },
@@ -444,15 +662,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
                             child: CommentModal(
                               postOwnerUserId: post.user.userId,
                               postId: post.id,
-                              userId: viewingUserId,
+                              userId: currentUserId,
                             ),
                           ),
                         );
                       },
-                      // ✅ Implemented delete functionality
-                      onDeletePressed: () => _deletePost(context, post),
-                      // ✅ Implemented update functionality
-                      onUpdatePressed: () => _updatePost(context, post),
+                      // Only show delete/update for own posts
+                      onDeletePressed: isOwnProfile ? () => _deletePost(context, post) : null,
+                      onUpdatePressed: isOwnProfile ? () => _updatePost(context, post) : null,
                     );
                   }).toList(),
               ],
