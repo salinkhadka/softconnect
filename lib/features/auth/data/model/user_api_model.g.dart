@@ -10,11 +10,15 @@ UserApiModel _$UserApiModelFromJson(Map<String, dynamic> json) => UserApiModel(
       userId: json['_id'] as String?,
       email: json['email'] as String,
       username: json['username'] as String,
-      studentId: (json['StudentId'] as num).toInt(),
-      password: json['password'] as String,
+      studentId: (json['StudentId'] as num?)?.toInt(),
+      password: json['password'] as String?,
       profilePhoto: json['profilePhoto'] as String?,
       bio: json['bio'] as String?,
-      role: json['role'] as String,
+      role: json['role'] as String? ?? 'Student',
+      followersCount: (json['followersCount'] as num?)?.toInt(),
+      followingCount: (json['followingCount'] as num?)?.toInt(),
+      createdAt: json['createdAt'] as String?,
+      updatedAt: json['updatedAt'] as String?,
     );
 
 Map<String, dynamic> _$UserApiModelToJson(UserApiModel instance) =>
@@ -27,4 +31,8 @@ Map<String, dynamic> _$UserApiModelToJson(UserApiModel instance) =>
       'profilePhoto': instance.profilePhoto,
       'bio': instance.bio,
       'role': instance.role,
+      'followersCount': instance.followersCount,
+      'followingCount': instance.followingCount,
+      'createdAt': instance.createdAt,
+      'updatedAt': instance.updatedAt,
     };

@@ -14,23 +14,34 @@ class UserRemoteDataSource implements IUserDataSource {
       : _apiService = apiService;
 
   @override
-  Future<UserEntity> getCurrentUser(String id) async {
-    try {
-      final response = await _apiService.dio.get(ApiEndpoints.getUserById(id));
+Future<UserEntity> getCurrentUser(String id) async {
+  try {
+    final response = await _apiService.dio.get(ApiEndpoints.getUserById(id));
 
-      if (response.statusCode == 200) {
-        final userData = response.data;
+    if (response.statusCode == 200) {
+      final responseData = response.data;
+      
+      // Check if the response has the expected structure
+      if (responseData is Map<String, dynamic> && 
+          responseData['success'] == true && 
+          responseData['data'] != null) {
+        
+        // Extract the actual user data from the 'data' field
+        final userData = responseData['data'] as Map<String, dynamic>;
         final userApiModel = UserApiModel.fromJson(userData);
-        return userApiModel.toEntity(); // convert to UserEntity
+        return userApiModel.toEntity();
       } else {
-        throw Exception("Failed to fetch user: ${response.statusMessage}");
+        throw Exception("Invalid response structure or unsuccessful response");
       }
-    } on DioException catch (e) {
-      throw Exception('Failed to get current user: ${e.message}');
-    } catch (e) {
-      throw Exception('Failed to get current user: $e');
+    } else {
+      throw Exception("Failed to fetch user: ${response.statusMessage}");
     }
+  } on DioException catch (e) {
+    throw Exception('Failed to get current user: ${e.message}');
+  } catch (e) {
+    throw Exception('Failed to get current user: $e');
   }
+}
 
   @override
   Future<Map<String, dynamic>> loginUser(
@@ -62,7 +73,6 @@ class UserRemoteDataSource implements IUserDataSource {
   }
 
   @override
-  @override
   Future<void> registerUser(UserEntity user) async {
     try {
       // Convert entity to API model
@@ -90,9 +100,6 @@ class UserRemoteDataSource implements IUserDataSource {
       throw Exception('Failed to register user: $e');
     }
   }
-
-  // <-- needed for MediaType
-
   @override
   Future<String> uploadProfilePicture(String filePath) async {
     try {

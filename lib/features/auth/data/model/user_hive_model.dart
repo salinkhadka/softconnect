@@ -18,7 +18,7 @@ class UserHiveModel extends Equatable {
   final String username;
 
   @HiveField(3)
-  final int studentId;
+  final int? studentId;
 
   @HiveField(4)
   final String password;

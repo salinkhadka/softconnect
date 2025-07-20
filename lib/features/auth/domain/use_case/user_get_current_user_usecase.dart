@@ -1,26 +1,27 @@
-import 'dart:io';
-
 import 'package:dartz/dartz.dart';
-import 'package:softconnect/app/use_case/use_case.dart';
+import 'package:equatable/equatable.dart';
 import 'package:softconnect/core/error/failure.dart';
-// import 'package:softconnect/core/usecase/usecase.dart';
+import 'package:softconnect/features/auth/domain/entity/user_entity.dart';
 import 'package:softconnect/features/auth/domain/repository/user_repository.dart';
+import 'package:softconnect/app/use_case/use_case.dart';
 
-class UserUploadProfilePictureParams {
-  final File file;
+class GetUserByIdParams extends Equatable {
+  final String userId;
 
-  const UserUploadProfilePictureParams({required this.file});
+  const GetUserByIdParams({required this.userId});
+
+  @override
+  List<Object?> get props => [userId];
 }
 
-class UserUploadProfilePictureUsecase
-    implements UsecaseWithParams<String, UserUploadProfilePictureParams> {
+class GetUserByIdUsecase implements UsecaseWithParams<UserEntity, GetUserByIdParams> {
   final IUserRepository _userRepository;
 
-  UserUploadProfilePictureUsecase({required IUserRepository userRepository})
+  GetUserByIdUsecase({required IUserRepository userRepository})
       : _userRepository = userRepository;
 
   @override
-  Future<Either<Failure, String>> call(UserUploadProfilePictureParams params) {
-    return _userRepository.uploadProfilePicture(params.file);
+  Future<Either<Failure, UserEntity>> call(GetUserByIdParams params) async {
+    return await _userRepository.getCurrentUser(params.userId);
   }
 }

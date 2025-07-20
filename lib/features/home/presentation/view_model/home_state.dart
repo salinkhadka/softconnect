@@ -5,9 +5,12 @@ import 'package:softconnect/app/service_locator/service_locator.dart';
 import 'package:softconnect/features/friends/presentation/view/friends_page.dart';
 import 'package:softconnect/features/friends/presentation/view_model/follow_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view/FeedPage.dart';
+import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_view_model.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
 import 'package:softconnect/features/message/presentation/view/inbox_page.dart';
 import 'package:softconnect/features/message/presentation/view_model/inbox_viewmodel.dart';
+import 'package:softconnect/features/profile/presentation/view/user_profile.dart';
+import 'package:softconnect/features/profile/presentation/view_model/user_profile_viewmodel.dart';
 
 class HomeState {
   final int selectedIndex;
@@ -15,12 +18,10 @@ class HomeState {
 
   const HomeState({required this.selectedIndex, required this.views});
 
-  /// A quick synchronous initial state with empty views.
   factory HomeState.initialSync() {
     return HomeState(selectedIndex: 0, views: const []);
   }
 
-  /// Asynchronously load initial state (load userId from SharedPreferences)
   static Future<HomeState> initial() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId') ?? 'unknown';
@@ -28,21 +29,33 @@ class HomeState {
     return HomeState(
       selectedIndex: 0,
       views: [
-        BlocProvider(
-          create: (_) {
-            // Just create the BLoC, don't dispatch event here
-            return serviceLocator<FeedViewModel>();
-          },
+        BlocProvider<FeedViewModel>(
+          create: (_) => serviceLocator<FeedViewModel>(),
           child: FeedPage(currentUserId: userId),
         ),
-        
-        BlocProvider(
+        BlocProvider<FollowViewModel>(
           create: (_) => serviceLocator<FollowViewModel>(),
           child: FriendsPage(userId: userId),
         ),
-        BlocProvider(create: (_)=>serviceLocator<InboxViewModel>(),child: InboxPage(),),
-        
-        const Center(child: Text('Profile')),
+        BlocProvider<InboxViewModel>(
+          create: (_) => serviceLocator<InboxViewModel>(),
+          child: InboxPage(),
+        ),
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<UserProfileViewModel>(
+              create: (_) => serviceLocator<UserProfileViewModel>(),
+            ),
+            BlocProvider<FeedViewModel>(
+              create: (_) => serviceLocator<FeedViewModel>(),
+            ),
+            BlocProvider<CommentViewModel>(
+              create: (_) => serviceLocator<CommentViewModel>(),
+            ),
+
+          ],
+          child: UserProfilePage(userId: userId),
+        ),
       ],
     );
   }

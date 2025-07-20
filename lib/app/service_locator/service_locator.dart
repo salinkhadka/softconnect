@@ -10,6 +10,7 @@ import 'package:softconnect/features/auth/data/data_source/remote_dataSource/use
 import 'package:softconnect/features/auth/data/data_source/user_data_source.dart';
 import 'package:softconnect/features/auth/data/repository/remote_repository/user_remote_repository.dart';
 import 'package:softconnect/features/auth/domain/repository/user_repository.dart';
+import 'package:softconnect/features/auth/domain/use_case/user_get_current_user_usecase.dart';
 import 'package:softconnect/features/auth/domain/use_case/user_login_usecase.dart';
 import 'package:softconnect/features/auth/domain/use_case/user_register_usecase.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_viewmodel.dart';
@@ -42,6 +43,7 @@ import 'package:softconnect/features/message/domain/use_case/inbox_usecase.dart'
 import 'package:softconnect/features/message/domain/use_case/message_usecase.dart';
 import 'package:softconnect/features/message/presentation/view_model/inbox_viewmodel.dart';
 import 'package:softconnect/features/message/presentation/view_model/message_view_model/message_view_model.dart';
+import 'package:softconnect/features/profile/presentation/view_model/user_profile_viewmodel.dart';
 
 // Splash imports
 import 'package:softconnect/features/splash/presentation/view_model/splash_viewmodel.dart';
@@ -54,7 +56,6 @@ import 'package:softconnect/features/friends/domain/use_case/follow_user_usecase
 import 'package:softconnect/features/friends/domain/use_case/get_followers_usecase.dart';
 import 'package:softconnect/features/friends/domain/use_case/unfollow_user_usecase.dart';
 
-
 final serviceLocator = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
@@ -64,7 +65,8 @@ Future<void> setupServiceLocator() async {
   await _initAuthModule();
   await _initHomeModule();
   await _initFriendsModule();
-   await _initMessageModule();
+  await _initMessageModule();
+  await _initProfileModule();
 }
 
 Future<void> _initMessageModule() async {
@@ -86,11 +88,13 @@ Future<void> _initMessageModule() async {
   );
 
   serviceLocator.registerLazySingleton<MarkMessagesAsReadUseCase>(
-    () => MarkMessagesAsReadUseCase(repository: serviceLocator<IMessageRepository>()),
+    () => MarkMessagesAsReadUseCase(
+        repository: serviceLocator<IMessageRepository>()),
   );
 
   serviceLocator.registerLazySingleton<GetMessagesBetweenUsersUseCase>(
-    () => GetMessagesBetweenUsersUseCase(repository: serviceLocator<IMessageRepository>()),
+    () => GetMessagesBetweenUsersUseCase(
+        repository: serviceLocator<IMessageRepository>()),
   );
 
   serviceLocator.registerLazySingleton<SendMessageUseCase>(
@@ -98,30 +102,32 @@ Future<void> _initMessageModule() async {
   );
 
   serviceLocator.registerLazySingleton<DeleteMessageUseCase>(
-    () => DeleteMessageUseCase(repository: serviceLocator<IMessageRepository>()),
+    () =>
+        DeleteMessageUseCase(repository: serviceLocator<IMessageRepository>()),
   );
 
   // ViewModels
-serviceLocator.registerFactory<InboxViewModel>(
-  () => InboxViewModel(
-    serviceLocator<GetInboxUseCase>(),
-    serviceLocator<MarkMessagesAsReadUseCase>(),
-  ),
-);
-
+  serviceLocator.registerFactory<InboxViewModel>(
+    () => InboxViewModel(
+      serviceLocator<GetInboxUseCase>(),
+      serviceLocator<MarkMessagesAsReadUseCase>(),
+    ),
+  );
 
   serviceLocator.registerFactory<MessageViewModel>(
     () => MessageViewModel(
-      getMessagesBetweenUsersUseCase: serviceLocator<GetMessagesBetweenUsersUseCase>(),
+      getMessagesBetweenUsersUseCase:
+          serviceLocator<GetMessagesBetweenUsersUseCase>(),
       sendMessageUseCase: serviceLocator<SendMessageUseCase>(),
       deleteMessageUseCase: serviceLocator<DeleteMessageUseCase>(),
     ),
   );
 
-  print("InboxViewModel registered: ${serviceLocator.isRegistered<InboxViewModel>()}");
-  print("MessageViewModel registered: ${serviceLocator.isRegistered<MessageViewModel>()}");
+  print(
+      "InboxViewModel registered: ${serviceLocator.isRegistered<InboxViewModel>()}");
+  print(
+      "MessageViewModel registered: ${serviceLocator.isRegistered<MessageViewModel>()}");
 }
-
 
 Future<void> _initHiveService() async {
   serviceLocator.registerLazySingleton(() => HiveService());
@@ -141,20 +147,21 @@ Future<void> _initAuthModule() async {
       () => UserRemoteDataSource(apiService: serviceLocator<ApiService>()));
 
   // Repository
-  serviceLocator.registerLazySingleton<IUserRepository>(() => UserRemoteRepository(
-      remoteDataSource: serviceLocator<UserRemoteDataSource>()));
+  serviceLocator.registerLazySingleton<IUserRepository>(() =>
+      UserRemoteRepository(
+          remoteDataSource: serviceLocator<UserRemoteDataSource>()));
 
   // Use cases
-  serviceLocator.registerLazySingleton<UserLoginUsecase>(
-      () => UserLoginUsecase(userRepository: serviceLocator<IUserRepository>()));
+  serviceLocator.registerLazySingleton<UserLoginUsecase>(() =>
+      UserLoginUsecase(userRepository: serviceLocator<IUserRepository>()));
   serviceLocator.registerLazySingleton<UserRegisterUsecase>(() =>
       UserRegisterUsecase(userRepository: serviceLocator<IUserRepository>()));
 
   // ViewModels
-  serviceLocator.registerFactory<LoginViewModel>(
-      () => LoginViewModel(userLoginUsecase: serviceLocator<UserLoginUsecase>()));
-  serviceLocator.registerFactory<SignupViewModel>(() =>
-      SignupViewModel(userRegisterUsecase: serviceLocator<UserRegisterUsecase>()));
+  serviceLocator.registerFactory<LoginViewModel>(() =>
+      LoginViewModel(userLoginUsecase: serviceLocator<UserLoginUsecase>()));
+  serviceLocator.registerFactory<SignupViewModel>(() => SignupViewModel(
+      userRegisterUsecase: serviceLocator<UserRegisterUsecase>()));
 }
 
 Future<void> _initSplashModule() async {
@@ -165,19 +172,22 @@ Future<void> _initHomeModule() async {
   // Repositories with inline data source injection
   serviceLocator.registerLazySingleton<IPostRepository>(
     () => PostRemoteRepository(
-      postDataSource: PostRemoteDatasource(apiService: serviceLocator<ApiService>()),
+      postDataSource:
+          PostRemoteDatasource(apiService: serviceLocator<ApiService>()),
     ),
   );
 
   serviceLocator.registerLazySingleton<ILikeRepository>(
     () => LikeRemoteRepository(
-      likeDataSource: LikeRemoteDatasource(apiService: serviceLocator<ApiService>()),
+      likeDataSource:
+          LikeRemoteDatasource(apiService: serviceLocator<ApiService>()),
     ),
   );
 
   serviceLocator.registerLazySingleton<ICommentRepository>(
     () => CommentRemoteRepository(
-      commentDataSource: CommentRemoteDatasource(apiService: serviceLocator<ApiService>()),
+      commentDataSource:
+          CommentRemoteDatasource(apiService: serviceLocator<ApiService>()),
     ),
   );
 
@@ -192,18 +202,22 @@ Future<void> _initHomeModule() async {
     () => UnlikePostUsecase(likeRepository: serviceLocator<ILikeRepository>()),
   );
   serviceLocator.registerLazySingleton<GetLikesByPostIdUsecase>(
-    () => GetLikesByPostIdUsecase(likeRepository: serviceLocator<ILikeRepository>()),
+    () => GetLikesByPostIdUsecase(
+        likeRepository: serviceLocator<ILikeRepository>()),
   );
-  
+
   // Comment-related use cases
   serviceLocator.registerLazySingleton<GetCommentsByPostIdUsecase>(
-    () => GetCommentsByPostIdUsecase(commentRepository: serviceLocator<ICommentRepository>()),
+    () => GetCommentsByPostIdUsecase(
+        commentRepository: serviceLocator<ICommentRepository>()),
   );
   serviceLocator.registerLazySingleton<CreateCommentUsecase>(
-    () => CreateCommentUsecase(commentRepository: serviceLocator<ICommentRepository>()),
+    () => CreateCommentUsecase(
+        commentRepository: serviceLocator<ICommentRepository>()),
   );
   serviceLocator.registerLazySingleton<DeleteCommentUsecase>(
-    () => DeleteCommentUsecase(commentRepository: serviceLocator<ICommentRepository>()),
+    () => DeleteCommentUsecase(
+        commentRepository: serviceLocator<ICommentRepository>()),
   );
 
   // === Your new use cases for post creation and image upload ===
@@ -227,24 +241,24 @@ Future<void> _initHomeModule() async {
   );
 
   serviceLocator.registerFactory<CommentViewModel>(
-  () => CommentViewModel(
-    createCommentUsecase: serviceLocator<CreateCommentUsecase>(),
-    getCommentsUsecase: serviceLocator<GetCommentsByPostIdUsecase>(),
-    deleteCommentUsecase: serviceLocator<DeleteCommentUsecase>(), // ✅ FIXED
-  ),
-);
-
+    () => CommentViewModel(
+      createCommentUsecase: serviceLocator<CreateCommentUsecase>(),
+      getCommentsUsecase: serviceLocator<GetCommentsByPostIdUsecase>(),
+      deleteCommentUsecase: serviceLocator<DeleteCommentUsecase>(), // ✅ FIXED
+    ),
+  );
 
   serviceLocator.registerFactory<HomeViewModel>(() => HomeViewModel());
 
-  print("FeedViewModel registered: ${serviceLocator.isRegistered<FeedViewModel>()}");
-  print("CommentViewModel registered: ${serviceLocator.isRegistered<CommentViewModel>()}");
-  print("CreatePostUsecase registered: ${serviceLocator.isRegistered<CreatePostUsecase>()}");
-  print("UploadImageUsecase registered: ${serviceLocator.isRegistered<UploadImageUsecase>()}");
+  print(
+      "FeedViewModel registered: ${serviceLocator.isRegistered<FeedViewModel>()}");
+  print(
+      "CommentViewModel registered: ${serviceLocator.isRegistered<CommentViewModel>()}");
+  print(
+      "CreatePostUsecase registered: ${serviceLocator.isRegistered<CreatePostUsecase>()}");
+  print(
+      "UploadImageUsecase registered: ${serviceLocator.isRegistered<UploadImageUsecase>()}");
 }
-
-
-
 
 Future<void> _initFriendsModule() async {
   // Data source
@@ -258,14 +272,14 @@ Future<void> _initFriendsModule() async {
           apiService: serviceLocator<ApiService>()));
 
   // Use cases
-  serviceLocator.registerLazySingleton<FollowUserUseCase>(
-      () => FollowUserUseCase(repository: serviceLocator<IFriendsRepository>()));
-  serviceLocator.registerLazySingleton<UnfollowUserUseCase>(
-      () => UnfollowUserUseCase(repository: serviceLocator<IFriendsRepository>()));
-  serviceLocator.registerLazySingleton<GetFollowersUseCase>(
-      () => GetFollowersUseCase(repository: serviceLocator<IFriendsRepository>()));
-  serviceLocator.registerLazySingleton<GetFollowingUseCase>(
-      () => GetFollowingUseCase(repository: serviceLocator<IFriendsRepository>()));
+  serviceLocator.registerLazySingleton<FollowUserUseCase>(() =>
+      FollowUserUseCase(repository: serviceLocator<IFriendsRepository>()));
+  serviceLocator.registerLazySingleton<UnfollowUserUseCase>(() =>
+      UnfollowUserUseCase(repository: serviceLocator<IFriendsRepository>()));
+  serviceLocator.registerLazySingleton<GetFollowersUseCase>(() =>
+      GetFollowersUseCase(repository: serviceLocator<IFriendsRepository>()));
+  serviceLocator.registerLazySingleton<GetFollowingUseCase>(() =>
+      GetFollowingUseCase(repository: serviceLocator<IFriendsRepository>()));
 
   // ViewModel
   serviceLocator.registerFactory<FollowViewModel>(() => FollowViewModel(
@@ -274,4 +288,18 @@ Future<void> _initFriendsModule() async {
         getFollowersUseCase: serviceLocator<GetFollowersUseCase>(),
         getFollowingUseCase: serviceLocator<GetFollowingUseCase>(),
       ));
+}
+
+Future<void> _initProfileModule() async {
+  serviceLocator.registerLazySingleton<GetUserByIdUsecase>(() =>
+      GetUserByIdUsecase(userRepository: serviceLocator<IUserRepository>()));
+  serviceLocator.registerLazySingleton<GetPostsByUserIdUsecase>(() =>
+      GetPostsByUserIdUsecase(serviceLocator<IPostRepository>()));
+
+  serviceLocator.registerFactory<UserProfileViewModel>(
+    () => UserProfileViewModel(
+      getUserById: serviceLocator<GetUserByIdUsecase>(),
+      getPostsByUserId: serviceLocator<GetPostsByUserIdUsecase>(),
+    ),
+  );
 }

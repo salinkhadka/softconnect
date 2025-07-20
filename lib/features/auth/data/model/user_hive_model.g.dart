@@ -20,7 +20,7 @@ class UserHiveModelAdapter extends TypeAdapter<UserHiveModel> {
       userId: fields[0] as String?,
       email: fields[1] as String,
       username: fields[2] as String,
-      studentId: fields[3] as int,
+      studentId: fields[3] as int?,
       password: fields[4] as String,
       profilePhoto: fields[5] as String?,
       bio: fields[6] as String?,
