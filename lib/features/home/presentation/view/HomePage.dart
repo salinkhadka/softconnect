@@ -5,10 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:softconnect/app/service_locator/service_locator.dart';
 import 'package:softconnect/features/home/domain/use_case/getPostsUseCase.dart';
 import 'package:softconnect/features/home/presentation/view/CreatePostModal.dart';
+import 'package:softconnect/features/home/presentation/view/user_search_delegate.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_event.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
-import 'package:softconnect/features/home/presentation/view_model/homepage_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/home_state.dart';
+import 'package:softconnect/features/home/presentation/view_model/homepage_viewmodel.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -48,6 +49,10 @@ class HomePage extends StatelessWidget {
     }
   }
 
+  void _openUserSearch(BuildContext context) {
+    showSearch(context: context, delegate: UserSearchDelegate());
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -65,6 +70,10 @@ class HomePage extends StatelessWidget {
             appBar: AppBar(
               title: const Text('SoftConnect'),
               actions: [
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () => _openUserSearch(context),
+                ),
                 IconButton(
                   icon: const Icon(Icons.logout),
                   onPressed: () {

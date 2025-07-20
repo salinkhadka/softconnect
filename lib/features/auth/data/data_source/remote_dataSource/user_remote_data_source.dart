@@ -14,38 +14,34 @@ class UserRemoteDataSource implements IUserDataSource {
       : _apiService = apiService;
 
   @override
-Future<UserEntity> getCurrentUser(String id) async {
-  try {
-    final response = await _apiService.dio.get(ApiEndpoints.getUserById(id));
+  Future<UserEntity> getCurrentUser(String id) async {
+    try {
+      final response = await _apiService.dio.get(ApiEndpoints.getUserById(id));
 
-    if (response.statusCode == 200) {
-      final responseData = response.data;
-      
-      // Check if the response has the expected structure
-      if (responseData is Map<String, dynamic> && 
-          responseData['success'] == true && 
-          responseData['data'] != null) {
-        
-        // Extract the actual user data from the 'data' field
-        final userData = responseData['data'] as Map<String, dynamic>;
-        final userApiModel = UserApiModel.fromJson(userData);
-        return userApiModel.toEntity();
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+
+        if (responseData is Map<String, dynamic> &&
+            responseData['success'] == true &&
+            responseData['data'] != null) {
+          final userData = responseData['data'] as Map<String, dynamic>;
+          final userApiModel = UserApiModel.fromJson(userData);
+          return userApiModel.toEntity();
+        } else {
+          throw Exception("Invalid response structure or unsuccessful response");
+        }
       } else {
-        throw Exception("Invalid response structure or unsuccessful response");
+        throw Exception("Failed to fetch user: ${response.statusMessage}");
       }
-    } else {
-      throw Exception("Failed to fetch user: ${response.statusMessage}");
+    } on DioException catch (e) {
+      throw Exception('Failed to get current user: ${e.message}');
+    } catch (e) {
+      throw Exception('Failed to get current user: $e');
     }
-  } on DioException catch (e) {
-    throw Exception('Failed to get current user: ${e.message}');
-  } catch (e) {
-    throw Exception('Failed to get current user: $e');
   }
-}
 
   @override
-  Future<Map<String, dynamic>> loginUser(
-      String username, String password) async {
+  Future<Map<String, dynamic>> loginUser(String username, String password) async {
     try {
       final response = await _apiService.dio.post(
         ApiEndpoints.loginUser,
@@ -75,13 +71,9 @@ Future<UserEntity> getCurrentUser(String id) async {
   @override
   Future<void> registerUser(UserEntity user) async {
     try {
-      // Convert entity to API model
       final userApiModel = UserApiModel.fromEntity(user);
-
-      // Convert to JSON
       final data = userApiModel.toJson();
 
-      // Make sure profilePhoto is included as a string (filename)
       if (user.profilePhoto != null && user.profilePhoto!.isNotEmpty) {
         data['profilePhoto'] = user.profilePhoto;
       }
@@ -100,10 +92,11 @@ Future<UserEntity> getCurrentUser(String id) async {
       throw Exception('Failed to register user: $e');
     }
   }
+
   @override
   Future<String> uploadProfilePicture(String filePath) async {
     try {
-      final mimeType = lookupMimeType(filePath); // e.g. "image/jpeg"
+      final mimeType = lookupMimeType(filePath);
       final fileName = filePath.split('/').last;
 
       final formData = FormData.fromMap({
@@ -123,7 +116,6 @@ Future<UserEntity> getCurrentUser(String id) async {
       );
 
       if (response.statusCode == 200) {
-        // Your server returns: { success: true, data: "filename.jpg" }
         final filename = response.data['data'];
         return filename;
       } else {
@@ -131,6 +123,33 @@ Future<UserEntity> getCurrentUser(String id) async {
       }
     } catch (e) {
       throw Exception('Failed to upload profile picture: $e');
+    }
+  }
+
+  // New method added for user search
+  @override
+  Future<List<UserEntity>> searchUsers(String query) async {
+    try {
+      final response = await _apiService.dio.get(
+        ApiEndpoints.getAllUsers, 
+        queryParameters: {'search': query},
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        if (responseData is Map<String, dynamic> && responseData['success'] == true) {
+          final List usersJson = responseData['data'] ?? [];
+          return usersJson
+              .map((json) => UserApiModel.fromJson(json).toEntity())
+              .toList();
+        } else {
+          throw Exception('Invalid response for user search');
+        }
+      } else {
+        throw Exception('Failed to search users: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      throw Exception('Search users failed: ${e.message}');
     }
   }
 }

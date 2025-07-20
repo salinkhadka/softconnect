@@ -51,4 +51,15 @@ class UserRemoteRepository implements IUserRepository {
       return Left(RemoteDatabaseFailure(message: e.toString()));
     }
   }
+
+  // New method implementation for searching users
+  @override
+  Future<Either<Failure, List<UserEntity>>> searchUsers(String query) async {
+    try {
+      final users = await _remoteDataSource.searchUsers(query);
+      return Right(users);
+    } catch (e) {
+      return Left(RemoteDatabaseFailure(message: e.toString()));
+    }
+  }
 }

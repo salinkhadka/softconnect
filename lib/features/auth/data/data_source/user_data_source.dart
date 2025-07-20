@@ -8,4 +8,7 @@ abstract interface class IUserDataSource {
   Future<String> uploadProfilePicture(String filePath);
 
   Future<UserEntity> getCurrentUser(String id);
+
+  // Added search users
+  Future<List<UserEntity>> searchUsers(String query);
 }

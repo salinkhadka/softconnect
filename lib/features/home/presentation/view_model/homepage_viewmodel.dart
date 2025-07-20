@@ -15,7 +15,6 @@ class HomeViewModel extends Cubit<HomeState> {
   void onTabTapped(int index) {
     emit(state.copyWith(selectedIndex: index));
   }
-
   void logout(BuildContext context) {
     // Implement logout logic (clear prefs, navigate to login)
     // Example:

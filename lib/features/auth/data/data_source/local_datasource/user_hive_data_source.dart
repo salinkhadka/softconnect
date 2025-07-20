@@ -50,6 +50,12 @@ class UserHiveDataSource implements IUserDataSource {
     // TODO: implement getCurrentUser
     throw UnimplementedError();
   }
+  
+  @override
+  Future<List<UserEntity>> searchUsers(String query) {
+    // TODO: implement searchUsers
+    throw UnimplementedError();
+  }
 
   // @override
   // Future<UserEntity> getCurrentUser(String id) async {

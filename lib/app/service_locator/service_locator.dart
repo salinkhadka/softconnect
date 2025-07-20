@@ -10,6 +10,7 @@ import 'package:softconnect/features/auth/data/data_source/remote_dataSource/use
 import 'package:softconnect/features/auth/data/data_source/user_data_source.dart';
 import 'package:softconnect/features/auth/data/repository/remote_repository/user_remote_repository.dart';
 import 'package:softconnect/features/auth/domain/repository/user_repository.dart';
+import 'package:softconnect/features/auth/domain/use_case/getall_users_usecase.dart';
 import 'package:softconnect/features/auth/domain/use_case/user_get_current_user_usecase.dart';
 import 'package:softconnect/features/auth/domain/use_case/user_login_usecase.dart';
 import 'package:softconnect/features/auth/domain/use_case/user_register_usecase.dart';
@@ -36,6 +37,7 @@ import 'package:softconnect/features/home/presentation/view_model/Feed_view_mode
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_view_model.dart';
 // import 'package:softconnect/features/home/presentation/view_model/feed_view_model/feed_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/homepage_viewmodel.dart';
+import 'package:softconnect/features/home/presentation/view_model/user_search_viewmodel.dart';
 import 'package:softconnect/features/message/data/data_source/remote_dataSource/message_remote_datasource.dart';
 import 'package:softconnect/features/message/data/repository/remote_repository/message_remote_repository.dart';
 import 'package:softconnect/features/message/domain/repository/message_repository.dart';
@@ -145,28 +147,50 @@ Future<void> _initApiService() async {
 Future<void> _initAuthModule() async {
   // Data Sources
   serviceLocator.registerLazySingleton<IUserDataSource>(
-      () => UserHiveDataSource(hiveService: serviceLocator<HiveService>()),
-      instanceName: 'localDataSource');
+    () => UserHiveDataSource(hiveService: serviceLocator<HiveService>()),
+    instanceName: 'localDataSource',
+  );
+  
   serviceLocator.registerLazySingleton<UserRemoteDataSource>(
-      () => UserRemoteDataSource(apiService: serviceLocator<ApiService>()));
+    () => UserRemoteDataSource(apiService: serviceLocator<ApiService>()),
+  );
 
   // Repository
-  serviceLocator.registerLazySingleton<IUserRepository>(() =>
-      UserRemoteRepository(
-          remoteDataSource: serviceLocator<UserRemoteDataSource>()));
+  serviceLocator.registerLazySingleton<IUserRepository>(
+    () => UserRemoteRepository(
+      remoteDataSource: serviceLocator<UserRemoteDataSource>(),
+    ),
+  );
 
   // Use cases
-  serviceLocator.registerLazySingleton<UserLoginUsecase>(() =>
-      UserLoginUsecase(userRepository: serviceLocator<IUserRepository>()));
-  serviceLocator.registerLazySingleton<UserRegisterUsecase>(() =>
-      UserRegisterUsecase(userRepository: serviceLocator<IUserRepository>()));
+  serviceLocator.registerLazySingleton<UserLoginUsecase>(
+    () => UserLoginUsecase(userRepository: serviceLocator<IUserRepository>()),
+  );
+
+  serviceLocator.registerLazySingleton<UserRegisterUsecase>(
+    () => UserRegisterUsecase(userRepository: serviceLocator<IUserRepository>()),
+  );
+
+  // *** New SearchUsers use case ***
+  serviceLocator.registerLazySingleton<SearchUsersUsecase>(
+    () => SearchUsersUsecase(userRepository: serviceLocator<IUserRepository>()),
+  );
 
   // ViewModels
-  serviceLocator.registerFactory<LoginViewModel>(() =>
-      LoginViewModel(userLoginUsecase: serviceLocator<UserLoginUsecase>()));
-  serviceLocator.registerFactory<SignupViewModel>(() => SignupViewModel(
-      userRegisterUsecase: serviceLocator<UserRegisterUsecase>()));
+  serviceLocator.registerFactory<LoginViewModel>(
+    () => LoginViewModel(userLoginUsecase: serviceLocator<UserLoginUsecase>()),
+  );
+
+  serviceLocator.registerFactory<SignupViewModel>(
+    () => SignupViewModel(userRegisterUsecase: serviceLocator<UserRegisterUsecase>()),
+  );
+
+  // *** New UserSearchViewModel ***
+  serviceLocator.registerFactory<UserSearchViewModel>(
+    () => UserSearchViewModel(  searchUsersUsecase: serviceLocator<SearchUsersUsecase>()),
+  );
 }
+
 
 Future<void> _initSplashModule() async {
   serviceLocator.registerFactory(() => SplashViewModel());

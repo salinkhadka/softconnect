@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,6 +10,8 @@ import 'package:softconnect/features/home/presentation/view/CommentModal.dart';
 import 'package:softconnect/features/home/presentation/view/post_component.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_event.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
+import 'package:softconnect/features/message/presentation/view/message_page.dart';
+import 'package:softconnect/features/message/presentation/view_model/message_view_model/message_view_model.dart';
 import 'package:softconnect/features/profile/presentation/view_model/user_profile_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_view_model.dart';
 import 'package:softconnect/features/home/domain/entity/post_entity.dart';
@@ -62,7 +63,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Delete Post'),
-          content: const Text('Are you sure you want to delete this post? This action cannot be undone.'),
+          content: const Text(
+              'Are you sure you want to delete this post? This action cannot be undone.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -80,8 +82,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
     if (shouldDelete == true) {
       await context.read<UserProfileViewModel>().deletePost(post.id);
-       
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Post deleted successfully')),
@@ -93,7 +94,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   // Update post dialog
   Future<void> _updatePost(BuildContext context, PostEntity post) async {
-    final TextEditingController contentController = TextEditingController(text: post.content);
+    final TextEditingController contentController =
+        TextEditingController(text: post.content);
     String selectedPrivacy = post.privacy;
     String? selectedImagePath;
 
@@ -104,7 +106,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
           builder: (context, setState) {
             Future<void> _pickImage() async {
               final picker = ImagePicker();
-              final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+              final pickedFile =
+                  await picker.pickImage(source: ImageSource.gallery);
               if (pickedFile != null) {
                 setState(() {
                   selectedImagePath = pickedFile.path;
@@ -134,9 +137,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         border: OutlineInputBorder(),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'Public', child: Text('Public')),
-                        DropdownMenuItem(value: 'Private', child: Text('Private')),
-                        DropdownMenuItem(value: 'Friends', child: Text('Friends Only')),
+                        DropdownMenuItem(
+                            value: 'Public', child: Text('Public')),
+                        DropdownMenuItem(
+                            value: 'Private', child: Text('Private')),
+                        DropdownMenuItem(
+                            value: 'Friends', child: Text('Friends Only')),
                       ],
                       onChanged: (value) {
                         setState(() {
@@ -160,14 +166,16 @@ class _UserProfilePageState extends State<UserProfilePage> {
                             ),
                           ),
                           const SizedBox(width: 10),
-                        ] else if (post.imageUrl != null && post.imageUrl!.isNotEmpty) ...[
+                        ] else if (post.imageUrl != null &&
+                            post.imageUrl!.isNotEmpty) ...[
                           Container(
                             width: 50,
                             height: 50,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               image: DecorationImage(
-                                image: NetworkImage(getFullImageUrl(post.imageUrl)),
+                                image: NetworkImage(
+                                    getFullImageUrl(post.imageUrl)),
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -177,9 +185,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         TextButton.icon(
                           onPressed: _pickImage,
                           icon: const Icon(Icons.image),
-                          label: Text(selectedImagePath != null || 
-                                      (post.imageUrl != null && post.imageUrl!.isNotEmpty) 
-                                      ? 'Change Image' : 'Add Image'),
+                          label: Text(selectedImagePath != null ||
+                                  (post.imageUrl != null &&
+                                      post.imageUrl!.isNotEmpty)
+                              ? 'Change Image'
+                              : 'Add Image'),
                         ),
                       ],
                     ),
@@ -200,7 +210,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
                     });
                   },
                   child: const Text('Update'),
-                  
                 ),
               ],
             );
@@ -218,12 +227,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
         user: post.user,
         createdAt: post.createdAt,
         updatedAt: DateTime.now(),
-       
       );
 
       await context.read<UserProfileViewModel>().updatePost(updatedPost);
       context.read<FeedViewModel>().add(LoadPostsEvent(viewingUserId));
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Post updated successfully')),
@@ -366,7 +374,23 @@ class _UserProfilePageState extends State<UserProfilePage> {
                       ),
                       OutlinedButton(
                         onPressed: () {
-                          // TODO: Navigate to message screen
+                          final messageViewModel =
+                              serviceLocator<MessageViewModel>();
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => BlocProvider.value(
+                                value: messageViewModel,
+                                child: MessagePage(
+                                  otherUserId: user.userId!,
+                                  otherUserName: user.username,
+                                  otherUserPhoto:
+                                      getFullImageUrl(user.profilePhoto),
+                                ),
+                              ),
+                            ),
+                          );
                         },
                         child: const Text('Message'),
                       ),

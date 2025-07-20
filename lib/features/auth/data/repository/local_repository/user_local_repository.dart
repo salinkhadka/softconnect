@@ -49,4 +49,10 @@ class UserLocalRepository implements IUserRepository {
     // TODO: implement uploadProfilePicture
     throw UnimplementedError();
   }
+  
+  @override
+  Future<Either<Failure, List<UserEntity>>> searchUsers(String query) {
+    // TODO: implement searchUsers
+    throw UnimplementedError();
+  }
 }
