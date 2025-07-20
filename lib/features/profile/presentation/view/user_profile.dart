@@ -80,11 +80,13 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
     if (shouldDelete == true) {
       await context.read<UserProfileViewModel>().deletePost(post.id);
+       
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Post deleted successfully')),
         );
+        context.read<FeedViewModel>().add(LoadPostsEvent(viewingUserId));
       }
     }
   }
@@ -132,9 +134,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         border: OutlineInputBorder(),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'public', child: Text('Public')),
-                        DropdownMenuItem(value: 'private', child: Text('Private')),
-                        DropdownMenuItem(value: 'friends', child: Text('Friends Only')),
+                        DropdownMenuItem(value: 'Public', child: Text('Public')),
+                        DropdownMenuItem(value: 'Private', child: Text('Private')),
+                        DropdownMenuItem(value: 'Friends', child: Text('Friends Only')),
                       ],
                       onChanged: (value) {
                         setState(() {
@@ -198,6 +200,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                     });
                   },
                   child: const Text('Update'),
+                  
                 ),
               ],
             );
@@ -219,6 +222,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       );
 
       await context.read<UserProfileViewModel>().updatePost(updatedPost);
+      context.read<FeedViewModel>().add(LoadPostsEvent(viewingUserId));
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

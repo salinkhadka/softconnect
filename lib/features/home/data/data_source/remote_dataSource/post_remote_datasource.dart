@@ -11,7 +11,8 @@ import 'package:softconnect/features/home/data/model/post_model.dart';
 class PostRemoteDatasource implements IPostsDataSource {
   final ApiService _apiService;
 
-  PostRemoteDatasource({required ApiService apiService}) : _apiService = apiService;
+  PostRemoteDatasource({required ApiService apiService})
+      : _apiService = apiService;
 
   // === AUTH HEADER RETRIEVAL ===
   Future<Options> _getAuthHeaders({Map<String, String>? extraHeaders}) async {
@@ -32,7 +33,8 @@ class PostRemoteDatasource implements IPostsDataSource {
   Future<List<PostModel>> getAllPosts() async {
     try {
       final options = await _getAuthHeaders();
-      final response = await _apiService.dio.get(ApiEndpoints.getAllPosts, options: options);
+      final response =
+          await _apiService.dio.get(ApiEndpoints.getAllPosts, options: options);
       final data = response.data['data'];
 
       if (data is! List) throw Exception("Unexpected format");
@@ -47,7 +49,8 @@ class PostRemoteDatasource implements IPostsDataSource {
   Future<List<PostModel>> getPostsByUserId(String userId) async {
     try {
       final options = await _getAuthHeaders();
-      final response = await _apiService.dio.get(ApiEndpoints.getUserPosts(userId), options: options);
+      final response = await _apiService.dio
+          .get(ApiEndpoints.getUserPosts(userId), options: options);
       final data = response.data['data'] as List;
       return data.map((json) => PostModel.fromJson(json)).toList();
     } catch (e) {
@@ -59,7 +62,8 @@ class PostRemoteDatasource implements IPostsDataSource {
   Future<PostModel> getPostById(String postId) async {
     try {
       final options = await _getAuthHeaders();
-      final response = await _apiService.dio.get(ApiEndpoints.getPostById(postId), options: options);
+      final response = await _apiService.dio
+          .get(ApiEndpoints.getPostById(postId), options: options);
       return PostModel.fromJson(response.data['data']);
     } catch (e) {
       throw Exception('Failed to fetch post: $e');
@@ -69,63 +73,71 @@ class PostRemoteDatasource implements IPostsDataSource {
   // === CREATE POST ===
   @override
   Future<PostModel> createPost({
-  required String userId,
-  required String content,
-  required String privacy,
-  String? imageUrl,   // change from imagePath to imageUrl (string URL or filename)
-}) async {
-  try {
-    final data = {
-      "userId": userId,
-      "content": content,
-      "privacy": privacy,
-      if (imageUrl != null) "imageUrl": imageUrl,
-    };
+    required String userId,
+    required String content,
+    required String privacy,
+    String?
+        imageUrl, // change from imagePath to imageUrl (string URL or filename)
+  }) async {
+    try {
+      final data = {
+        "userId": userId,
+        "content": content,
+        "privacy": privacy,
+        if (imageUrl != null) "imageUrl": imageUrl,
+      };
 
-    final options = await _getAuthHeaders();
+      final options = await _getAuthHeaders();
 
-    final response = await _apiService.dio.post(
-      ApiEndpoints.createPost,
-      data: data,
-      options: options,
-    );
+      final response = await _apiService.dio.post(
+        ApiEndpoints.createPost,
+        data: data,
+        options: options,
+      );
 
-    return PostModel.fromJson(response.data['data']);
-  } catch (e) {
-    throw Exception('Failed to create post: $e');
+      return PostModel.fromJson(response.data['data']);
+    } catch (e) {
+      throw Exception('Failed to create post: $e');
+    }
   }
-}
 
-
-  // === UPDATE POST ===
   @override
   Future<PostModel> updatePost({
     required String postId,
     String? content,
     String? privacy,
-    String? imageUrl,
+    String? imageUrl, // Can be a local file path or a remote URL or null
   }) async {
     try {
       final formData = FormData();
 
-      if (content != null) formData.fields.add(MapEntry('content', content));
-      if (privacy != null) formData.fields.add(MapEntry('privacy', privacy));
-      if (imageUrl != null) {
+      if (content != null) {
+        formData.fields.add(MapEntry('content', content));
+      }
+
+      if (privacy != null) {
+        formData.fields.add(MapEntry('privacy', privacy));
+      }
+
+      // Determine whether it's a local file or a string URL
+      if (imageUrl != null && File(imageUrl).existsSync()) {
         formData.files.add(
           MapEntry(
             "imageUrl",
             await MultipartFile.fromFile(
               imageUrl,
               filename: imageUrl.split('/').last,
-              contentType: MediaType.parse(lookupMimeType(imageUrl) ?? 'image/jpeg'),
+              contentType:
+                  MediaType.parse(lookupMimeType(imageUrl) ?? 'image/jpeg'),
             ),
           ),
         );
+      } else if (imageUrl != null) {
+        // Just send the imageUrl as plain text
+        formData.fields.add(MapEntry('imageUrl', imageUrl));
       }
 
-      final options = await _getAuthHeaders(extraHeaders: {
-        "Content-Type": "multipart/form-data",
-      });
+      final options = await _getAuthHeaders();
 
       final response = await _apiService.dio.put(
         ApiEndpoints.updatePost(postId),
@@ -144,7 +156,8 @@ class PostRemoteDatasource implements IPostsDataSource {
   Future<void> deletePost(String postId) async {
     try {
       final options = await _getAuthHeaders();
-      final response = await _apiService.dio.delete(ApiEndpoints.deletePost(postId), options: options);
+      final response = await _apiService.dio
+          .delete(ApiEndpoints.deletePost(postId), options: options);
       if (response.statusCode != 200 || response.data['success'] != true) {
         throw Exception("Post deletion failed");
       }
