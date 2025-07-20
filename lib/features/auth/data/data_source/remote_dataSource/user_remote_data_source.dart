@@ -28,7 +28,8 @@ class UserRemoteDataSource implements IUserDataSource {
           final userApiModel = UserApiModel.fromJson(userData);
           return userApiModel.toEntity();
         } else {
-          throw Exception("Invalid response structure or unsuccessful response");
+          throw Exception(
+              "Invalid response structure or unsuccessful response");
         }
       } else {
         throw Exception("Failed to fetch user: ${response.statusMessage}");
@@ -41,7 +42,8 @@ class UserRemoteDataSource implements IUserDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>> loginUser(String username, String password) async {
+  Future<Map<String, dynamic>> loginUser(
+      String username, String password) async {
     try {
       final response = await _apiService.dio.post(
         ApiEndpoints.loginUser,
@@ -131,13 +133,14 @@ class UserRemoteDataSource implements IUserDataSource {
   Future<List<UserEntity>> searchUsers(String query) async {
     try {
       final response = await _apiService.dio.get(
-        ApiEndpoints.getAllUsers, 
+        ApiEndpoints.getAllUsers,
         queryParameters: {'search': query},
       );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
-        if (responseData is Map<String, dynamic> && responseData['success'] == true) {
+        if (responseData is Map<String, dynamic> &&
+            responseData['success'] == true) {
           final List usersJson = responseData['data'] ?? [];
           return usersJson
               .map((json) => UserApiModel.fromJson(json).toEntity())
@@ -150,6 +153,58 @@ class UserRemoteDataSource implements IUserDataSource {
       }
     } on DioException catch (e) {
       throw Exception('Search users failed: ${e.message}');
+    }
+  }
+
+  @override
+  Future<void> requestPasswordReset(String email) async {
+    try {
+      final response = await _apiService.dio.post(
+        ApiEndpoints.requestReset,
+        data: {"email": email},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+            'Password reset request failed: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      throw Exception('Request reset failed: ${e.message}');
+    }
+  }
+
+  @override
+  Future<void> resetPassword(String token, String newPassword) async {
+    try {
+      final response = await _apiService.dio.post(
+        ApiEndpoints.resetPassword(token), // call function properly
+        data: {"password": newPassword},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Password reset failed: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      throw Exception('Reset password failed: ${e.message}');
+    }
+  }
+
+  @override
+  Future<String> verifyPassword(String userId, String currentPassword) async {
+    try {
+      final response = await _apiService.dio.post(
+        ApiEndpoints.verifyPassword,
+        data: {"userId": userId, "currentPassword": currentPassword},
+      );
+
+      final data = response.data;
+      if (data['success'] == true && data['token'] != null) {
+        return data['token'];
+      } else {
+        throw Exception(data['message'] ?? "Password verification failed");
+      }
+    } on DioException catch (e) {
+      throw Exception('Verify password failed: ${e.message}');
     }
   }
 }

@@ -4,6 +4,7 @@ import 'package:softconnect/core/utils/validators.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_event.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_state.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_viewmodel.dart';
+import 'forgot_password.dart';  // Import ForgotPassword page
 
 class LoginScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
@@ -127,7 +128,12 @@ class LoginScreen extends StatelessWidget {
                           const SizedBox(height: 10),
                           TextButton(
                             onPressed: () {
-                              // TODO: Implement forgot password
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ForgotPassword(),
+                                ),
+                              );
                             },
                             child: const Text("Forgot password?"),
                           ),

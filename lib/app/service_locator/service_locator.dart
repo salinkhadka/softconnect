@@ -11,9 +11,12 @@ import 'package:softconnect/features/auth/data/data_source/user_data_source.dart
 import 'package:softconnect/features/auth/data/repository/remote_repository/user_remote_repository.dart';
 import 'package:softconnect/features/auth/domain/repository/user_repository.dart';
 import 'package:softconnect/features/auth/domain/use_case/getall_users_usecase.dart';
+import 'package:softconnect/features/auth/domain/use_case/request_passsword_reset_usecase.dart';
+import 'package:softconnect/features/auth/domain/use_case/reset_password_usecase.dart';
 import 'package:softconnect/features/auth/domain/use_case/user_get_current_user_usecase.dart';
 import 'package:softconnect/features/auth/domain/use_case/user_login_usecase.dart';
 import 'package:softconnect/features/auth/domain/use_case/user_register_usecase.dart';
+import 'package:softconnect/features/auth/domain/use_case/verify_password.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_viewmodel.dart';
 import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_viewmodel.dart';
 import 'package:softconnect/features/friends/domain/use_case/get_following_usecase.dart';
@@ -165,6 +168,20 @@ Future<void> _initAuthModule() async {
   // Use cases
   serviceLocator.registerLazySingleton<UserLoginUsecase>(
     () => UserLoginUsecase(userRepository: serviceLocator<IUserRepository>()),
+  );
+
+  serviceLocator.registerLazySingleton<VerifyPasswordUsecase>(
+    () => VerifyPasswordUsecase(userRepository: serviceLocator<IUserRepository>()),
+  );
+
+  serviceLocator.registerLazySingleton<ResetPasswordUsecase>(
+    () => ResetPasswordUsecase(userRepository: serviceLocator<IUserRepository>()),
+  );
+
+  
+
+  serviceLocator.registerLazySingleton<RequestPasswordResetUsecase>(
+    () => RequestPasswordResetUsecase(userRepository: serviceLocator<IUserRepository>()),
   );
 
   serviceLocator.registerLazySingleton<UserRegisterUsecase>(

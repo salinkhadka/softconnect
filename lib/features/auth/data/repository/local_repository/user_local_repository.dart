@@ -55,4 +55,22 @@ class UserLocalRepository implements IUserRepository {
     // TODO: implement searchUsers
     throw UnimplementedError();
   }
+  
+  @override
+  Future<Either<Failure, void>> requestPasswordReset(String email) {
+    // TODO: implement requestPasswordReset
+    throw UnimplementedError();
+  }
+  
+  @override
+  Future<Either<Failure, void>> resetPassword(String token, String newPassword) {
+    // TODO: implement resetPassword
+    throw UnimplementedError();
+  }
+  
+  @override
+  Future<Either<Failure, String>> verifyPassword(String userId, String currentPassword) {
+    // TODO: implement verifyPassword
+    throw UnimplementedError();
+  }
 }

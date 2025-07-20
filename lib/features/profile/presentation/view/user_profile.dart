@@ -21,6 +21,7 @@ import 'package:softconnect/features/home/presentation/view_model/Comment_view_m
 import 'package:softconnect/features/home/domain/entity/post_entity.dart';
 import 'package:softconnect/features/profile/presentation/view/followers_page.dart';
 import 'package:softconnect/features/profile/presentation/view/following_page.dart';
+import 'package:softconnect/features/auth/presentation/view/View/change_password.dart';
 // Add these imports for your use cases
 import 'package:softconnect/features/friends/domain/entity/follow_entity.dart';
 
@@ -533,15 +534,39 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
                 // EDIT PROFILE BUTTON (only on own profile)
                 if (isOwnProfile)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Center(
-                      child: ElevatedButton(
-                        onPressed: () => _showEditProfileSheet(context),
-                        child: const Text('Edit Profile'),
-                      ),
-                    ),
+  Padding(
+    padding: const EdgeInsets.symmetric(vertical: 16),
+    child: Center(
+      child: Row(
+        mainAxisSize: MainAxisSize.min, // Wrap content width
+        children: [
+          ElevatedButton(
+            onPressed: () => _showEditProfileSheet(context),
+            child: const Text('Edit Profile'),
+          ),
+          const SizedBox(width: 16), // spacing between buttons
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ChangePassword(
+                    userId: viewingUserId,
                   ),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange, // or any color you prefer
+            ),
+            child: const Text('Change Password'),
+          ),
+        ],
+      ),
+    ),
+  ),
+
+                  
 
                 // FOLLOW/UNFOLLOW AND MESSAGE BUTTONS (only for other users)
                 if (!isOwnProfile)

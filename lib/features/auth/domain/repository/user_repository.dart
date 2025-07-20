@@ -18,4 +18,10 @@ abstract interface class IUserRepository {
 
   // New method for searching users by query string
   Future<Either<Failure, List<UserEntity>>> searchUsers(String query);
+  Future<Either<Failure, void>> requestPasswordReset(String email);
+
+  Future<Either<Failure, void>> resetPassword(String token, String newPassword);
+
+  Future<Either<Failure, String>> verifyPassword(
+      String userId, String currentPassword);
 }

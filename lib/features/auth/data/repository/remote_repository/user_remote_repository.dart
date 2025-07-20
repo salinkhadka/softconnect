@@ -23,9 +23,11 @@ class UserRemoteRepository implements IUserRepository {
   }
 
   @override
-  Future<Either<Failure, Map<String, dynamic>>> loginUser(String username, String password) async {
+  Future<Either<Failure, Map<String, dynamic>>> loginUser(
+      String username, String password) async {
     try {
-      final Map<String, dynamic> result = await _remoteDataSource.loginUser(username, password);
+      final Map<String, dynamic> result =
+          await _remoteDataSource.loginUser(username, password);
       return Right(result);
     } catch (e) {
       return Left(RemoteDatabaseFailure(message: e.toString()));
@@ -52,12 +54,41 @@ class UserRemoteRepository implements IUserRepository {
     }
   }
 
-  // New method implementation for searching users
   @override
   Future<Either<Failure, List<UserEntity>>> searchUsers(String query) async {
     try {
       final users = await _remoteDataSource.searchUsers(query);
       return Right(users);
+    } catch (e) {
+      return Left(RemoteDatabaseFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> requestPasswordReset(String email) async {
+    try {
+      await _remoteDataSource.requestPasswordReset(email);
+      return const Right(null);
+    } catch (e) {
+      return Left(RemoteDatabaseFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> resetPassword(String token, String newPassword) async {
+    try {
+      await _remoteDataSource.resetPassword(token, newPassword);
+      return const Right(null);
+    } catch (e) {
+      return Left(RemoteDatabaseFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> verifyPassword(String userId, String currentPassword) async {
+    try {
+      final token = await _remoteDataSource.verifyPassword(userId, currentPassword);
+      return Right(token);
     } catch (e) {
       return Left(RemoteDatabaseFailure(message: e.toString()));
     }

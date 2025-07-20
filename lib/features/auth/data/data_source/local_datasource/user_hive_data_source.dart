@@ -56,6 +56,24 @@ class UserHiveDataSource implements IUserDataSource {
     // TODO: implement searchUsers
     throw UnimplementedError();
   }
+  
+  @override
+  Future<void> requestPasswordReset(String email) {
+    // TODO: implement requestPasswordReset
+    throw UnimplementedError();
+  }
+  
+  @override
+  Future<void> resetPassword(String token, String newPassword) {
+    // TODO: implement resetPassword
+    throw UnimplementedError();
+  }
+  
+  @override
+  Future<String> verifyPassword(String userId, String currentPassword) {
+    // TODO: implement verifyPassword
+    throw UnimplementedError();
+  }
 
   // @override
   // Future<UserEntity> getCurrentUser(String id) async {
