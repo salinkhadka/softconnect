@@ -43,6 +43,10 @@ import 'package:softconnect/features/message/domain/use_case/inbox_usecase.dart'
 import 'package:softconnect/features/message/domain/use_case/message_usecase.dart';
 import 'package:softconnect/features/message/presentation/view_model/inbox_viewmodel.dart';
 import 'package:softconnect/features/message/presentation/view_model/message_view_model/message_view_model.dart';
+import 'package:softconnect/features/profile/data/data_source/remote_dataSource/profile_page_remote_datasource.dart';
+import 'package:softconnect/features/profile/data/repository/remote_repository/profile_remote_repository.dart';
+import 'package:softconnect/features/profile/domain/repository/profile_repository.dart';
+import 'package:softconnect/features/profile/domain/use_case/updateProfileUsecase.dart';
 import 'package:softconnect/features/profile/presentation/view_model/user_profile_viewmodel.dart';
 
 // Splash imports
@@ -291,15 +295,40 @@ Future<void> _initFriendsModule() async {
 }
 
 Future<void> _initProfileModule() async {
-  serviceLocator.registerLazySingleton<GetUserByIdUsecase>(() =>
-      GetUserByIdUsecase(userRepository: serviceLocator<IUserRepository>()));
-  serviceLocator.registerLazySingleton<GetPostsByUserIdUsecase>(() =>
-      GetPostsByUserIdUsecase(serviceLocator<IPostRepository>()));
+  // Data source
+  serviceLocator.registerLazySingleton<ProfilePageRemoteDataSource>(
+    () => ProfilePageRemoteDataSource(apiService: serviceLocator<ApiService>()),
+  );
 
+  // Repository
+  serviceLocator.registerLazySingleton<IProfileRepository>(
+    () => ProfileRemoteRepository(
+      dataSource: serviceLocator<ProfilePageRemoteDataSource>(),
+    ),
+  );
+
+  // Usecases
+  serviceLocator.registerLazySingleton<GetUserByIdUsecase>(
+    () => GetUserByIdUsecase(userRepository: serviceLocator<IUserRepository>()),
+  );
+
+  serviceLocator.registerLazySingleton<GetPostsByUserIdUsecase>(
+    () => GetPostsByUserIdUsecase(serviceLocator<IPostRepository>()),
+  );
+
+  serviceLocator.registerLazySingleton<UpdateUserProfileUsecase>(
+    () => UpdateUserProfileUsecase(serviceLocator<IProfileRepository>()),
+  );
+
+  // ViewModel
   serviceLocator.registerFactory<UserProfileViewModel>(
     () => UserProfileViewModel(
       getUserById: serviceLocator<GetUserByIdUsecase>(),
       getPostsByUserId: serviceLocator<GetPostsByUserIdUsecase>(),
+      updateUserProfileUsecase: serviceLocator<UpdateUserProfileUsecase>(),
+      uploadImageUsecase: serviceLocator<UploadImageUsecase>(),
     ),
   );
 }
+
+

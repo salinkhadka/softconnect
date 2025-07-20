@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -5,6 +7,7 @@ import 'package:softconnect/features/auth/domain/entity/user_entity.dart';
 import 'package:softconnect/features/auth/domain/use_case/user_get_current_user_usecase.dart';
 import 'package:softconnect/features/home/domain/entity/post_entity.dart';
 import 'package:softconnect/features/home/domain/use_case/getPostsUseCase.dart';
+import 'package:softconnect/features/profile/domain/use_case/updateProfileUsecase.dart';
 
 // State class
 class UserProfileState extends Equatable {
@@ -42,10 +45,14 @@ class UserProfileState extends Equatable {
 class UserProfileViewModel extends Cubit<UserProfileState> {
   final GetUserByIdUsecase getUserById;
   final GetPostsByUserIdUsecase getPostsByUserId;
+  final UpdateUserProfileUsecase updateUserProfileUsecase;
+  final UploadImageUsecase uploadImageUsecase;
 
   UserProfileViewModel({
     required this.getUserById,
     required this.getPostsByUserId,
+    required this.updateUserProfileUsecase,
+    required this.uploadImageUsecase
   }) : super(const UserProfileState());
 
   Future<void> loadUserProfile(String userId) async {
@@ -73,6 +80,55 @@ class UserProfileViewModel extends Cubit<UserProfileState> {
       isLoading: false,
     ));
   }
+
+
+  
+Future<void> updateUserProfile({
+  required String userId,
+  required String username,
+  required String email,
+  String? bio,
+  String? profilePhotoPath,
+}) async {
+  emit(state.copyWith(isLoading: true));
+
+  String? imageUrl;
+
+  if (profilePhotoPath != null && profilePhotoPath.isNotEmpty) {
+    final uploadResult = await uploadImageUsecase(
+      UploadImageParams(File(profilePhotoPath)), // ✅ Wrap in UploadImageParams
+    );
+
+    uploadResult.fold(
+      (failure) => debugPrint('Image upload failed: $failure'),
+      (path) => imageUrl = path,
+    );
+  }
+
+  final result = await updateUserProfileUsecase(
+    UpdateUserProfileParams(
+      userId: userId,
+      username: username,
+      email: email,
+      bio: bio,
+      profilePhoto: imageUrl, // ✅ Correct field
+    ),
+  );
+
+  result.fold(
+    (failure) {
+      debugPrint('Update failed: $failure');
+      emit(state.copyWith(isLoading: false));
+    },
+    (updatedUser) {
+      emit(state.copyWith(user: updatedUser, isLoading: false));
+    },
+  );
+}
+
+
+
+
 
   void toggleFollow(String userId) {
     emit(state.copyWith(isFollowing: !state.isFollowing));

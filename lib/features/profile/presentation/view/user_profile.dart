@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:softconnect/app/service_locator/service_locator.dart';
 import 'package:softconnect/core/utils/network_image_util.dart';
@@ -76,7 +80,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
           ),
           body: RefreshIndicator(
             onRefresh: () async {
-              await context.read<UserProfileViewModel>().loadUserProfile(viewingUserId);
+              await context
+                  .read<UserProfileViewModel>()
+                  .loadUserProfile(viewingUserId);
               context.read<FeedViewModel>().add(LoadPostsEvent(viewingUserId));
             },
             child: ListView(
@@ -145,6 +151,18 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
                 const SizedBox(height: 16),
 
+                // EDIT PROFILE BUTTON (only on own profile)
+                if (isOwnProfile)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Center(
+                      child: ElevatedButton(
+                        onPressed: () => _showEditProfileSheet(context),
+                        child: const Text('Edit Profile'),
+                      ),
+                    ),
+                  ),
+
                 if (!isOwnProfile)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -153,7 +171,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         onPressed: () => context
                             .read<UserProfileViewModel>()
                             .toggleFollow(viewingUserId),
-                        child: Text(profileState.isFollowing ? 'Unfollow' : 'Follow'),
+                        child: Text(
+                            profileState.isFollowing ? 'Unfollow' : 'Follow'),
                       ),
                       OutlinedButton(
                         onPressed: () {
@@ -173,8 +192,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   const Center(child: Text('No posts available'))
                 else
                   ...posts.map((post) {
-                    final isLiked = feedViewModel.state.isLikedMap[post.id] ?? false;
-                    final likeCount = feedViewModel.state.likeCounts[post.id] ?? 0;
+                    final isLiked =
+                        feedViewModel.state.isLikedMap[post.id] ?? false;
+                    final likeCount =
+                        feedViewModel.state.likeCounts[post.id] ?? 0;
                     final commentCount =
                         feedViewModel.state.commentCounts[post.id] ?? 0;
 
@@ -215,7 +236,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         );
                       },
                     );
-                  }),
+                  }).toList(),
               ],
             ),
           ),
@@ -231,6 +252,204 @@ class _UserProfilePageState extends State<UserProfilePage> {
         Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
         Text(value),
       ],
+    );
+  }
+
+  void _showEditProfileSheet(BuildContext context) {
+    final userProfileVM = context.read<UserProfileViewModel>();
+    final user = userProfileVM.state.user;
+
+    final TextEditingController usernameController =
+        TextEditingController(text: user?.username ?? '');
+    final TextEditingController emailController =
+        TextEditingController(text: user?.email ?? '');
+    final TextEditingController bioController =
+        TextEditingController(text: user?.bio ?? '');
+
+    String? selectedImagePath; // local variable to hold picked image path
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            // Get full image URL using existing method
+            final fullProfileImageUrl = getFullImageUrl(user?.profilePhoto);
+
+            Future<void> _pickImage(ImageSource source) async {
+              final picker = ImagePicker();
+
+              Permission permission;
+
+              if (source == ImageSource.camera) {
+                permission = Permission.camera;
+              } else {
+                if (Theme.of(context).platform == TargetPlatform.android) {
+                  permission = Permission.storage;
+                } else {
+                  permission = Permission.photos; // iOS
+                }
+              }
+
+              final status = await permission.request();
+
+              if (status.isGranted) {
+                final pickedFile = await picker.pickImage(source: source);
+                if (pickedFile != null) {
+                  setState(() {
+                    selectedImagePath = pickedFile.path;
+                  });
+                }
+              } else if (status.isDenied) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text(
+                          'Permission denied. Please allow it to continue.')),
+                );
+              } else if (status.isPermanentlyDenied) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                        'Permission permanently denied. Open app settings to enable it.'),
+                    action: SnackBarAction(
+                      label: 'Settings',
+                      onPressed: () => openAppSettings(),
+                    ),
+                  ),
+                );
+              }
+            }
+
+            Future<void> _showImageSourcePicker() async {
+              showModalBottomSheet(
+                context: context,
+                builder: (_) => SafeArea(
+                  child: Wrap(
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.photo_library),
+                        title: const Text('Choose from Gallery'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _pickImage(ImageSource.gallery);
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.camera_alt),
+                        title: const Text('Take a Photo'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _pickImage(ImageSource.camera);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Edit Profile',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 20),
+                    GestureDetector(
+                      onTap: _showImageSourcePicker,
+                      child: CircleAvatar(
+                        radius: 40,
+                        backgroundImage: selectedImagePath != null
+                            ? FileImage(File(selectedImagePath!))
+                            : (fullProfileImageUrl.isNotEmpty
+                                ? NetworkImage(fullProfileImageUrl)
+                                : null),
+                        child: (selectedImagePath == null &&
+                                fullProfileImageUrl.isEmpty)
+                            ? const Icon(Icons.camera_alt)
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: usernameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Username',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: bioController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Bio',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final newUsername = usernameController.text.trim();
+                          final newEmail = emailController.text.trim();
+                          final newBio = bioController.text.trim();
+
+                          if (newUsername.isEmpty || newEmail.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content:
+                                    Text('Username and Email cannot be empty'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          // ✅ Pass selected image to ViewModel
+                          await userProfileVM.updateUserProfile(
+                            userId: viewingUserId,
+                            username: newUsername,
+                            email: newEmail,
+                            bio: newBio,
+                            profilePhotoPath:
+                                selectedImagePath, // ✅ This line is now active
+                          );
+
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Update'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
