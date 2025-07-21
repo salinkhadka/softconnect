@@ -10,6 +10,8 @@ import 'package:softconnect/features/home/presentation/view_model/Feed_view_mode
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/home_state.dart';
 import 'package:softconnect/features/home/presentation/view_model/homepage_viewmodel.dart';
+import 'package:softconnect/features/notification/presentation/view/notification_page.dart';
+import 'package:softconnect/features/notification/presentation/view_model/notification_viewmodel.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -53,6 +55,17 @@ class HomePage extends StatelessWidget {
     showSearch(context: context, delegate: UserSearchDelegate());
   }
 
+  void _openNotifications(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BlocProvider(
+          create: (_) => serviceLocator<NotificationViewModel>(),
+          child: const NotificationPage(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -73,6 +86,10 @@ class HomePage extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.search),
                   onPressed: () => _openUserSearch(context),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.notifications),
+                  onPressed: () => _openNotifications(context),
                 ),
                 IconButton(
                   icon: const Icon(Icons.logout),

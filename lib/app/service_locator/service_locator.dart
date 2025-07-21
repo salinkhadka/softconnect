@@ -48,6 +48,12 @@ import 'package:softconnect/features/message/domain/use_case/inbox_usecase.dart'
 import 'package:softconnect/features/message/domain/use_case/message_usecase.dart';
 import 'package:softconnect/features/message/presentation/view_model/inbox_viewmodel.dart';
 import 'package:softconnect/features/message/presentation/view_model/message_view_model/message_view_model.dart';
+import 'package:softconnect/features/notification/data/data_source/notification_data_source.dart';
+import 'package:softconnect/features/notification/data/data_source/remote_dataSource/notification_remote_datasource.dart';
+import 'package:softconnect/features/notification/data/repository/remote_repository/notification_remote_repository.dart';
+import 'package:softconnect/features/notification/domain/repository/notification_repository.dart';
+import 'package:softconnect/features/notification/domain/use_case/notification_usecases.dart';
+import 'package:softconnect/features/notification/presentation/view_model/notification_viewmodel.dart';
 import 'package:softconnect/features/profile/data/data_source/remote_dataSource/profile_page_remote_datasource.dart';
 import 'package:softconnect/features/profile/data/repository/remote_repository/profile_remote_repository.dart';
 import 'package:softconnect/features/profile/domain/repository/profile_repository.dart';
@@ -76,6 +82,7 @@ Future<void> setupServiceLocator() async {
   await _initFriendsModule();
   await _initMessageModule();
   await _initProfileModule();
+  await _initNotificationModule();
 }
 
 Future<void> _initMessageModule() async {
@@ -153,7 +160,7 @@ Future<void> _initAuthModule() async {
     () => UserHiveDataSource(hiveService: serviceLocator<HiveService>()),
     instanceName: 'localDataSource',
   );
-  
+
   serviceLocator.registerLazySingleton<UserRemoteDataSource>(
     () => UserRemoteDataSource(apiService: serviceLocator<ApiService>()),
   );
@@ -171,21 +178,23 @@ Future<void> _initAuthModule() async {
   );
 
   serviceLocator.registerLazySingleton<VerifyPasswordUsecase>(
-    () => VerifyPasswordUsecase(userRepository: serviceLocator<IUserRepository>()),
+    () => VerifyPasswordUsecase(
+        userRepository: serviceLocator<IUserRepository>()),
   );
 
   serviceLocator.registerLazySingleton<ResetPasswordUsecase>(
-    () => ResetPasswordUsecase(userRepository: serviceLocator<IUserRepository>()),
+    () =>
+        ResetPasswordUsecase(userRepository: serviceLocator<IUserRepository>()),
   );
 
-  
-
   serviceLocator.registerLazySingleton<RequestPasswordResetUsecase>(
-    () => RequestPasswordResetUsecase(userRepository: serviceLocator<IUserRepository>()),
+    () => RequestPasswordResetUsecase(
+        userRepository: serviceLocator<IUserRepository>()),
   );
 
   serviceLocator.registerLazySingleton<UserRegisterUsecase>(
-    () => UserRegisterUsecase(userRepository: serviceLocator<IUserRepository>()),
+    () =>
+        UserRegisterUsecase(userRepository: serviceLocator<IUserRepository>()),
   );
 
   // *** New SearchUsers use case ***
@@ -199,15 +208,16 @@ Future<void> _initAuthModule() async {
   );
 
   serviceLocator.registerFactory<SignupViewModel>(
-    () => SignupViewModel(userRegisterUsecase: serviceLocator<UserRegisterUsecase>()),
+    () => SignupViewModel(
+        userRegisterUsecase: serviceLocator<UserRegisterUsecase>()),
   );
 
   // *** New UserSearchViewModel ***
   serviceLocator.registerFactory<UserSearchViewModel>(
-    () => UserSearchViewModel(  searchUsersUsecase: serviceLocator<SearchUsersUsecase>()),
+    () => UserSearchViewModel(
+        searchUsersUsecase: serviceLocator<SearchUsersUsecase>()),
   );
 }
-
 
 Future<void> _initSplashModule() async {
   serviceLocator.registerFactory(() => SplashViewModel());
@@ -354,11 +364,11 @@ Future<void> _initProfileModule() async {
   );
 
   serviceLocator.registerLazySingleton<UpdatePostUsecase>(
-    () => UpdatePostUsecase( serviceLocator<IPostRepository>()),
+    () => UpdatePostUsecase(serviceLocator<IPostRepository>()),
   );
 
   serviceLocator.registerLazySingleton<DeletePostUsecase>(
-    () => DeletePostUsecase( serviceLocator<IPostRepository>()),
+    () => DeletePostUsecase(serviceLocator<IPostRepository>()),
   );
 
   serviceLocator.registerLazySingleton<GetPostsByUserIdUsecase>(
@@ -375,9 +385,61 @@ Future<void> _initProfileModule() async {
       getUserById: serviceLocator<GetUserByIdUsecase>(),
       getPostsByUserId: serviceLocator<GetPostsByUserIdUsecase>(),
       updateUserProfileUsecase: serviceLocator<UpdateUserProfileUsecase>(),
-      uploadImageUsecase: serviceLocator<UploadImageUsecase>(), updatePostUsecase: serviceLocator<UpdatePostUsecase>(), deletePostUsecase: serviceLocator<DeletePostUsecase>(),
+      uploadImageUsecase: serviceLocator<UploadImageUsecase>(),
+      updatePostUsecase: serviceLocator<UpdatePostUsecase>(),
+      deletePostUsecase: serviceLocator<DeletePostUsecase>(),
     ),
   );
 }
 
+Future<void> _initNotificationModule() async {
+  // Data source
+  serviceLocator.registerLazySingleton<INotificationDataSource>(
+    () =>
+        NotificationRemoteDataSource(apiService: serviceLocator<ApiService>()),
+  );
 
+  // Repository
+  serviceLocator.registerLazySingleton<INotificationRepository>(
+    () => NotificationRemoteRepository(
+      dataSource: serviceLocator<INotificationDataSource>(),
+    ),
+  );
+
+  // Use cases
+  serviceLocator.registerLazySingleton<GetNotificationsByUserIdUsecase>(
+    () => GetNotificationsByUserIdUsecase(
+      notificationRepository: serviceLocator<INotificationRepository>(),
+    ),
+  );
+
+  serviceLocator.registerLazySingleton<CreateNotificationUsecase>(
+    () => CreateNotificationUsecase(
+      notificationRepository: serviceLocator<INotificationRepository>(),
+    ),
+  );
+
+  serviceLocator.registerLazySingleton<MarkNotificationAsReadUsecase>(
+    () => MarkNotificationAsReadUsecase(
+      notificationRepository: serviceLocator<INotificationRepository>(),
+    ),
+  );
+
+  serviceLocator.registerLazySingleton<DeleteNotificationUsecase>(
+    () => DeleteNotificationUsecase(
+      notificationRepository: serviceLocator<INotificationRepository>(),
+    ),
+  );
+
+  // ViewModel
+  serviceLocator.registerFactory<NotificationViewModel>(
+    () => NotificationViewModel(
+      deleteNotificationUsecase: serviceLocator<DeleteNotificationUsecase>(),
+      getNotificationsUsecase:
+          serviceLocator<GetNotificationsByUserIdUsecase>(),
+      markAsReadUsecase: serviceLocator<MarkNotificationAsReadUsecase>(),
+    ),
+  );
+
+  print("Notification module initialized successfully");
+}

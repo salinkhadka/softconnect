@@ -27,9 +27,19 @@ class UserPreviewModel {
 
   Map<String, dynamic> toJson() => _$UserPreviewModelToJson(this);
 
+  /// Convert model to domain entity
   UserPreviewEntity toEntity() => UserPreviewEntity(
         userId: userId,
         username: username,
         profilePhoto: profilePhoto,
       );
+
+  /// Create model from domain entity
+  factory UserPreviewModel.fromEntity(UserPreviewEntity entity) {
+    return UserPreviewModel(
+      userId: entity.userId,
+      username: entity.username,
+      profilePhoto: entity.profilePhoto,
+    );
+  }
 }
