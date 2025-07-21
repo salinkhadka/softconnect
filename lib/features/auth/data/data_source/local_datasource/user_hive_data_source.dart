@@ -14,7 +14,6 @@ class UserHiveDataSource implements IUserDataSource {
     try {
       final userData = await _hiveService.login(username, password);
       if (userData != null && userData.password == password) {
-        // Simulate a token for local login, or generate one if needed
         final token = "local_dummy_token";
 
         return {

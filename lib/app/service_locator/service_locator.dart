@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import 'package:softconnect/core/network/api_service.dart';
 import 'package:softconnect/core/network/hive_service.dart';
@@ -14,12 +15,15 @@ import 'package:softconnect/features/home/domain/repository/like_repository.dart
 import 'package:softconnect/features/home/domain/repository/comment_repository.dart';
 import 'package:softconnect/features/auth/domain/repository/user_repository.dart';
 import 'package:softconnect/features/friends/domain/repository/friends_repository.dart';
+import 'package:softconnect/features/message/data/data_source/local_datasource/message_hive_datasource_impl.dart';
+import 'package:softconnect/features/message/data/data_source/message_datsource.dart';
+import 'package:softconnect/features/message/data/data_source/message_hive_datasource.dart';
 import 'package:softconnect/features/message/domain/repository/message_repository.dart';
+import 'package:softconnect/features/message/domain/repository/message_repository_impl.dart';
 import 'package:softconnect/features/profile/domain/repository/profile_repository.dart';
 import 'package:softconnect/features/notification/domain/repository/notification_repository.dart';
 import 'package:softconnect/features/auth/data/data_source/user_data_source.dart';
 import 'package:softconnect/features/notification/data/data_source/notification_data_source.dart';
-
 
 // --- DATA SOURCE & REPO IMPLEMENTATIONS ---
 import 'package:softconnect/features/home/data/data_source/remote_dataSource/post_remote_datasource.dart';
@@ -41,7 +45,6 @@ import 'package:softconnect/features/profile/data/repository/remote_repository/p
 import 'package:softconnect/features/friends/data/data_source/remote_dataSource/friends_api_datasource.dart';
 import 'package:softconnect/features/friends/data/repository/remote_repository/friends_remote_repository.dart';
 
-
 // --- ALL USE CASES ---
 import 'package:softconnect/features/auth/domain/use_case/getall_users_usecase.dart';
 import 'package:softconnect/features/auth/domain/use_case/request_passsword_reset_usecase.dart';
@@ -62,7 +65,6 @@ import 'package:softconnect/features/friends/domain/use_case/get_followers_useca
 import 'package:softconnect/features/friends/domain/use_case/unfollow_user_usecase.dart';
 import 'package:softconnect/features/friends/domain/use_case/get_following_usecase.dart';
 
-
 // --- ALL VIEWMODELS ---
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_viewmodel.dart';
 import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_viewmodel.dart';
@@ -76,7 +78,6 @@ import 'package:softconnect/features/message/presentation/view_model/message_vie
 import 'package:softconnect/features/notification/presentation/view_model/notification_viewmodel.dart';
 import 'package:softconnect/features/profile/presentation/view_model/user_profile_viewmodel.dart';
 import 'package:softconnect/features/splash/presentation/view_model/splash_viewmodel.dart';
-
 
 final serviceLocator = GetIt.instance;
 
@@ -100,7 +101,6 @@ Future<void> _initCoreServices() async {
   serviceLocator.registerLazySingleton<Dio>(() => Dio());
   serviceLocator.registerLazySingleton(() => ApiService(serviceLocator<Dio>()));
 }
-
 
 // =========================================================================
 // === NEW UNIFIED POST MODULE (This contains all the new post logic) ===
@@ -149,7 +149,6 @@ Future<void> _initPostModule() async {
   print("✅ Unified Post Module Initialized Successfully.");
 }
 
-
 Future<void> _initHomeModule() async {
   // --- OLD IPostRepository Registration ---
   // serviceLocator.registerLazySingleton<IPostRepository>(
@@ -162,12 +161,14 @@ Future<void> _initHomeModule() async {
   // Like and Comment functionality remains online-only for now
   serviceLocator.registerLazySingleton<ILikeRepository>(
     () => LikeRemoteRepository(
-      likeDataSource: LikeRemoteDatasource(apiService: serviceLocator<ApiService>()),
+      likeDataSource:
+          LikeRemoteDatasource(apiService: serviceLocator<ApiService>()),
     ),
   );
   serviceLocator.registerLazySingleton<ICommentRepository>(
     () => CommentRemoteRepository(
-      commentDataSource: CommentRemoteDatasource(apiService: serviceLocator<ApiService>()),
+      commentDataSource:
+          CommentRemoteDatasource(apiService: serviceLocator<ApiService>()),
     ),
   );
 
@@ -181,16 +182,20 @@ Future<void> _initHomeModule() async {
     () => UnlikePostUsecase(likeRepository: serviceLocator<ILikeRepository>()),
   );
   serviceLocator.registerLazySingleton<GetLikesByPostIdUsecase>(
-    () => GetLikesByPostIdUsecase(likeRepository: serviceLocator<ILikeRepository>()),
+    () => GetLikesByPostIdUsecase(
+        likeRepository: serviceLocator<ILikeRepository>()),
   );
   serviceLocator.registerLazySingleton<GetCommentsByPostIdUsecase>(
-    () => GetCommentsByPostIdUsecase(commentRepository: serviceLocator<ICommentRepository>()),
+    () => GetCommentsByPostIdUsecase(
+        commentRepository: serviceLocator<ICommentRepository>()),
   );
   serviceLocator.registerLazySingleton<CreateCommentUsecase>(
-    () => CreateCommentUsecase(commentRepository: serviceLocator<ICommentRepository>()),
+    () => CreateCommentUsecase(
+        commentRepository: serviceLocator<ICommentRepository>()),
   );
   serviceLocator.registerLazySingleton<DeleteCommentUsecase>(
-    () => DeleteCommentUsecase(commentRepository: serviceLocator<ICommentRepository>()),
+    () => DeleteCommentUsecase(
+        commentRepository: serviceLocator<ICommentRepository>()),
   );
 
   // ViewModels - No changes needed, they get dependencies from the locator
@@ -219,7 +224,8 @@ Future<void> _initProfileModule() async {
     () => ProfilePageRemoteDataSource(apiService: serviceLocator<ApiService>()),
   );
   serviceLocator.registerLazySingleton<IProfileRepository>(
-    () => ProfileRemoteRepository(dataSource: serviceLocator<ProfilePageRemoteDataSource>()),
+    () => ProfileRemoteRepository(
+        dataSource: serviceLocator<ProfilePageRemoteDataSource>()),
   );
 
   // Use cases for Profile
@@ -269,16 +275,20 @@ Future<void> _initAuthModule() async {
     () => UserLoginUsecase(userRepository: serviceLocator<IUserRepository>()),
   );
   serviceLocator.registerLazySingleton<VerifyPasswordUsecase>(
-    () => VerifyPasswordUsecase(userRepository: serviceLocator<IUserRepository>()),
+    () => VerifyPasswordUsecase(
+        userRepository: serviceLocator<IUserRepository>()),
   );
   serviceLocator.registerLazySingleton<ResetPasswordUsecase>(
-    () => ResetPasswordUsecase(userRepository: serviceLocator<IUserRepository>()),
+    () =>
+        ResetPasswordUsecase(userRepository: serviceLocator<IUserRepository>()),
   );
   serviceLocator.registerLazySingleton<RequestPasswordResetUsecase>(
-    () => RequestPasswordResetUsecase(userRepository: serviceLocator<IUserRepository>()),
+    () => RequestPasswordResetUsecase(
+        userRepository: serviceLocator<IUserRepository>()),
   );
   serviceLocator.registerLazySingleton<UserRegisterUsecase>(
-    () => UserRegisterUsecase(userRepository: serviceLocator<IUserRepository>()),
+    () =>
+        UserRegisterUsecase(userRepository: serviceLocator<IUserRepository>()),
   );
   serviceLocator.registerLazySingleton<SearchUsersUsecase>(
     () => SearchUsersUsecase(userRepository: serviceLocator<IUserRepository>()),
@@ -287,10 +297,12 @@ Future<void> _initAuthModule() async {
     () => LoginViewModel(userLoginUsecase: serviceLocator<UserLoginUsecase>()),
   );
   serviceLocator.registerFactory<SignupViewModel>(
-    () => SignupViewModel(userRegisterUsecase: serviceLocator<UserRegisterUsecase>()),
+    () => SignupViewModel(
+        userRegisterUsecase: serviceLocator<UserRegisterUsecase>()),
   );
   serviceLocator.registerFactory<UserSearchViewModel>(
-    () => UserSearchViewModel(searchUsersUsecase: serviceLocator<SearchUsersUsecase>()),
+    () => UserSearchViewModel(
+        searchUsersUsecase: serviceLocator<SearchUsersUsecase>()),
   );
 }
 
@@ -317,30 +329,54 @@ Future<void> _initFriendsModule() async {
       ));
 }
 
+// Updated _initMessageModule function for your service locator
+
 Future<void> _initMessageModule() async {
-  serviceLocator.registerLazySingleton<MessageApiDataSource>(
+  // Register Connectivity (if not already registered in core services)
+  if (!serviceLocator.isRegistered<Connectivity>()) {
+    serviceLocator.registerLazySingleton(() => Connectivity());
+  }
+
+  // Register Remote Data Source
+  serviceLocator.registerLazySingleton<IMessageDataSource>(
     () => MessageApiDataSource(apiService: serviceLocator<ApiService>()),
   );
+
+  // Register Local Data Source
+  serviceLocator.registerLazySingleton<IMessageLocalDataSource>(
+    () => MessageHiveDatasourceImpl(hiveService: serviceLocator<HiveService>()),
+  );
+
+  // Register the Hybrid Repository (MessageRepositoryImpl)
   serviceLocator.registerLazySingleton<IMessageRepository>(
-    () => MessageRemoteRepository(
-      dataSource: serviceLocator<MessageApiDataSource>(),
+    () => MessageRepositoryImpl(
+      remoteDataSource: serviceLocator<IMessageDataSource>(),
+      localDataSource: serviceLocator<IMessageLocalDataSource>(),
+      connectivity: serviceLocator<Connectivity>(),
     ),
   );
+
+  // Register Use Cases
   serviceLocator.registerLazySingleton<GetInboxUseCase>(
     () => GetInboxUseCase(repository: serviceLocator<IMessageRepository>()),
   );
   serviceLocator.registerLazySingleton<MarkMessagesAsReadUseCase>(
-    () => MarkMessagesAsReadUseCase(repository: serviceLocator<IMessageRepository>()),
+    () => MarkMessagesAsReadUseCase(
+        repository: serviceLocator<IMessageRepository>()),
   );
   serviceLocator.registerLazySingleton<GetMessagesBetweenUsersUseCase>(
-    () => GetMessagesBetweenUsersUseCase(repository: serviceLocator<IMessageRepository>()),
+    () => GetMessagesBetweenUsersUseCase(
+        repository: serviceLocator<IMessageRepository>()),
   );
   serviceLocator.registerLazySingleton<SendMessageUseCase>(
     () => SendMessageUseCase(repository: serviceLocator<IMessageRepository>()),
   );
   serviceLocator.registerLazySingleton<DeleteMessageUseCase>(
-    () => DeleteMessageUseCase(repository: serviceLocator<IMessageRepository>()),
+    () =>
+        DeleteMessageUseCase(repository: serviceLocator<IMessageRepository>()),
   );
+
+  // Register ViewModels
   serviceLocator.registerFactory<InboxViewModel>(
     () => InboxViewModel(
       serviceLocator<GetInboxUseCase>(),
@@ -355,11 +391,14 @@ Future<void> _initMessageModule() async {
       deleteMessageUseCase: serviceLocator<DeleteMessageUseCase>(),
     ),
   );
+
+  print("✅ Message Module with Offline Support Initialized Successfully.");
 }
 
 Future<void> _initNotificationModule() async {
   serviceLocator.registerLazySingleton<INotificationDataSource>(
-    () => NotificationRemoteDataSource(apiService: serviceLocator<ApiService>()),
+    () =>
+        NotificationRemoteDataSource(apiService: serviceLocator<ApiService>()),
   );
   serviceLocator.registerLazySingleton<INotificationRepository>(
     () => NotificationRemoteRepository(
