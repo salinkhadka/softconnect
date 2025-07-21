@@ -15,9 +15,21 @@ class SplashViewModel extends Cubit<SplashState> {
     await Future.delayed(const Duration(seconds: 2));
 
     final prefs = await SharedPreferences.getInstance();
-    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    
+    // Check for token and other user data
+    final token = prefs.getString('token');
+    final userId = prefs.getString('userId');
+    final role = prefs.getString('role');
+    final username = prefs.getString('username');
 
-    if (isLoggedIn) {
+    // If token exists and other essential data is present, navigate to home
+    // You can adjust this logic based on which fields are mandatory
+    if (token != null && 
+        token.isNotEmpty && 
+        userId != null && 
+        userId.isNotEmpty &&
+        role != null && 
+        role.isNotEmpty) {
       emit(SplashState.navigateToHome);
     } else {
       emit(SplashState.navigateToLogin);
