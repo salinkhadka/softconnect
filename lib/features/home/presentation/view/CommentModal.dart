@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:softconnect/core/utils/network_image_util.dart';
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_event.dart';
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_state.dart';
@@ -24,6 +25,8 @@ class CommentModal extends StatefulWidget {
 
 class _CommentModalState extends State<CommentModal> {
   String? replyingToCommentId;
+  Set<String> expandedReplies = {};
+  final TextEditingController _commentController = TextEditingController();
 
   String getBackendBaseUrl() {
     if (Platform.isAndroid) {
@@ -36,16 +39,12 @@ class _CommentModalState extends State<CommentModal> {
   @override
   void initState() {
     super.initState();
-    // Load comments when modal opens
     context.read<CommentViewModel>().add(LoadComments(widget.postId));
   }
 
   @override
   Widget build(BuildContext context) {
     final backendBaseUrl = getBackendBaseUrl();
-
-    // TextEditingController for new top-level comment
-    final TextEditingController _commentController = TextEditingController();
 
     return DraggableScrollableSheet(
       initialChildSize: 0.5,
@@ -65,8 +64,7 @@ class _CommentModalState extends State<CommentModal> {
                     padding: EdgeInsets.symmetric(vertical: 12),
                     child: Text(
                       "Comments",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
                   Expanded(
@@ -76,110 +74,16 @@ class _CommentModalState extends State<CommentModal> {
                             ? const Center(child: Text('No comments yet'))
                             : ListView.builder(
                                 controller: scrollController,
-                                itemCount: state.comments.length,
+                                itemCount: state.comments
+                                    .where((c) => c.parentCommentId == null)
+                                    .length,
                                 itemBuilder: (context, index) {
-                                  final comment = state.comments[index];
-                                  return Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      ListTile(
-                                        leading: comment.profilePhoto != null &&
-                                                comment.profilePhoto!
-                                                    .isNotEmpty
-                                            ? CircleAvatar(
-                                                radius: 20,
-                                                child: ClipOval(
-                                                  child: NetworkImageWidget(
-                                                    imageUrl:
-                                                        '$backendBaseUrl/${comment.profilePhoto!.replaceAll('\\', '/')}',
-                                                    height: 40,
-                                                    width: 40,
-                                                    fit: BoxFit.cover,
-                                                    placeholder: const Center(
-                                                      child:
-                                                          CircularProgressIndicator(
-                                                              strokeWidth: 2),
-                                                    ),
-                                                    errorWidget: const Icon(
-                                                      Icons.account_circle,
-                                                      size: 40,
-                                                      color: Colors.grey,
-                                                    ),
-                                                  ),
-                                                ),
-                                              )
-                                            : CircleAvatar(
-                                                radius: 20,
-                                                child: Text(
-                                                  comment.username != null &&
-                                                          comment.username!
-                                                              .isNotEmpty
-                                                      ? comment.username![0]
-                                                          .toUpperCase()
-                                                      : '?',
-                                                  style:
-                                                      const TextStyle(fontSize: 18),
-                                                ),
-                                              ),
-                                        title: Text(comment.content),
-                                        subtitle:
-                                            Text('@${comment.username ?? 'anonymous'}'),
-                                        trailing: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            TextButton(
-                                              child: const Text('Reply'),
-                                              onPressed: () {
-                                                setState(() {
-                                                  if (replyingToCommentId ==
-                                                      comment.id) {
-                                                    replyingToCommentId = null;
-                                                  } else {
-                                                    replyingToCommentId = comment.id;
-                                                  }
-                                                });
-                                              },
-                                            ),
-                                            if (comment.userId == widget.userId ||
-                                                widget.postOwnerUserId ==
-                                                    widget.userId)
-                                              IconButton(
-                                                icon: const Icon(Icons.delete,
-                                                    color: Colors.red),
-                                                onPressed: () {
-                                                  context.read<CommentViewModel>().add(
-                                                        DeleteComment(
-                                                            commentId: comment.id,
-                                                            postId: widget.postId),
-                                                      );
-                                                },
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                      if (replyingToCommentId == comment.id)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 72, right: 16, bottom: 8),
-                                          child: ReplyTextField(
-                                            onReply: (replyContent) {
-                                              context.read<CommentViewModel>().add(
-                                                    AddComment(
-                                                      userId: widget.userId,
-                                                      postId: widget.postId,
-                                                      content: replyContent,
-                                                      parentCommentId: comment.id, // key part
-                                                    ),
-                                                  );
-                                              setState(() {
-                                                replyingToCommentId = null;
-                                              });
-                                            },
-                                          ),
-                                        ),
-                                    ],
-                                  );
+                                  final topLevelComments = state.comments
+                                      .where((c) => c.parentCommentId == null)
+                                      .toList();
+                                  final comment = topLevelComments[index];
+
+                                  return buildComment(comment, state, backendBaseUrl);
                                 },
                               ),
                   ),
@@ -227,7 +131,6 @@ class _CommentModalState extends State<CommentModal> {
                                       userId: widget.userId,
                                       postId: widget.postId,
                                       content: content,
-                                      // No parentId means top-level comment
                                     ));
                                 _commentController.clear();
                                 FocusScope.of(context).unfocus();
@@ -245,6 +148,137 @@ class _CommentModalState extends State<CommentModal> {
           ),
         );
       },
+    );
+  }
+
+  Widget buildComment(dynamic comment, CommentState state, String backendBaseUrl, {bool isReply = false}) {
+    final replies = state.comments
+        .where((c) => c.parentCommentId == comment.id)
+        .toList();
+    final isExpanded = expandedReplies.contains(comment.id);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.only(left: isReply ? 72 : 16, right: 16),
+          leading: comment.profilePhoto != null &&
+                  comment.profilePhoto!.isNotEmpty
+              ? CircleAvatar(
+                  radius: isReply ? 16 : 20,
+                  child: ClipOval(
+                    child: NetworkImageWidget(
+                      imageUrl:
+                          '$backendBaseUrl/${comment.profilePhoto!.replaceAll('\\', '/')}',
+                      height: isReply ? 32 : 40,
+                      width: isReply ? 32 : 40,
+                      fit: BoxFit.cover,
+                      placeholder: const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      errorWidget: const Icon(
+                        Icons.account_circle,
+                        size: 40,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                )
+              : CircleAvatar(
+                  radius: isReply ? 16 : 20,
+                  child: Text(
+                    comment.username != null &&
+                            comment.username!.isNotEmpty
+                        ? comment.username![0].toUpperCase()
+                        : '?',
+                    style: TextStyle(fontSize: isReply ? 14 : 18),
+                  ),
+                ),
+          title: Text(comment.content),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('@${comment.username ?? 'anonymous'}'),
+              Text(
+                DateFormat('yyyy-MM-dd hh:mm a').format(
+                  (comment.createdAt),
+                ),
+                style: const TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextButton(
+                child: const Text('Reply'),
+                onPressed: () {
+                  setState(() {
+                    replyingToCommentId = replyingToCommentId == comment.id ? null : comment.id;
+                  });
+                },
+              ),
+              if (comment.userId == widget.userId ||
+                  widget.postOwnerUserId == widget.userId)
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    context.read<CommentViewModel>().add(
+                          DeleteComment(
+                            commentId: comment.id,
+                            postId: widget.postId,
+                          ),
+                        );
+                  },
+                ),
+            ],
+          ),
+        ),
+        if (replyingToCommentId == comment.id)
+          Padding(
+            padding: EdgeInsets.only(left: isReply ? 88 : 72, right: 16, bottom: 8),
+            child: ReplyTextField(
+              onReply: (replyContent) {
+                context.read<CommentViewModel>().add(
+                      AddComment(
+                        userId: widget.userId,
+                        postId: widget.postId,
+                        content: replyContent,
+                        parentCommentId: comment.id,
+                      ),
+                    );
+                setState(() {
+                  replyingToCommentId = null;
+                });
+              },
+            ),
+          ),
+        if (replies.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.only(left: isReply ? 88 : 72),
+            child: TextButton(
+              onPressed: () {
+                setState(() {
+                  if (isExpanded) {
+                    expandedReplies.remove(comment.id);
+                  } else {
+                    expandedReplies.add(comment.id);
+                  }
+                });
+              },
+              child: Text(
+                isExpanded
+                    ? "Hide replies"
+                    : "View ${replies.length} repl${replies.length > 1 ? 'ies' : 'y'}",
+                style: const TextStyle(fontSize: 14),
+              ),
+            ),
+          ),
+        if (isExpanded)
+          ...replies.map(
+            (reply) => buildComment(reply, state, backendBaseUrl, isReply: true),
+          ),
+      ],
     );
   }
 }
