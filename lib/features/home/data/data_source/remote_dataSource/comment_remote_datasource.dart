@@ -22,58 +22,88 @@ class CommentRemoteDatasource implements ICommentDataSource {
   }
 
   @override
-  Future<CommentModel> createComment({
-    required String userId,
-    required String postId,
-    required String content,
-    String? parentCommentId,
-  }) async {
-    try {
-      final options = await _getAuthHeaders();
+Future<CommentModel> createComment({
+  required String userId,
+  required String postId,
+  required String content,
+  String? parentCommentId,
+}) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final username = prefs.getString('username') ?? 'Unknown';
+    final options = await _getAuthHeaders();
 
-      final response = await _apiService.dio.post(
-        ApiEndpoints.createComment,
-        data: {
-          "userId": userId,
-          "postId": postId,
-          "content": content,
-          if (parentCommentId != null) "parentCommentId": parentCommentId,
-        },
-        options: options,
-      );
+    final response = await _apiService.dio.post(
+      ApiEndpoints.createComment,
+      data: {
+        "userId": userId,
+        "postId": postId,
+        "content": content,
+        if (parentCommentId != null) "parentCommentId": parentCommentId,
+      },
+      options: options,
+    );
 
-      if (response.statusCode == 201) {
-        dynamic dataRaw = response.data['data'];
+    if (response.statusCode == 201) {
+      dynamic dataRaw = response.data['data'];
 
-        // Ensure it's parsed into a Map
-        if (dataRaw is String) {
-          dataRaw = jsonDecode(dataRaw);
+      if (dataRaw is String) dataRaw = jsonDecode(dataRaw);
+
+      if (dataRaw is Map<String, dynamic>) {
+        // Transform data
+        if (dataRaw['userId'] is String) {
+          dataRaw['userId'] = {
+            '_id': dataRaw['userId'],
+            'username': 'Unknown',
+            'profilePhoto': null,
+          };
         }
 
-        if (dataRaw is Map<String, dynamic>) {
-          // Transform the data to match expected structure
-          Map<String, dynamic> transformedData = Map.from(dataRaw);
-          
-          // If userId is just a string, create a minimal user object
-          if (transformedData['userId'] is String) {
-            transformedData['userId'] = {
-              '_id': transformedData['userId'],
-              'username': 'Unknown', // You might want to fetch this from somewhere
-              'profilePhoto': null,
-            };
+        final postOwnerId = dataRaw['postOwnerId']?.toString();
+
+        // 🔔 Create notification (if not commenting on own post)
+        if (postOwnerId != null && postOwnerId != userId) {
+          final notificationPayload = {
+            "recipient": postOwnerId,
+            "type": "comment",
+            "message": "$username commented on your post",
+            "relatedId": postId,
+          };
+
+          try {
+            final notificationResponse = await _apiService.dio.post(
+              ApiEndpoints.createNotification,
+              data: notificationPayload,
+              options: Options(headers: {
+                'Authorization': 'Bearer $token',
+                'Content-Type': 'application/json',
+              }),
+            );
+
+            print("DEBUG: Notification created: ${notificationResponse.statusCode}");
+          } catch (notificationError) {
+            print("ERROR: Failed to send comment notification");
+            if (notificationError is DioException) {
+              print("DioError: ${notificationError.response?.data}");
+            } else {
+              print(notificationError);
+            }
           }
-          
-          return CommentModel.fromJson(transformedData);
-        } else {
-          throw Exception('Unexpected response format in "data".');
         }
+
+        return CommentModel.fromJson(dataRaw);
       } else {
-        throw Exception("Failed to create comment: ${response.statusMessage}");
+        throw Exception('Unexpected response format in "data".');
       }
-    } on DioException catch (e) {
-      throw Exception("Failed to create comment: ${e.message}");
+    } else {
+      throw Exception("Failed to create comment: ${response.statusMessage}");
     }
+  } on DioException catch (e) {
+    throw Exception("Failed to create comment: ${e.message}");
   }
+}
+
 
   @override
   Future<List<CommentModel>> getCommentsByPostId(String postId) async {

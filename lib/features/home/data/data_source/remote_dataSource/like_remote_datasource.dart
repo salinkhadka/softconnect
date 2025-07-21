@@ -17,17 +17,25 @@ class LikeRemoteDatasource implements ILikeDataSource {
     if (token == null) {
       throw Exception('Auth token not found');
     }
-    return Options(headers: {'Authorization': 'Bearer $token'});
+    return Options(
+      headers: {'Authorization': 'Bearer $token'},
+      receiveTimeout: const Duration(seconds: 10),
+      sendTimeout: const Duration(seconds: 10),
+    );
   }
 
   @override
-  Future<LikeModel> likePost(
-      {required String userId, required String postId}) async {
+  Future<LikeModel> likePost({
+    required String userId,
+    required String postId,
+  }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
-      final username = prefs.getString('username'); // Assuming stored at login
-      final options = Options(headers: {'Authorization': 'Bearer $token'});
+      final username = prefs.getString('username') ?? 'Unknown';
+      final options = await _getAuthHeaders();
+
+      print("DEBUG: Sending like for postId: $postId by userId: $userId");
 
       // Step 1: Like the post
       final response = await _apiService.dio.post(
@@ -40,36 +48,61 @@ class LikeRemoteDatasource implements ILikeDataSource {
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        final likeData = LikeModel.fromJson(response.data['data']);
+        final responseData = response.data['data'];
+        final postOwnerId = responseData['postOwnerId']?.toString();
 
-        // Step 2: Get post owner ID from response (assuming it's returned)
-        final postOwnerId =
-            response.data['data']['postOwnerId']; // Backend must provide this
+        print("DEBUG: Like successful, postOwnerId = $postOwnerId");
 
-        // Step 3: Create notification
-        await _apiService.dio.post(
-          ApiEndpoints.createNotification,
-          data: {
+        // Step 2: Send notification if not liking own post
+        if (postOwnerId != null && postOwnerId != userId) {
+          final notificationPayload = {
             "recipient": postOwnerId,
             "type": "like",
             "message": "$username liked your post",
             "relatedId": postId,
-          },
-          options: options,
-        );
+          };
 
-        return likeData;
+          print("DEBUG: Sending notification: $notificationPayload");
+
+          try {
+            final notificationResponse = await _apiService.dio.post(
+              ApiEndpoints.createNotification,
+              data: notificationPayload,
+              options: Options(
+                headers: {
+                  'Authorization': 'Bearer $token',
+                  'Content-Type': 'application/json',
+                },
+              ),
+            );
+            print("DEBUG: Notification created: ${notificationResponse.statusCode}");
+          } catch (notificationError) {
+            print("ERROR: Failed to send notification");
+            if (notificationError is DioException) {
+              print("DioError: ${notificationError.response?.data}");
+            } else {
+              print(notificationError);
+            }
+          }
+        } else {
+          print("DEBUG: Skipped notification (self-like or null postOwnerId)");
+        }
+
+        return LikeModel.fromJson(responseData);
       } else {
         throw Exception('Failed to like post: ${response.statusMessage}');
       }
     } on DioException catch (e) {
+      print("DioException: ${e.response?.data}");
       throw Exception('Failed to like post: ${e.message}');
     }
   }
 
   @override
-  Future<void> unlikePost(
-      {required String userId, required String postId}) async {
+  Future<void> unlikePost({
+    required String userId,
+    required String postId,
+  }) async {
     try {
       final options = await _getAuthHeaders();
 
@@ -93,8 +126,7 @@ class LikeRemoteDatasource implements ILikeDataSource {
   @override
   Future<List<LikeModel>> getLikesByPostId(String postId) async {
     try {
-      final response =
-          await _apiService.dio.get(ApiEndpoints.getPostLikes(postId));
+      final response = await _apiService.dio.get(ApiEndpoints.getPostLikes(postId));
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as List;
