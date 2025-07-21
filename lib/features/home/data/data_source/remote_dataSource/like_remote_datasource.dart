@@ -8,7 +8,8 @@ import 'package:softconnect/features/home/data/model/like_model.dart';
 class LikeRemoteDatasource implements ILikeDataSource {
   final ApiService _apiService;
 
-  LikeRemoteDatasource({required ApiService apiService}) : _apiService = apiService;
+  LikeRemoteDatasource({required ApiService apiService})
+      : _apiService = apiService;
 
   Future<Options> _getAuthHeaders() async {
     final prefs = await SharedPreferences.getInstance();
@@ -20,10 +21,15 @@ class LikeRemoteDatasource implements ILikeDataSource {
   }
 
   @override
-  Future<LikeModel> likePost({required String userId, required String postId}) async {
+  Future<LikeModel> likePost(
+      {required String userId, required String postId}) async {
     try {
-      final options = await _getAuthHeaders();
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final username = prefs.getString('username'); // Assuming stored at login
+      final options = Options(headers: {'Authorization': 'Bearer $token'});
 
+      // Step 1: Like the post
       final response = await _apiService.dio.post(
         ApiEndpoints.likePost,
         data: {
@@ -34,7 +40,25 @@ class LikeRemoteDatasource implements ILikeDataSource {
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        return LikeModel.fromJson(response.data['data']);
+        final likeData = LikeModel.fromJson(response.data['data']);
+
+        // Step 2: Get post owner ID from response (assuming it's returned)
+        final postOwnerId =
+            response.data['data']['postOwnerId']; // Backend must provide this
+
+        // Step 3: Create notification
+        await _apiService.dio.post(
+          ApiEndpoints.createNotification,
+          data: {
+            "recipient": postOwnerId,
+            "type": "like",
+            "message": "$username liked your post",
+            "relatedId": postId,
+          },
+          options: options,
+        );
+
+        return likeData;
       } else {
         throw Exception('Failed to like post: ${response.statusMessage}');
       }
@@ -44,7 +68,8 @@ class LikeRemoteDatasource implements ILikeDataSource {
   }
 
   @override
-  Future<void> unlikePost({required String userId, required String postId}) async {
+  Future<void> unlikePost(
+      {required String userId, required String postId}) async {
     try {
       final options = await _getAuthHeaders();
 
@@ -68,7 +93,8 @@ class LikeRemoteDatasource implements ILikeDataSource {
   @override
   Future<List<LikeModel>> getLikesByPostId(String postId) async {
     try {
-      final response = await _apiService.dio.get(ApiEndpoints.getPostLikes(postId));
+      final response =
+          await _apiService.dio.get(ApiEndpoints.getPostLikes(postId));
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as List;

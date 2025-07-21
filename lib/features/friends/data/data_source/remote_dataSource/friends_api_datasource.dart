@@ -13,12 +13,15 @@ class FriendsApiDatasource implements IFriendsDataSource {
       : _apiService = apiService;
 
 
-  @override
+@override
 Future<FollowModel> followUser(String followeeId) async {
   try {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("token");
+    final senderId = prefs.getString("userId"); // Assuming you store this on login
+    final senderusername = prefs.getString("username"); 
 
+    // Step 1: Follow user
     final response = await _apiService.dio.post(
       ApiEndpoints.followUser,
       data: {"followeeId": followeeId},
@@ -31,6 +34,22 @@ Future<FollowModel> followUser(String followeeId) async {
 
     final followResponse = FollowResponse.fromJson(response.data);
     if (followResponse.success && followResponse.data != null) {
+      // Step 2: Create notification after successful follow
+      await _apiService.dio.post(
+        ApiEndpoints.createNotification,
+        data: {
+          "recipient": followeeId,
+          "type": "follow",
+          "message": "$senderusername started following you",
+          "relatedId": senderId, // optionally use followId or senderId
+        },
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+          },
+        ),
+      );
+
       return followResponse.data!;
     } else {
       throw Exception("Follow failed: ${followResponse.message}");
@@ -39,6 +58,7 @@ Future<FollowModel> followUser(String followeeId) async {
     throw Exception("Follow error: $e");
   }
 }
+
 
 
   @override
