@@ -53,23 +53,39 @@ class NotificationRemoteDataSource implements INotificationDataSource {
   }
 
   @override
-  Future<List<NotificationEntity>> getNotifications(String userId) async {
-    final options = await _getAuthHeaders();
+Future<List<NotificationEntity>> getNotifications(String userId) async {
+  final options = await _getAuthHeaders();
 
-    final response = await _apiService.dio.get(
-      'notifications/$userId',
-      options: options,
-    );
+  final response = await _apiService.dio.get(
+    'notifications/$userId',
+    options: options,
+  );
 
-    if (response.statusCode == 200 && response.data['success'] == true) {
-      final List<dynamic> list = response.data['data'];
-      return list
-          .map((json) => NotificationApiModel.fromJson(json as Map<String, dynamic>).toEntity())
-          .toList();
-    } else {
-      throw Exception('Failed to fetch notifications');
+  if (response.statusCode == 200 && response.data['success'] == true) {
+    final List<dynamic>? list = response.data['data'];
+
+    if (list == null) {
+      throw Exception('Notification list is null');
     }
+
+    return list
+    .whereType<Map<String, dynamic>>()
+    .map((json) {
+      try {
+        return NotificationApiModel.fromJson(json).toEntity();
+      } catch (e) {
+        print("Error parsing notification: $e");
+        return null;
+      }
+    })
+    .whereType<NotificationEntity>()
+    .toList();
+
+  } else {
+    throw Exception('Failed to fetch notifications');
   }
+}
+
 
   @override
   Future<void> markAsRead(String notificationId) async {
