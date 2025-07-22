@@ -6,6 +6,8 @@ import 'package:softconnect/core/network/api_service.dart';
 import 'package:softconnect/features/auth/data/data_source/user_data_source.dart';
 import 'package:softconnect/features/auth/data/model/user_api_model.dart';
 import 'package:softconnect/features/auth/domain/entity/user_entity.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
 
 class UserRemoteDataSource implements IUserDataSource {
   final ApiService _apiService;
@@ -42,33 +44,40 @@ class UserRemoteDataSource implements IUserDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>> loginUser(
-      String username, String password) async {
-    try {
-      final response = await _apiService.dio.post(
-        ApiEndpoints.loginUser,
-        data: {"email": username.toString(), "password": password.toString()},
-      );
+Future<Map<String, dynamic>> loginUser(String username, String password) async {
+  try {
+    // 🔥 Get the current FCM token
+    final fcmToken = await FirebaseMessaging.instance.getToken();
 
-      if (response.statusCode == 200) {
-        final token = response.data['token'];
-        final userData = response.data['data'];
-        final userApiModel = UserApiModel.fromJson(userData);
-        final userEntity = userApiModel.toEntity();
+    final response = await _apiService.dio.post(
+      ApiEndpoints.loginUser,
+      data: {
+        "email": username.toString(),
+        "password": password.toString(),
+        "fcmToken": fcmToken, // 🔥 Send FCM token to backend
+      },
+    );
 
-        return {
-          'token': token,
-          'user': userEntity,
-        };
-      } else {
-        throw Exception(response.statusMessage);
-      }
-    } on DioException catch (e) {
-      throw Exception('Failed to login user: ${e.message}');
-    } catch (e) {
-      throw Exception('Failed to login user: $e');
+    if (response.statusCode == 200) {
+      final token = response.data['token'];
+      final userData = response.data['data'];
+      final userApiModel = UserApiModel.fromJson(userData);
+      final userEntity = userApiModel.toEntity();
+
+      return {
+        'token': token,
+        'user': userEntity,
+      };
+    } else {
+      throw Exception(response.statusMessage);
     }
+  } on DioException catch (e) {
+    throw Exception('Failed to login user: ${e.message}');
+  } catch (e) {
+    throw Exception('Failed to login user: $e');
   }
+}
+
 
   @override
   Future<void> registerUser(UserEntity user) async {
