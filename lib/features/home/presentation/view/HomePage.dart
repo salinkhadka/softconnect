@@ -1,7 +1,9 @@
+import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:softconnect/app/service_locator/service_locator.dart';
 import 'package:softconnect/features/home/domain/use_case/getPostsUseCase.dart';
 import 'package:softconnect/features/home/presentation/view/CreatePostModal.dart';
@@ -13,8 +15,47 @@ import 'package:softconnect/features/home/presentation/view_model/homepage_viewm
 import 'package:softconnect/features/notification/presentation/view/notification_page.dart';
 import 'package:softconnect/features/notification/presentation/view_model/notification_viewmodel.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  late StreamSubscription _accelerometerSubscription;
+  double _shakeThreshold = 15.0;
+  DateTime? _lastShakeTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _startListeningToShake();
+  }
+
+  @override
+  void dispose() {
+    _accelerometerSubscription.cancel();
+    super.dispose();
+  }
+
+  void _startListeningToShake() {
+    _accelerometerSubscription = accelerometerEventStream().listen((event) {
+      double acceleration = sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
+      if (acceleration > _shakeThreshold) {
+        final now = DateTime.now();
+        if (_lastShakeTime == null || now.difference(_lastShakeTime!) > const Duration(seconds: 2)) {
+          _lastShakeTime = now;
+          _onShakeDetected();
+        }
+      }
+    });
+  }
+
+  void _onShakeDetected() {
+    final homeViewModel = context.read<HomeViewModel>();
+    homeViewModel.logout(context);
+  }
 
   Future<String?> _getCurrentUserId() async {
     final prefs = await SharedPreferences.getInstance();
