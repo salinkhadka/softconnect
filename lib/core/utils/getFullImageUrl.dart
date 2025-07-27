@@ -5,4 +5,4 @@ String getFullImageUrl(String? imagePath) {
     return imagePath.contains('http')
         ? imagePath
         : ApiEndpoints.serverAddress+'/${imagePath.replaceAll("\\", "/")}';
-  }git s
+  }
