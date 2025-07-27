@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:softconnect/app/constants/api_endpoints.dart';
 import 'package:softconnect/app/service_locator/service_locator.dart';
 import 'package:softconnect/core/utils/network_image_util.dart';
 import 'package:softconnect/features/friends/domain/use_case/follow_user_usecase.dart';
@@ -22,8 +23,8 @@ import 'package:softconnect/features/home/domain/entity/post_entity.dart';
 import 'package:softconnect/features/profile/presentation/view/followers_page.dart';
 import 'package:softconnect/features/profile/presentation/view/following_page.dart';
 import 'package:softconnect/features/auth/presentation/view/View/change_password.dart';
-// Add these imports for your use cases
 import 'package:softconnect/features/friends/domain/entity/follow_entity.dart';
+import 'package:softconnect/features/profile/presentation/view/profile_header_component.dart';
 
 class UserProfilePage extends StatefulWidget {
   final String? userId;
@@ -167,7 +168,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Unfollowed successfully'),
-                backgroundColor: Colors.green,
+                backgroundColor: Color(0xFF37225C),
               ),
             );
 
@@ -200,7 +201,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Followed successfully'),
-                backgroundColor: Colors.green,
+                backgroundColor:Color(0xFF37225C),
               ),
             );
 
@@ -226,7 +227,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   String getFullImageUrl(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) return '';
-    const baseUrl = 'http://10.0.2.2:2000';
+    const baseUrl = ApiEndpoints.serverAddress;
     return imagePath.startsWith('http')
         ? imagePath
         : '$baseUrl/${imagePath.replaceAll("\\", "/")}';
@@ -234,22 +235,64 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   // Delete post with confirmation dialog
   Future<void> _deletePost(BuildContext context, PostEntity post) async {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Delete Post'),
-          content: const Text(
-              'Are you sure you want to delete this post? This action cannot be undone.'),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Delete Post',
+            style: TextStyle(
+              color: const Color(0xFF37225C),
+              fontSize: isTablet ? 22 : 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to delete this post? This action cannot be undone.',
+            style: TextStyle(
+              color: const Color(0xFF37225C).withOpacity(0.8),
+              fontSize: isTablet ? 16 : 14,
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFB8A6E6),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isTablet ? 20 : 16,
+                  vertical: isTablet ? 12 : 8,
+                ),
+              ),
+              child: Text(
+                'Cancel',
+                style: TextStyle(fontSize: isTablet ? 16 : 14),
+              ),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Delete'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isTablet ? 20 : 16,
+                  vertical: isTablet ? 12 : 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                'Delete',
+                style: TextStyle(fontSize: isTablet ? 16 : 14),
+              ),
             ),
           ],
         );
@@ -257,19 +300,44 @@ class _UserProfilePageState extends State<UserProfilePage> {
     );
 
     if (shouldDelete == true) {
-      await context.read<UserProfileViewModel>().deletePost(post.id);
+      try {
+        await context.read<UserProfileViewModel>().deletePost(post.id);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Post deleted successfully')),
-        );
-        context.read<FeedViewModel>().add(LoadPostsEvent(viewingUserId));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Post deleted successfully'),
+              backgroundColor: const Color(0xFF37225C),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+          context.read<FeedViewModel>().add(LoadPostsEvent(viewingUserId));
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete post: ${e.toString()}'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
       }
     }
   }
 
   // Update post dialog
   Future<void> _updatePost(BuildContext context, PostEntity post) async {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+    
     final TextEditingController contentController =
         TextEditingController(text: post.content);
     String selectedPrivacy = post.privacy;
@@ -292,7 +360,18 @@ class _UserProfilePageState extends State<UserProfilePage> {
             }
 
             return AlertDialog(
-              title: const Text('Update Post'),
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Text(
+                'Update Post',
+                style: TextStyle(
+                  color: const Color(0xFF37225C),
+                  fontSize: isTablet ? 22 : 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -300,25 +379,52 @@ class _UserProfilePageState extends State<UserProfilePage> {
                     TextField(
                       controller: contentController,
                       maxLines: 5,
-                      decoration: const InputDecoration(
+                      style: TextStyle(
+                        fontSize: isTablet ? 16 : 14,
+                        color: const Color(0xFF37225C),
+                      ),
+                      decoration: InputDecoration(
                         labelText: 'Content',
-                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(
+                          color: const Color(0xFFB8A6E6),
+                          fontSize: isTablet ? 16 : 14,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFB8A6E6)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF37225C), width: 2),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: isTablet ? 20 : 16),
                     DropdownButtonFormField<String>(
                       value: selectedPrivacy,
-                      decoration: const InputDecoration(
+                      style: TextStyle(
+                        fontSize: isTablet ? 16 : 14,
+                        color: const Color(0xFF37225C),
+                      ),
+                      decoration: InputDecoration(
                         labelText: 'Privacy',
-                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(
+                          color: const Color(0xFFB8A6E6),
+                          fontSize: isTablet ? 16 : 14,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFB8A6E6)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF37225C), width: 2),
+                        ),
                       ),
                       items: const [
-                        DropdownMenuItem(
-                            value: 'Public', child: Text('Public')),
-                        DropdownMenuItem(
-                            value: 'Private', child: Text('Private')),
-                        DropdownMenuItem(
-                            value: 'Friends', child: Text('Friends Only')),
+                        DropdownMenuItem(value: 'Public', child: Text('Public')),
+                        DropdownMenuItem(value: 'Private', child: Text('Private')),
+                        DropdownMenuItem(value: 'Friends', child: Text('Friends Only')),
                       ],
                       onChanged: (value) {
                         setState(() {
@@ -326,13 +432,13 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         });
                       },
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: isTablet ? 20 : 16),
                     Row(
                       children: [
                         if (selectedImagePath != null) ...[
                           Container(
-                            width: 50,
-                            height: 50,
+                            width: isTablet ? 60 : 50,
+                            height: isTablet ? 60 : 50,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               image: DecorationImage(
@@ -341,31 +447,46 @@ class _UserProfilePageState extends State<UserProfilePage> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 10),
-                        ] else if (post.imageUrl != null &&
-                            post.imageUrl!.isNotEmpty) ...[
+                          SizedBox(width: isTablet ? 12 : 10),
+                        ] else if (post.imageUrl != null && post.imageUrl!.isNotEmpty) ...[
                           Container(
-                            width: 50,
-                            height: 50,
+                            width: isTablet ? 60 : 50,
+                            height: isTablet ? 60 : 50,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               image: DecorationImage(
-                                image: NetworkImage(
-                                    getFullImageUrl(post.imageUrl)),
+                                image: NetworkImage(getFullImageUrl(post.imageUrl)),
                                 fit: BoxFit.cover,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          SizedBox(width: isTablet ? 12 : 10),
                         ],
-                        TextButton.icon(
-                          onPressed: _pickImage,
-                          icon: const Icon(Icons.image),
-                          label: Text(selectedImagePath != null ||
-                                  (post.imageUrl != null &&
-                                      post.imageUrl!.isNotEmpty)
-                              ? 'Change Image'
-                              : 'Add Image'),
+                        Expanded(
+                          child: TextButton.icon(
+                            onPressed: _pickImage,
+                            icon: Icon(
+                              Icons.image,
+                              color: const Color(0xFF37225C),
+                              size: isTablet ? 20 : 18,
+                            ),
+                            label: Text(
+                              selectedImagePath != null ||
+                                      (post.imageUrl != null && post.imageUrl!.isNotEmpty)
+                                  ? 'Change Image'
+                                  : 'Add Image',
+                              style: TextStyle(
+                                color: const Color(0xFF37225C),
+                                fontSize: isTablet ? 16 : 14,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              backgroundColor: const Color(0xFFB8A6E6).withOpacity(0.1),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -375,9 +496,19 @@ class _UserProfilePageState extends State<UserProfilePage> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFB8A6E6),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isTablet ? 20 : 16,
+                      vertical: isTablet ? 12 : 8,
+                    ),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(fontSize: isTablet ? 16 : 14),
+                  ),
                 ),
-                TextButton(
+                ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pop({
                       'content': contentController.text.trim(),
@@ -385,7 +516,21 @@ class _UserProfilePageState extends State<UserProfilePage> {
                       'imagePath': selectedImagePath,
                     });
                   },
-                  child: const Text('Update'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF37225C),
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isTablet ? 20 : 16,
+                      vertical: isTablet ? 12 : 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    'Update',
+                    style: TextStyle(fontSize: isTablet ? 16 : 14),
+                  ),
                 ),
               ],
             );
@@ -395,23 +540,45 @@ class _UserProfilePageState extends State<UserProfilePage> {
     );
 
     if (result != null) {
-      final updatedPost = PostEntity(
-        id: post.id,
-        content: result['content'] as String,
-        privacy: result['privacy'] as String,
-        imageUrl: result['imagePath'] as String? ?? post.imageUrl,
-        user: post.user,
-        createdAt: post.createdAt,
-        updatedAt: DateTime.now(),
-      );
-
-      await context.read<UserProfileViewModel>().updatePost(updatedPost);
-      context.read<FeedViewModel>().add(LoadPostsEvent(viewingUserId));
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Post updated successfully')),
+      try {
+        final updatedPost = PostEntity(
+          id: post.id,
+          content: result['content'] as String,
+          privacy: result['privacy'] as String,
+          imageUrl: result['imagePath'] as String? ?? post.imageUrl,
+          user: post.user,
+          createdAt: post.createdAt,
+          updatedAt: DateTime.now(),
         );
+
+        await context.read<UserProfileViewModel>().updatePost(updatedPost);
+        context.read<FeedViewModel>().add(LoadPostsEvent(viewingUserId));
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Post updated successfully'),
+              backgroundColor: const Color(0xFF37225C),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update post: ${e.toString()}'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
       }
     }
   }
@@ -419,14 +586,21 @@ class _UserProfilePageState extends State<UserProfilePage> {
   @override
   Widget build(BuildContext context) {
     final feedViewModel = context.watch<FeedViewModel>();
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
 
     return BlocBuilder<UserProfileViewModel, UserProfileState>(
       builder: (context, profileState) {
         final user = profileState.user;
 
         if (user == null) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Center(
+              child: CircularProgressIndicator(
+                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF37225C)),
+              ),
+            ),
           );
         }
 
@@ -437,6 +611,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
               SnackBar(
                 content: Text(profileState.error!),
                 backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             );
           });
@@ -446,13 +624,23 @@ class _UserProfilePageState extends State<UserProfilePage> {
             .where((p) => p.user.userId == viewingUserId)
             .toList();
 
-        final profileImageUrl = getFullImageUrl(user.profilePhoto);
-
         return Scaffold(
+          backgroundColor: Colors.white,
           appBar: AppBar(
-            title: Text(isOwnProfile ? 'My Profile' : user.username),
+            backgroundColor: const Color(0xFF37225C),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            title: Text(
+              isOwnProfile ? 'My Profile' : user.username,
+              style: TextStyle(
+                fontSize: isTablet ? 22 : 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            centerTitle: true,
           ),
           body: RefreshIndicator(
+            color: const Color(0xFF37225C),
             onRefresh: () async {
               await context
                   .read<UserProfileViewModel>()
@@ -467,236 +655,419 @@ class _UserProfilePageState extends State<UserProfilePage> {
               }
             },
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.zero,
               children: [
-                /// Profile Header
-                Center(
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundImage: profileImageUrl.isNotEmpty
-                            ? NetworkImage(profileImageUrl)
-                            : null,
-                        child: profileImageUrl.isEmpty
-                            ? const Icon(Icons.person, size: 50)
-                            : null,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        user.username,
-                        style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      Text('@${user.username}',
-                          style: const TextStyle(color: Colors.grey)),
-                      if (user.bio != null && user.bio!.isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        Text(
-                          user.bio!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                              fontSize: 14,
-                              fontStyle: FontStyle.italic,
-                              color: Colors.black87),
-                        ),
-                      ],
-                    ],
-                  ),
+                // Use the new ProfileHeaderComponent
+                ProfileHeaderComponent(
+                  user: user,
+                  getFullImageUrl: getFullImageUrl,
                 ),
 
-                const SizedBox(height: 20),
-
-                /// Info Card
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        if (user.studentId != null) ...[
-                          _infoRow("Student ID", user.studentId.toString()),
-                          const SizedBox(height: 8),
+                // Info Card with responsive design
+                Container(
+                  margin: EdgeInsets.symmetric(
+                    horizontal: isTablet ? 32.0 : 16.0,
+                    vertical: isTablet ? 16.0 : 12.0,
+                  ),
+                  child: Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    color: Colors.white,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFFB8A6E6).withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      padding: EdgeInsets.all(isTablet ? 24.0 : 16.0),
+                      child: Column(
+                        children: [
+                          if (user.studentId != null) ...[
+                            _infoRow("Student ID", user.studentId.toString(), isTablet),
+                            SizedBox(height: isTablet ? 16 : 12),
+                          ],
+                          _infoRow("Role", user.role, isTablet),
+                          SizedBox(height: isTablet ? 16 : 12),
+                          _infoRow("Followers", '${followers.length}', isTablet),
+                          SizedBox(height: isTablet ? 16 : 12),
+                          _infoRow("Following", '${following.length}', isTablet),
                         ],
-                        _infoRow("Role", user.role),
-                        const SizedBox(height: 8),
-                        _infoRow("Followers", '${followers.length}'),
-                        const SizedBox(height: 8),
-                        _infoRow("Following", '${following.length}'),
-                      ],
+                      ),
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 16),
-
-                // EDIT PROFILE BUTTON (only on own profile)
-                if (isOwnProfile)
-  Padding(
-    padding: const EdgeInsets.symmetric(vertical: 16),
-    child: Center(
-      child: Row(
-        mainAxisSize: MainAxisSize.min, // Wrap content width
-        children: [
-          ElevatedButton(
-            onPressed: () => _showEditProfileSheet(context),
-            child: const Text('Edit Profile'),
-          ),
-          const SizedBox(width: 16), // spacing between buttons
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ChangePassword(
-                    userId: viewingUserId,
+                // Action Buttons Section
+                Container(
+                  margin: EdgeInsets.symmetric(
+                    horizontal: isTablet ? 32.0 : 16.0,
+                    vertical: isTablet ? 16.0 : 12.0,
                   ),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange, // or any color you prefer
-            ),
-            child: const Text('Change Password'),
-          ),
-        ],
-      ),
-    ),
-  ),
-
-                  
-
-                // FOLLOW/UNFOLLOW AND MESSAGE BUTTONS (only for other users)
-                if (!isOwnProfile)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: isLoadingFollowData
-                        ? const Center(child: CircularProgressIndicator())
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              ElevatedButton(
-                                onPressed: isLoadingFollow ? null : _toggleFollow,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isFollowing ? Colors.grey : Colors.blue,
+                  child: Column(
+                    children: [
+                      // EDIT PROFILE BUTTONS (only on own profile)
+                      if (isOwnProfile)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => _showEditProfileSheet(context),
+                                icon: Icon(
+                                  Icons.edit,
+                                  size: isTablet ? 20 : 18,
                                 ),
-                                child: isLoadingFollow
-                                    ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                        ),
-                                      )
-                                    : Text(isFollowing ? 'Unfollow' : 'Follow'),
+                                label: Text(
+                                  'Edit Profile',
+                                  style: TextStyle(
+                                    fontSize: isTablet ? 16 : 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF37225C),
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: isTablet ? 16 : 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 2,
+                                ),
                               ),
-                              OutlinedButton(
+                            ),
+                            SizedBox(width: isTablet ? 16 : 12),
+                            Expanded(
+                              child: ElevatedButton.icon(
                                 onPressed: () {
-                                  final messageViewModel =
-                                      serviceLocator<MessageViewModel>();
-
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => BlocProvider.value(
-                                        value: messageViewModel,
-                                        child: MessagePage(
-                                          otherUserId: user.userId!,
-                                          otherUserName: user.username,
-                                          otherUserPhoto:
-                                              getFullImageUrl(user.profilePhoto),
-                                        ),
+                                      builder: (_) => ChangePassword(
+                                        userId: viewingUserId,
                                       ),
                                     ),
                                   );
                                 },
-                                child: const Text('Message'),
+                                icon: Icon(
+                                  Icons.lock,
+                                  size: isTablet ? 20 : 18,
+                                ),
+                                label: Text(
+                                  'Change Password',
+                                  style: TextStyle(
+                                    fontSize: isTablet ? 16 : 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFB8A6E6),
+                                  foregroundColor: const Color(0xFF37225C),
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: isTablet ? 16 : 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                      // FOLLOW/UNFOLLOW AND MESSAGE BUTTONS (only for other users)
+                      if (!isOwnProfile)
+                        isLoadingFollowData
+                            ? Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(isTablet ? 24.0 : 16.0),
+                                  child: CircularProgressIndicator(
+                                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF37225C)),
+                                  ),
+                                ),
+                              )
+                            : Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: isLoadingFollow ? null : _toggleFollow,
+                                      icon: isLoadingFollow
+                                          ? SizedBox(
+                                              width: isTablet ? 20 : 16,
+                                              height: isTablet ? 20 : 16,
+                                              child: const CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                              ),
+                                            )
+                                          : Icon(
+                                              isFollowing ? Icons.person_remove : Icons.person_add,
+                                              size: isTablet ? 20 : 18,
+                                            ),
+                                      label: Text(
+                                        isFollowing ? 'Unfollow' : 'Follow',
+                                        style: TextStyle(
+                                          fontSize: isTablet ? 16 : 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: isFollowing 
+                                            ? const Color(0xFFB8A6E6) 
+                                            : const Color(0xFF37225C),
+                                        foregroundColor: isFollowing 
+                                            ? const Color(0xFF37225C) 
+                                            : Colors.white,
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: isTablet ? 16 : 12,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        elevation: 2,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: isTablet ? 16 : 12),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () {
+                                        final messageViewModel =
+                                            serviceLocator<MessageViewModel>();
+
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => BlocProvider.value(
+                                              value: messageViewModel,
+                                              child: MessagePage(
+                                                otherUserId: user.userId!,
+                                                otherUserName: user.username,
+                                                otherUserPhoto:
+                                                    getFullImageUrl(user.profilePhoto),
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      icon: Icon(
+                                        Icons.message,
+                                        size: isTablet ? 20 : 18,
+                                      ),
+                                      label: Text(
+                                        'Message',
+                                        style: TextStyle(
+                                          fontSize: isTablet ? 16 : 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: const Color(0xFF37225C),
+                                        side: const BorderSide(
+                                          color: Color(0xFF37225C),
+                                          width: 2,
+                                        ),
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: isTablet ? 16 : 12,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                    ],
+                  ),
+                ),
+
+                // Posts Section
+                Container(
+                  margin: EdgeInsets.symmetric(
+                    horizontal: isTablet ? 32.0 : 16.0,
+                    vertical: isTablet ? 24.0 : 16.0,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Posts Header
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isTablet ? 20.0 : 16.0,
+                          vertical: isTablet ? 16.0 : 12.0,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF37225C),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.article,
+                              color: Colors.white,
+                              size: isTablet ? 24 : 20,
+                            ),
+                            SizedBox(width: isTablet ? 12 : 8),
+                            Text(
+                              'Posts',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: isTablet ? 20 : 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isTablet ? 12 : 8,
+                                vertical: isTablet ? 6 : 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${posts.length}',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: isTablet ? 16 : 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      SizedBox(height: isTablet ? 20 : 16),
+
+                      // Posts Content
+                      if (!isOwnProfile && !isFollowing)
+                        Container(
+                          padding: EdgeInsets.all(isTablet ? 40.0 : 32.0),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFB8A6E6).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFFB8A6E6).withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.lock,
+                                size: isTablet ? 64 : 48,
+                                color: const Color(0xFFB8A6E6),
+                              ),
+                              SizedBox(height: isTablet ? 20 : 16),
+                              Text(
+                                'Follow this user to see their posts',
+                                style: TextStyle(
+                                  fontSize: isTablet ? 18 : 16,
+                                  color: const Color(0xFF37225C).withOpacity(0.7),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
                             ],
                           ),
+                        )
+                      else if (posts.isEmpty)
+                        Container(
+                          padding: EdgeInsets.all(isTablet ? 40.0 : 32.0),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFB8A6E6).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFFB8A6E6).withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.article_outlined,
+                                size: isTablet ? 64 : 48,
+                                color: const Color(0xFFB8A6E6),
+                              ),
+                              SizedBox(height: isTablet ? 20 : 16),
+                              Text(
+                                'No posts available',
+                                style: TextStyle(
+                                  fontSize: isTablet ? 18 : 16,
+                                  color: const Color(0xFF37225C).withOpacity(0.7),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        ...posts.map((post) {
+                          final isLiked =
+                              feedViewModel.state.isLikedMap[post.id] ?? false;
+                          final likeCount =
+                              feedViewModel.state.likeCounts[post.id] ?? 0;
+                          final commentCount =
+                              feedViewModel.state.commentCounts[post.id] ?? 0;
+
+                          return Container(
+                            margin: EdgeInsets.only(
+                              bottom: isTablet ? 16.0 : 12.0,
+                            ),
+                            child: PostComponent(
+                              post: post,
+                              currentUserId: currentUserId,
+                              isLiked: isLiked,
+                              likeCount: likeCount,
+                              commentCount: commentCount,
+                              onLikePressed: () {
+                                final feedBloc = context.read<FeedViewModel>();
+                                if (isLiked) {
+                                  feedBloc.add(UnlikePostEvent(
+                                    postId: post.id,
+                                    userId: currentUserId,
+                                  ));
+                                } else {
+                                  feedBloc.add(LikePostEvent(
+                                    postId: post.id,
+                                    userId: currentUserId,
+                                  ));
+                                }
+                              },
+                              onCommentPressed: () {
+                                final commentVM = serviceLocator<CommentViewModel>();
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (_) => BlocProvider.value(
+                                    value: commentVM,
+                                    child: CommentModal(
+                                      postOwnerUserId: post.user.userId,
+                                      postId: post.id,
+                                      userId: currentUserId,
+                                    ),
+                                  ),
+                                );
+                              },
+                              // Only show delete/update for own posts
+                              onDeletePressed: isOwnProfile ? () => _deletePost(context, post) : null,
+                              onUpdatePressed: isOwnProfile ? () => _updatePost(context, post) : null,
+                            ),
+                          );
+                        }).toList(),
+                    ],
                   ),
-
-                const Divider(height: 32),
-
-                Text('Posts', style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 12),
-
-                // Posts section with conditional visibility
-                if (!isOwnProfile && !isFollowing)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: Column(
-                        children: [
-                          Icon(Icons.lock, size: 48, color: Colors.grey),
-                          SizedBox(height: 16),
-                          Text(
-                            'Follow this user to see their posts',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                else if (posts.isEmpty)
-                  const Center(child: Text('No posts available'))
-                else
-                  ...posts.map((post) {
-                    final isLiked =
-                        feedViewModel.state.isLikedMap[post.id] ?? false;
-                    final likeCount =
-                        feedViewModel.state.likeCounts[post.id] ?? 0;
-                    final commentCount =
-                        feedViewModel.state.commentCounts[post.id] ?? 0;
-
-                    return PostComponent(
-                      post: post,
-                      currentUserId: currentUserId,
-                      isLiked: isLiked,
-                      likeCount: likeCount,
-                      commentCount: commentCount,
-                      onLikePressed: () {
-                        final feedBloc = context.read<FeedViewModel>();
-                        if (isLiked) {
-                          feedBloc.add(UnlikePostEvent(
-                            postId: post.id,
-                            userId: currentUserId,
-                          ));
-                        } else {
-                          feedBloc.add(LikePostEvent(
-                            postId: post.id,
-                            userId: currentUserId,
-                          ));
-                        }
-                      },
-                      onCommentPressed: () {
-                        final commentVM = serviceLocator<CommentViewModel>();
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) => BlocProvider.value(
-                            value: commentVM,
-                            child: CommentModal(
-                              postOwnerUserId: post.user.userId,
-                              postId: post.id,
-                              userId: currentUserId,
-                            ),
-                          ),
-                        );
-                      },
-                      // Only show delete/update for own posts
-                      onDeletePressed: isOwnProfile ? () => _deletePost(context, post) : null,
-                      onUpdatePressed: isOwnProfile ? () => _updatePost(context, post) : null,
-                    );
-                  }).toList(),
+                ),
               ],
             ),
           ),
@@ -705,12 +1076,26 @@ class _UserProfilePageState extends State<UserProfilePage> {
     );
   }
 
-  Widget _infoRow(String label, String value) {
+  Widget _infoRow(String label, String value, bool isTablet) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        Text(value),
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: isTablet ? 16 : 14,
+            color: const Color(0xFF37225C),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isTablet ? 16 : 14,
+            color: const Color(0xFF37225C).withOpacity(0.8),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ],
     );
   }
@@ -718,6 +1103,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
   void _showEditProfileSheet(BuildContext context) {
     final userProfileVM = context.read<UserProfileViewModel>();
     final user = userProfileVM.state.user;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
 
     final TextEditingController usernameController =
         TextEditingController(text: user?.username ?? '');
@@ -726,18 +1113,16 @@ class _UserProfilePageState extends State<UserProfilePage> {
     final TextEditingController bioController =
         TextEditingController(text: user?.bio ?? '');
 
-    String? selectedImagePath; // local variable to hold picked image path
+    String? selectedImagePath;
+    bool isUpdating = false;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            // Get full image URL using existing method
             final fullProfileImageUrl = getFullImageUrl(user?.profilePhoto);
 
             Future<void> _pickImage(ImageSource source) async {
@@ -751,7 +1136,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 if (Theme.of(context).platform == TargetPlatform.android) {
                   permission = Permission.storage;
                 } else {
-                  permission = Permission.photos; // iOS
+                  permission = Permission.photos;
                 }
               }
 
@@ -766,15 +1151,25 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 }
               } else if (status.isDenied) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text(
-                          'Permission denied. Please allow it to continue.')),
+                  SnackBar(
+                    content: const Text('Permission denied. Please allow it to continue.'),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 );
               } else if (status.isPermanentlyDenied) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: const Text(
                         'Permission permanently denied. Open app settings to enable it.'),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     action: SnackBarAction(
                       label: 'Settings',
                       onPressed: () => openAppSettings(),
@@ -787,20 +1182,42 @@ class _UserProfilePageState extends State<UserProfilePage> {
             Future<void> _showImageSourcePicker() async {
               showModalBottomSheet(
                 context: context,
+                backgroundColor: Colors.white,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
                 builder: (_) => SafeArea(
                   child: Wrap(
                     children: [
                       ListTile(
-                        leading: const Icon(Icons.photo_library),
-                        title: const Text('Choose from Gallery'),
+                        leading: const Icon(
+                          Icons.photo_library,
+                          color: Color(0xFF37225C),
+                        ),
+                        title: Text(
+                          'Choose from Gallery',
+                          style: TextStyle(
+                            color: const Color(0xFF37225C),
+                            fontSize: isTablet ? 16 : 14,
+                          ),
+                        ),
                         onTap: () {
                           Navigator.pop(context);
                           _pickImage(ImageSource.gallery);
                         },
                       ),
                       ListTile(
-                        leading: const Icon(Icons.camera_alt),
-                        title: const Text('Take a Photo'),
+                        leading: const Icon(
+                          Icons.camera_alt,
+                          color: Color(0xFF37225C),
+                        ),
+                        title: Text(
+                          'Take a Photo',
+                          style: TextStyle(
+                            color: const Color(0xFF37225C),
+                            fontSize: isTablet ? 16 : 14,
+                          ),
+                        ),
                         onTap: () {
                           Navigator.pop(context);
                           _pickImage(ImageSource.camera);
@@ -812,95 +1229,296 @@ class _UserProfilePageState extends State<UserProfilePage> {
               );
             }
 
-            return Padding(
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
               padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 24,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                left: isTablet ? 24 : 16,
+                right: isTablet ? 24 : 16,
+                top: isTablet ? 32 : 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom + (isTablet ? 32 : 24),
               ),
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Handle bar
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFB8A6E6),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    SizedBox(height: isTablet ? 24 : 20),
+
                     Text(
                       'Edit Profile',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 20),
-                    GestureDetector(
-                      onTap: _showImageSourcePicker,
-                      child: CircleAvatar(
-                        radius: 40,
-                        backgroundImage: selectedImagePath != null
-                            ? FileImage(File(selectedImagePath!))
-                            : (fullProfileImageUrl.isNotEmpty
-                                ? NetworkImage(fullProfileImageUrl)
-                                : null),
-                        child: (selectedImagePath == null &&
-                                fullProfileImageUrl.isEmpty)
-                            ? const Icon(Icons.camera_alt)
-                            : null,
+                      style: TextStyle(
+                        fontSize: isTablet ? 24 : 20,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF37225C),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: isTablet ? 32 : 24),
+
+                    // Profile Image Picker
+                    GestureDetector(
+                      onTap: isUpdating ? null : _showImageSourcePicker,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: isTablet ? 120 : 100,
+                            height: isTablet ? 120 : 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFFB8A6E6),
+                                width: 3,
+                              ),
+                            ),
+                            child: CircleAvatar(
+                              radius: isTablet ? 57 : 47,
+                              backgroundColor: const Color(0xFFB8A6E6).withOpacity(0.3),
+                              backgroundImage: selectedImagePath != null
+                                  ? FileImage(File(selectedImagePath!))
+                                  : (fullProfileImageUrl.isNotEmpty
+                                      ? NetworkImage(fullProfileImageUrl)
+                                      : null),
+                              child: (selectedImagePath == null &&
+                                      fullProfileImageUrl.isEmpty)
+                                  ? Icon(
+                                      Icons.camera_alt,
+                                      size: isTablet ? 32 : 28,
+                                      color: const Color(0xFF37225C),
+                                    )
+                                  : null,
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: EdgeInsets.all(isTablet ? 8 : 6),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF37225C),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.edit,
+                                color: Colors.white,
+                                size: isTablet ? 20 : 16,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: isTablet ? 32 : 24),
+
+                    // Form Fields
                     TextField(
                       controller: usernameController,
-                      decoration: const InputDecoration(
+                      enabled: !isUpdating,
+                      style: TextStyle(
+                        fontSize: isTablet ? 16 : 14,
+                        color: const Color(0xFF37225C),
+                      ),
+                      decoration: InputDecoration(
                         labelText: 'Username',
-                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(
+                          color: const Color(0xFFB8A6E6),
+                          fontSize: isTablet ? 16 : 14,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFB8A6E6)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF37225C), width: 2),
+                        ),
+                        prefixIcon: Icon(
+                          Icons.person,
+                          color: const Color(0xFFB8A6E6),
+                          size: isTablet ? 24 : 20,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: isTablet ? 20 : 16),
+
                     TextField(
                       controller: emailController,
+                      enabled: !isUpdating,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
+                      style: TextStyle(
+                        fontSize: isTablet ? 16 : 14,
+                        color: const Color(0xFF37225C),
+                      ),
+                      decoration: InputDecoration(
                         labelText: 'Email',
-                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(
+                          color: const Color(0xFFB8A6E6),
+                          fontSize: isTablet ? 16 : 14,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFB8A6E6)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF37225C), width: 2),
+                        ),
+                        prefixIcon: Icon(
+                          Icons.email,
+                          color: const Color(0xFFB8A6E6),
+                          size: isTablet ? 24 : 20,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: isTablet ? 20 : 16),
+
                     TextField(
                       controller: bioController,
+                      enabled: !isUpdating,
                       maxLines: 3,
-                      decoration: const InputDecoration(
+                      style: TextStyle(
+                        fontSize: isTablet ? 16 : 14,
+                        color: const Color(0xFF37225C),
+                      ),
+                      decoration: InputDecoration(
                         labelText: 'Bio',
-                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(
+                          color: const Color(0xFFB8A6E6),
+                          fontSize: isTablet ? 16 : 14,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFB8A6E6)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFF37225C), width: 2),
+                        ),
+                        prefixIcon: Icon(
+                          Icons.info,
+                          color: const Color(0xFFB8A6E6),
+                          size: isTablet ? 24 : 20,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: isTablet ? 32 : 24),
+
+                    // Update Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () async {
+                        onPressed: isUpdating ? null : () async {
                           final newUsername = usernameController.text.trim();
                           final newEmail = emailController.text.trim();
                           final newBio = bioController.text.trim();
 
                           if (newUsername.isEmpty || newEmail.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content:
-                                    Text('Username and Email cannot be empty'),
+                              SnackBar(
+                                content: const Text('Username and Email cannot be empty'),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
                             );
                             return;
                           }
 
-                          // ✅ Pass selected image to ViewModel
-                          await userProfileVM.updateUserProfile(
-                            userId: viewingUserId,
-                            username: newUsername,
-                            email: newEmail,
-                            bio: newBio,
-                            profilePhotoPath:
-                                selectedImagePath, // ✅ This line is now active
-                          );
+                          setState(() {
+                            isUpdating = true;
+                          });
 
-                          Navigator.pop(context);
+                          try {
+                            await userProfileVM.updateUserProfile(
+                              userId: viewingUserId,
+                              username: newUsername,
+                              email: newEmail,
+                              bio: newBio,
+                              profilePhotoPath: selectedImagePath,
+                            );
+
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('Profile updated successfully'),
+                                backgroundColor: const Color(0xFF37225C),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to update profile: ${e.toString()}'),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            );
+                          } finally {
+                            setState(() {
+                              isUpdating = false;
+                            });
+                          }
                         },
-                        child: const Text('Update'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isUpdating 
+                              ? const Color(0xFFB8A6E6).withOpacity(0.5)
+                              : const Color(0xFF37225C),
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(
+                            vertical: isTablet ? 16 : 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 2,
+                        ),
+                        child: isUpdating 
+                            ? Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: isTablet ? 20 : 16,
+                                    height: isTablet ? 20 : 16,
+                                    child: const CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  ),
+                                  SizedBox(width: isTablet ? 12 : 8),
+                                  Text(
+                                    'Updating...',
+                                    style: TextStyle(
+                                      fontSize: isTablet ? 18 : 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Text(
+                                'Update Profile',
+                                style: TextStyle(
+                                  fontSize: isTablet ? 18 : 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                   ],

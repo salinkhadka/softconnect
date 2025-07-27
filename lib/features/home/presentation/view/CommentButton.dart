@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:softconnect/app/theme/colors/themecolor.dart';
 
 class CommentButton extends StatelessWidget {
   final int commentCount;
@@ -16,16 +17,19 @@ class CommentButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextButton.icon(
       onPressed: isLoading ? null : onPressed,
-      icon: const Icon(Icons.comment_outlined, color: Colors.grey),
+      icon: Icon(Icons.comment_outlined, color: Themecolor.lavender),
       label: isLoading
-          ? const SizedBox(
+          ? SizedBox(
               width: 12,
               height: 12,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Themecolor.purple,
+              ),
             )
           : Text(
               '$commentCount',
-              style: const TextStyle(color: Colors.grey),
+              style: TextStyle(color: Themecolor.purple),
             ),
     );
   }

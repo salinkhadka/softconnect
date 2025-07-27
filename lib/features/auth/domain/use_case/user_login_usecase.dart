@@ -27,4 +27,3 @@ class UserLoginUsecase implements UsecaseWithParams<Map<String, dynamic>, UserLo
     return await _userRepository.loginUser(params.username, params.password);
   }
 }
-

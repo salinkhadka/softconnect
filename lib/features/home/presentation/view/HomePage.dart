@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:softconnect/app/service_locator/service_locator.dart';
+import 'package:softconnect/app/theme/colors/themecolor.dart';
 import 'package:softconnect/features/home/domain/use_case/getPostsUseCase.dart';
 import 'package:softconnect/features/home/presentation/view/CreatePostModal.dart';
 import 'package:softconnect/features/home/presentation/view/user_search_delegate.dart';
@@ -114,15 +115,23 @@ class _HomePageState extends State<HomePage> {
       child: BlocBuilder<HomeViewModel, HomeState>(
         builder: (context, state) {
           if (state.views.isEmpty) {
-            return const Scaffold(
-              body: SafeArea(child: Center(child: CircularProgressIndicator())),
+            return Scaffold(
+              backgroundColor: Themecolor.white,
+              body: SafeArea(
+                child: Center(
+                  child: CircularProgressIndicator(color: Themecolor.purple),
+                ),
+              ),
             );
           }
 
           return Scaffold(
             resizeToAvoidBottomInset: true,
+            backgroundColor: Themecolor.white,
             appBar: AppBar(
               title: const Text('SoftConnect'),
+              backgroundColor: Themecolor.purple,
+              foregroundColor: Themecolor.white,
               actions: [
                 IconButton(
                   icon: const Icon(Icons.search),
@@ -151,8 +160,9 @@ class _HomePageState extends State<HomePage> {
                     currentIndex: state.selectedIndex,
                     onTap: (index) =>
                         context.read<HomeViewModel>().onTabTapped(index),
-                    selectedItemColor: Theme.of(context).primaryColor,
-                    unselectedItemColor: Colors.grey,
+                    selectedItemColor: Themecolor.purple,
+                    unselectedItemColor: Themecolor.lavender,
+                    backgroundColor: Themecolor.white,
                     items: const [
                       BottomNavigationBarItem(
                           icon: Icon(Icons.home), label: 'Home'),
@@ -172,6 +182,8 @@ class _HomePageState extends State<HomePage> {
                     child: Center(
                       child: FloatingActionButton(
                         onPressed: () => _showPostModal(context),
+                        backgroundColor: Themecolor.purple,
+                        foregroundColor: Themecolor.white,
                         child: const Icon(Icons.add),
                       ),
                     ),

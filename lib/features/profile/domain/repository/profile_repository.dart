@@ -11,4 +11,3 @@ abstract interface class IProfileRepository {
     String? profilePhoto, // Added
   });
 }
-

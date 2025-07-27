@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:softconnect/app/constants/api_endpoints.dart';
+import 'package:softconnect/app/theme/colors/themecolor.dart';
 import 'package:softconnect/features/home/domain/entity/post_entity.dart';
 import 'package:softconnect/features/home/presentation/view/LikeButton.dart';
 import 'package:softconnect/features/home/presentation/view/CommentButton.dart';
@@ -32,126 +34,226 @@ class PostCard extends StatelessWidget {
     if (imagePath == null || imagePath.isEmpty) return '';
     return imagePath.contains('http')
         ? imagePath
-        : 'http://10.0.2.2:2000/${imagePath.replaceAll("\\", "/")}';
+        : ApiEndpoints.serverAddress+'/${imagePath.replaceAll("\\", "/")}';
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
     final fullImageUrl = getFullImageUrl(post.imageUrl);
     final profileImageUrl = getFullImageUrl(post.user.profilePhoto);
 
-    return Card(
-      elevation: 3,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// HEADER: User Info + PopupMenuButton
-            Row(
-              children: [
-                profileImageUrl.isNotEmpty
-                    ? CircleAvatar(
-                        radius: 20,
-                        backgroundImage: NetworkImage(profileImageUrl),
-                      )
-                    : CircleAvatar(
-                        radius: 20,
-                        backgroundColor: Colors.blueGrey,
-                        child: Text(
-                          post.user.username[0].toUpperCase(),
-                          style: const TextStyle(color: Colors.white),
+    return Container(
+      margin: EdgeInsets.symmetric(
+        vertical: isTablet ? 12 : 8,
+        horizontal: isTablet ? 16 : 0,
+      ),
+      child: Card(
+        elevation: 3,
+        color: Themecolor.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: Themecolor.lavender.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(isTablet ? 16 : 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// HEADER: User Info + PopupMenuButton
+              Row(
+                children: [
+                  profileImageUrl.isNotEmpty
+                      ? CircleAvatar(
+                          radius: isTablet ? 24 : 20,
+                          backgroundColor: Themecolor.lavender,
+                          backgroundImage: NetworkImage(profileImageUrl),
+                        )
+                      : CircleAvatar(
+                          radius: isTablet ? 24 : 20,
+                          backgroundColor: Themecolor.lavender,
+                          child: Text(
+                            post.user.username[0].toUpperCase(),
+                            style: TextStyle(
+                              color: Themecolor.purple,
+                              fontSize: isTablet ? 18 : 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                  SizedBox(width: isTablet ? 12 : 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          post.user.username,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: isTablet ? 18 : 16,
+                            color: Themecolor.purple,
+                          ),
+                        ),
+                        Text(
+                          post.createdAt.toLocal().toString().split(' ')[0],
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: isTablet ? 14 : 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // PopupMenuButton
+                  PopupMenuButton<String>(
+                    icon: Icon(
+                      Icons.more_vert,
+                      size: isTablet ? 24 : 20,
+                      color: Themecolor.purple,
+                    ),
+                    color: Themecolor.white,
+                    onSelected: (value) {
+                      if (value == 'delete') {
+                        if (onDeletePressed != null) onDeletePressed!();
+                      } else if (value == 'update') {
+                        if (onUpdatePressed != null) onUpdatePressed!();
+                      }
+                    },
+                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                      PopupMenuItem<String>(
+                        value: 'update',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit, color: Themecolor.purple, size: isTablet ? 20 : 18),
+                            SizedBox(width: isTablet ? 12 : 8),
+                            Text(
+                              'Update Post',
+                              style: TextStyle(
+                                color: Themecolor.purple,
+                                fontSize: isTablet ? 16 : 14,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        post.user.username,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        post.createdAt.toLocal().toString().split(' ')[0],
-                        style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, color: Colors.red, size: isTablet ? 20 : 18),
+                            SizedBox(width: isTablet ? 12 : 8),
+                            Text(
+                              'Delete Post',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: isTablet ? 16 : 14,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
-                // Replace Icon with PopupMenuButton
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, size: 20),
-                  onSelected: (value) {
-                    if (value == 'delete') {
-                      if (onDeletePressed != null) onDeletePressed!();
-                    } else if (value == 'update') {
-                      if (onUpdatePressed != null) onUpdatePressed!();
-                    }
-                  },
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
-                      value: 'update',
-                      child: Text('Update Post'),
+                ],
+              ),
+
+              SizedBox(height: isTablet ? 12 : 10),
+
+              /// POST TEXT
+              if (post.content.isNotEmpty)
+                Padding(
+                  padding: EdgeInsets.only(bottom: isTablet ? 12 : 10),
+                  child: Text(
+                    post.content,
+                    style: TextStyle(
+                      fontSize: isTablet ? 16 : 15,
+                      color: Themecolor.purple,
+                      height: 1.4,
                     ),
-                    const PopupMenuItem<String>(
-                      value: 'delete',
-                      child: Text('Delete Post'),
+                  ),
+                ),
+
+              /// POST IMAGE
+              if (fullImageUrl.isNotEmpty)
+                Container(
+                  margin: EdgeInsets.only(bottom: isTablet ? 16 : 12),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: NetworkImageWidget(
+                      imageUrl: fullImageUrl,
+                      width: double.infinity,
+                      height: isTablet ? 300 : 250,
+                      fit: BoxFit.cover,
+                      placeholder: Container(
+                        height: isTablet ? 300 : 250,
+                        color: Themecolor.lavender.withOpacity(0.1),
+                        child: Center(
+                          child: CircularProgressIndicator(color: Themecolor.purple),
+                        ),
+                      ),
+                      errorWidget: Container(
+                        height: isTablet ? 300 : 250,
+                        color: Themecolor.lavender.withOpacity(0.1),
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.broken_image,
+                                color: Themecolor.lavender,
+                                size: isTablet ? 48 : 40,
+                              ),
+                              SizedBox(height: isTablet ? 12 : 8),
+                              Text(
+                                'Image load failed',
+                                style: TextStyle(
+                                  color: Themecolor.lavender,
+                                  fontSize: isTablet ? 16 : 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+              /// LIKE + COMMENT ACTIONS
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isTablet ? 8 : 4,
+                  vertical: isTablet ? 8 : 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Themecolor.lavender.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    LikeButton(
+                      postId: post.id,
+                      userId: currentUserId ?? '',
+                      isLiked: isLiked,
+                      likeCount: likeCount,
+                      isLoading: false,
+                      onPressed: onLikePressed,
+                    ),
+                    CommentButton(
+                      commentCount: commentCount,
+                      isLoading: false,
+                      onPressed: onCommentPressed,
                     ),
                   ],
                 ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            /// POST TEXT
-            if (post.content.isNotEmpty)
-              Text(
-                post.content,
-                style: const TextStyle(fontSize: 15),
               ),
-
-            const SizedBox(height: 10),
-
-            /// POST IMAGE
-            if (fullImageUrl.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: NetworkImageWidget(
-                  imageUrl: fullImageUrl,
-                  width: double.infinity,
-                  height: 250,
-                  fit: BoxFit.cover,
-                  placeholder: const Center(child: CircularProgressIndicator()),
-                  errorWidget: const Center(child: Text('Image load failed')),
-                ),
-              ),
-
-            const SizedBox(height: 12),
-
-            /// LIKE + COMMENT ACTIONS
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                LikeButton(
-                  postId: post.id,
-                  userId: currentUserId ?? '',
-                  isLiked: isLiked,
-                  likeCount: likeCount,
-                  isLoading: false,
-                  onPressed: onLikePressed,
-                ),
-                CommentButton(
-                  commentCount: commentCount,
-                  isLoading: false,
-                  onPressed: onCommentPressed,
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

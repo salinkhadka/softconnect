@@ -26,4 +26,3 @@ class DeleteComment extends CommentEvent {
 
   DeleteComment({required this.commentId, required this.postId});
 }
-

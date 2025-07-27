@@ -21,10 +21,38 @@ class HomeViewModel extends Cubit<HomeState> {
   }
 
   void logout(BuildContext context) async {
-    print("Logout triggered");
+  print("Logout triggered");
 
+  try {
     final prefs = await SharedPreferences.getInstance();
+    
+    // STEP 1: Backup biometric data before clearing
+    final biometricEmail = prefs.getString('biometric_email');
+    final biometricPassword = prefs.getString('biometric_password');
+    final biometricEnabled = prefs.getBool('biometric_enabled') ?? false;
+    
+    print('Backing up biometric data before logout:');
+    print('Biometric email: $biometricEmail');
+    print('Biometric password exists: ${biometricPassword != null}');
+    print('Biometric enabled: $biometricEnabled');
+    
+    // STEP 2: Clear all preferences
     await prefs.clear();
+    print('All preferences cleared');
+    
+    // STEP 3: Restore biometric data if it existed
+    if (biometricEmail != null && biometricPassword != null && biometricEnabled) {
+      await prefs.setString('biometric_email', biometricEmail);
+      await prefs.setString('biometric_password', biometricPassword);
+      await prefs.setBool('biometric_enabled', true);
+      
+      print('Biometric data restored after logout:');
+      print('Restored email: ${prefs.getString('biometric_email')}');
+      print('Restored password exists: ${prefs.getString('biometric_password') != null}');
+      print('Restored enabled: ${prefs.getBool('biometric_enabled')}');
+    } else {
+      print('No biometric data to restore');
+    }
 
     // Navigate to login screen and remove all previous routes
     Navigator.pushAndRemoveUntil(
@@ -37,5 +65,23 @@ class HomeViewModel extends Cubit<HomeState> {
       ),
       (route) => false,
     );
+    
+    print("Logout completed successfully with biometric data preserved");
+    
+  } catch (e) {
+    print('Error during logout: $e');
+    
+    // Even if there's an error, still navigate to login
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BlocProvider<LoginViewModel>(
+          create: (_) => serviceLocator<LoginViewModel>(),
+          child: LoginScreen(),
+        ),
+      ),
+      (route) => false,
+    );
   }
+}
 }

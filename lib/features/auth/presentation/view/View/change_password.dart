@@ -47,7 +47,7 @@ class _ChangePasswordState extends State<ChangePassword> {
       (token) {
         _resetToken = token; // Save the token here
 
-        showMySnackBar(context: context, message: "Password verified successfully", color: Colors.green);
+        showMySnackBar(context: context, message: "Password verified successfully", color: Color(0xFF37225C));
         setState(() {
           _verified = true;
         });
@@ -84,7 +84,7 @@ class _ChangePasswordState extends State<ChangePassword> {
     result.fold(
       (failure) => showMySnackBar(context: context, message: "Reset failed: ${failure.message}", color: Colors.red),
       (_) {
-        showMySnackBar(context: context, message: "Password reset successfully", color: Colors.green);
+        showMySnackBar(context: context, message: "Password reset successfully", color:Color(0xFF37225C));
         Navigator.pop(context); // Go back after success
       },
     );

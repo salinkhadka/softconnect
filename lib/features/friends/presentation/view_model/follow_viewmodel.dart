@@ -63,7 +63,7 @@ class FollowViewModel extends Bloc<FollowEvent, FollowState> {
         showMySnackBar(
           context: event.context,
           message: "Followed successfully!",
-          color: Colors.green,
+          color: Color(0xFF37225C),
         );
       },
     );
@@ -97,7 +97,7 @@ class FollowViewModel extends Bloc<FollowEvent, FollowState> {
         showMySnackBar(
           context: event.context,
           message: "Unfollowed successfully!",
-          color: Colors.green,
+          color:Color(0xFF37225C),
         );
       },
     );

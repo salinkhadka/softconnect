@@ -1,6 +1,8 @@
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:softconnect/app/constants/api_endpoints.dart';
+import 'package:softconnect/app/theme/colors/themecolor.dart';
 import 'package:softconnect/features/friends/presentation/view_model/follow_event.dart';
 import 'package:softconnect/features/friends/presentation/view_model/follow_state.dart';
 import 'package:softconnect/features/friends/presentation/view_model/follow_viewmodel.dart';
@@ -12,7 +14,7 @@ class FriendsPage extends StatelessWidget {
 
   String getBackendBaseUrl() {
     if (Platform.isAndroid) {
-      return 'http://10.0.2.2:2000';
+      return ApiEndpoints.serverAddress ;
     } else if (Platform.isIOS) {
       return 'http://localhost:2000';
     } else {
@@ -25,7 +27,12 @@ class FriendsPage extends StatelessWidget {
     final backendBaseUrl = getBackendBaseUrl();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Friends')),
+      appBar: AppBar(
+        title: const Text('Friends'),
+        backgroundColor: Themecolor.purple,
+        foregroundColor: Themecolor.white,
+      ),
+      backgroundColor: Themecolor.white,
       body: BlocBuilder<FollowViewModel, FollowState>(
         builder: (context, state) {
           if (!state.isLoading &&
@@ -36,26 +43,34 @@ class FriendsPage extends StatelessWidget {
 
           return Column(
             children: [
-              ToggleButtons(
-                isSelected: [state.showFollowers, !state.showFollowers],
-                onPressed: (index) {
-                  if (index == 0) {
-                    context.read<FollowViewModel>().add(ShowFollowersViewEvent());
-                  } else {
-                    context.read<FollowViewModel>().add(ShowFollowingViewEvent());
-                  }
-                },
-                children: const [
-                  Padding(
-                      padding: EdgeInsets.all(10), child: Text('Followers')),
-                  Padding(
-                      padding: EdgeInsets.all(10), child: Text('Following')),
-                ],
+              Container(
+                color: Themecolor.white,
+                child: ToggleButtons(
+                  isSelected: [state.showFollowers, !state.showFollowers],
+                  onPressed: (index) {
+                    if (index == 0) {
+                      context.read<FollowViewModel>().add(ShowFollowersViewEvent());
+                    } else {
+                      context.read<FollowViewModel>().add(ShowFollowingViewEvent());
+                    }
+                  },
+                  color: Themecolor.purple,
+                  selectedColor: Themecolor.white,
+                  fillColor: Themecolor.purple,
+                  borderColor: Themecolor.lavender,
+                  selectedBorderColor: Themecolor.purple,
+                  children: const [
+                    Padding(
+                        padding: EdgeInsets.all(10), child: Text('Followers')),
+                    Padding(
+                        padding: EdgeInsets.all(10), child: Text('Following')),
+                  ],
+                ),
               ),
               const SizedBox(height: 10),
               Expanded(
                 child: state.isLoading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? Center(child: CircularProgressIndicator(color: Themecolor.purple))
                     : Builder(
                         builder: (_) {
                           final list =
@@ -63,15 +78,18 @@ class FriendsPage extends StatelessWidget {
 
                           if (list.isEmpty) {
                             return Center(
-                              child: Text(state.showFollowers
-                                  ? 'No followers yet.'
-                                  : 'Not following anyone.'),
+                              child: Text(
+                                state.showFollowers
+                                    ? 'No followers yet.'
+                                    : 'Not following anyone.',
+                                style: TextStyle(color: Themecolor.purple),
+                              ),
                             );
                           }
 
                           return ListView.separated(
                             itemCount: list.length,
-                            separatorBuilder: (_, __) => const Divider(),
+                            separatorBuilder: (_, __) => Divider(color: Themecolor.lavender),
                             itemBuilder: (context, index) {
                               final follow = list[index];
 
@@ -86,16 +104,11 @@ class FriendsPage extends StatelessWidget {
                                     '$backendBaseUrl/${photo.replaceAll('\\', '/')}';
                               }
 
-                              // DEBUG PRINTS:
-                              print('username: $username');
-                              print('photo field: $photo');
-                              print('Generated imageUrl: $imageUrl');
-
                               return ListTile(
                                 leading: (imageUrl != null)
                                     ? CircleAvatar(
                                         radius: 22,
-                                        backgroundColor: Colors.transparent,
+                                        backgroundColor: Themecolor.lavender,
                                         child: ClipOval(
                                           child: Image.network(
                                             imageUrl,
@@ -105,26 +118,29 @@ class FriendsPage extends StatelessWidget {
                                             loadingBuilder:
                                                 (context, child, loadingProgress) {
                                               if (loadingProgress == null) return child;
-                                              return const Center(
+                                              return Center(
                                                 child: CircularProgressIndicator(
-                                                    strokeWidth: 2),
+                                                  strokeWidth: 2,
+                                                  color: Themecolor.purple,
+                                                ),
                                               );
                                             },
                                             errorBuilder:
                                                 (context, error, stackTrace) {
-                                              print('Image load error: $error');
-                                              return const Icon(Icons.person, size: 32);
+                                              return Icon(Icons.person, size: 32, color: Themecolor.purple);
                                             },
                                           ),
                                         ),
                                       )
-                                    : const CircleAvatar(
+                                    : CircleAvatar(
                                         radius: 22,
-                                        child: Icon(Icons.person),
+                                        backgroundColor: Themecolor.lavender,
+                                        child: Icon(Icons.person, color: Themecolor.purple),
                                       ),
-                                title: Text(username),
+                                title: Text(username, style: TextStyle(color: Themecolor.purple)),
                                 subtitle: Text(
                                   'Followed at: ${createdAt.toString().substring(0, 16)}',
+                                  style: TextStyle(color: Colors.grey[600]),
                                 ),
                                 trailing: !state.showFollowers
                                     ? ElevatedButton(

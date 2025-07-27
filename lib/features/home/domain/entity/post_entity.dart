@@ -1,4 +1,3 @@
-
 import 'package:softconnect/features/home/domain/entity/user_preview_entity.dart';
 
 class PostEntity {

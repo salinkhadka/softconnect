@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:softconnect/app/constants/api_endpoints.dart';
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_view_model.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/user_search_state.dart';
@@ -18,7 +19,7 @@ class UserSearchDelegate extends SearchDelegate {
 
   String getFullImageUrl(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) return '';
-    const baseUrl = 'http://10.0.2.2:2000';
+    const baseUrl = ApiEndpoints.serverAddress;
     return imagePath.startsWith('http')
         ? imagePath
         : '$baseUrl/${imagePath.replaceAll("\\", "/")}';

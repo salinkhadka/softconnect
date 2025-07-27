@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:softconnect/app/constants/api_endpoints.dart';
 import 'package:softconnect/app/service_locator/service_locator.dart';
+import 'package:softconnect/app/theme/colors/themecolor.dart';
 import 'package:softconnect/features/friends/domain/entity/follow_entity.dart';
 import 'package:softconnect/features/friends/domain/use_case/get_following_usecase.dart';
 import 'package:softconnect/features/friends/domain/use_case/follow_user_usecase.dart';
@@ -23,7 +25,7 @@ class FollowingPage extends StatefulWidget {
 
 class _FollowingPageState extends State<FollowingPage> {
   List<FollowEntity> following = [];
-  Set<String> currentUserFollowing = {}; // Track who current user is following
+  Set<String> currentUserFollowing = {};
   bool isLoading = true;
   String? error;
   late String currentUserId;
@@ -60,7 +62,6 @@ class _FollowingPageState extends State<FollowingPage> {
     });
 
     try {
-      // Load following list for the profile being viewed
       final followingResult = await _getFollowingUseCase.call(
         GetFollowingParams(widget.userId),
       );
@@ -75,7 +76,6 @@ class _FollowingPageState extends State<FollowingPage> {
         (followingList) async {
           following = followingList;
           
-          // If not viewing own profile, load current user's following to show correct buttons
           if (!isOwnProfile) {
             await _loadCurrentUserFollowing();
           }
@@ -100,7 +100,7 @@ class _FollowingPageState extends State<FollowingPage> {
       );
 
       result.fold(
-        (_) {}, // Ignore error for this optional data
+        (_) {},
         (currentUserFollowingList) {
           currentUserFollowing = currentUserFollowingList
               .map((follow) => follow.id!)
@@ -117,7 +117,6 @@ class _FollowingPageState extends State<FollowingPage> {
 
     try {
       if (isFollowing) {
-        // Unfollow
         final result = await _unfollowUserUseCase.call(
           UnfollowUserParams(targetUserId),
         );
@@ -130,16 +129,14 @@ class _FollowingPageState extends State<FollowingPage> {
             setState(() {
               currentUserFollowing.remove(targetUserId);
               
-              // If viewing own profile, also remove from the following list
               if (isOwnProfile) {
                 following.removeWhere((follow) => follow.id == targetUserId);
               }
             });
-            _showSnackBar('Unfollowed successfully', Colors.green);
+            _showSnackBar('Unfollowed successfully',Color(0xFF37225C));
           },
         );
       } else {
-        // Follow
         final result = await _followUserUseCase.call(
           FollowUserParams(targetUserId),
         );
@@ -152,7 +149,7 @@ class _FollowingPageState extends State<FollowingPage> {
             setState(() {
               currentUserFollowing.add(targetUserId);
             });
-            _showSnackBar('Followed successfully', Colors.green);
+            _showSnackBar('Followed successfully',Color(0xFF37225C));
           },
         );
       }
@@ -173,7 +170,7 @@ class _FollowingPageState extends State<FollowingPage> {
 
   String getFullImageUrl(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) return '';
-    const baseUrl = 'http://10.0.2.2:2000';
+    const baseUrl = ApiEndpoints.serverAddress;
     return imagePath.startsWith('http')
         ? imagePath
         : '$baseUrl/${imagePath.replaceAll("\\", "/")}';
@@ -181,173 +178,252 @@ class _FollowingPageState extends State<FollowingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+
     return Scaffold(
+      backgroundColor: Themecolor.white,
       appBar: AppBar(
-        title: Text('${widget.userName}\'s Following'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        title: Text(
+          '${widget.userName}\'s Following',
+          style: TextStyle(
+            fontSize: isTablet ? 22 : 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Themecolor.purple,
+        foregroundColor: Themecolor.white,
         elevation: 1,
       ),
       body: RefreshIndicator(
+        color: Themecolor.purple,
         onRefresh: _loadData,
-        child: _buildBody(),
+        child: _buildBody(isTablet),
       ),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(bool isTablet) {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: CircularProgressIndicator(color: Themecolor.purple),
+      );
     }
 
     if (error != null) {
-      return _buildErrorWidget();
+      return _buildErrorWidget(isTablet);
     }
 
     if (following.isEmpty) {
-      return _buildEmptyWidget();
+      return _buildEmptyWidget(isTablet);
     }
 
     return ListView.builder(
       itemCount: following.length,
-      padding: const EdgeInsets.all(8),
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 24 : 16,
+        vertical: isTablet ? 16 : 8,
+      ),
       itemBuilder: (context, index) {
         final followingUser = following[index];
-        return _buildFollowingCard(followingUser);
+        return _buildFollowingCard(followingUser, isTablet);
       },
     );
   }
 
-  Widget _buildErrorWidget() {
+  Widget _buildErrorWidget(bool isTablet) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 64, color: Colors.grey),
-          const SizedBox(height: 16),
-          Text('Error: $error'),
-          const SizedBox(height: 16),
+          Icon(
+            Icons.error_outline,
+            size: isTablet ? 80 : 64,
+            color: Themecolor.lavender,
+          ),
+          SizedBox(height: isTablet ? 24 : 16),
+          Text(
+            'Error: $error',
+            style: TextStyle(
+              color: Themecolor.purple,
+              fontSize: isTablet ? 18 : 16,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: isTablet ? 24 : 16),
           ElevatedButton(
             onPressed: _loadData,
-            child: const Text('Retry'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Themecolor.purple,
+              foregroundColor: Themecolor.white,
+              padding: EdgeInsets.symmetric(
+                horizontal: isTablet ? 32 : 24,
+                vertical: isTablet ? 16 : 12,
+              ),
+            ),
+            child: Text(
+              'Retry',
+              style: TextStyle(fontSize: isTablet ? 16 : 14),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyWidget() {
-    return const Center(
+  Widget _buildEmptyWidget(bool isTablet) {
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.person_add_outlined, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
+          Icon(
+            Icons.person_add_outlined,
+            size: isTablet ? 80 : 64,
+            color: Themecolor.lavender,
+          ),
+          SizedBox(height: isTablet ? 24 : 16),
           Text(
             'Not following anyone yet',
-            style: TextStyle(fontSize: 18, color: Colors.grey),
+            style: TextStyle(
+              fontSize: isTablet ? 20 : 18,
+              color: Themecolor.purple,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFollowingCard(FollowEntity followingUser) {
+  Widget _buildFollowingCard(FollowEntity followingUser, bool isTablet) {
     final isCurrentUser = followingUser.id == currentUserId;
     final profileImageUrl = getFullImageUrl(followingUser.profilePhoto);
     final isFollowing = currentUserFollowing.contains(followingUser.id);
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: CircleAvatar(
-          radius: 25,
-          backgroundImage: profileImageUrl.isNotEmpty
-              ? NetworkImage(profileImageUrl)
-              : null,
-          child: profileImageUrl.isEmpty
-              ? Text(
-                  followingUser.username![0].toUpperCase(),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                )
-              : null,
+    return Container(
+      margin: EdgeInsets.only(bottom: isTablet ? 12 : 8),
+      child: Card(
+        elevation: 2,
+        color: Themecolor.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: Themecolor.lavender.withOpacity(0.2),
+            width: 1,
+          ),
         ),
-        title: Text(
-          followingUser.username!,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Text('@${followingUser.username}'),
-        trailing: _buildTrailingWidget(isCurrentUser, isFollowing, followingUser.id!),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => UserProfilePage(
-                userId: followingUser.id,
-              ),
+        child: ListTile(
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: isTablet ? 20 : 16,
+            vertical: isTablet ? 12 : 8,
+          ),
+          leading: CircleAvatar(
+            radius: isTablet ? 28 : 25,
+            backgroundColor: Themecolor.lavender,
+            backgroundImage: profileImageUrl.isNotEmpty
+                ? NetworkImage(profileImageUrl)
+                : null,
+            child: profileImageUrl.isEmpty
+                ? Text(
+                    followingUser.username![0].toUpperCase(),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: isTablet ? 20 : 18,
+                      color: Themecolor.purple,
+                    ),
+                  )
+                : null,
+          ),
+          title: Text(
+            followingUser.username!,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: isTablet ? 18 : 16,
+              color: Themecolor.purple,
             ),
-          );
-        },
+          ),
+          subtitle: Text(
+            '@${followingUser.username}',
+            style: TextStyle(
+              color: Themecolor.lavender,
+              fontSize: isTablet ? 16 : 14,
+            ),
+          ),
+          trailing: _buildTrailingWidget(isCurrentUser, isFollowing, followingUser.id!, isTablet),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => UserProfilePage(
+                  userId: followingUser.id,
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget? _buildTrailingWidget(bool isCurrentUser, bool isFollowing, String userId) {
+  Widget? _buildTrailingWidget(bool isCurrentUser, bool isFollowing, String userId, bool isTablet) {
     if (isCurrentUser) {
-      return const Chip(
-        label: Text('You', style: TextStyle(fontSize: 12)),
-        backgroundColor: Colors.blue,
-        labelStyle: TextStyle(color: Colors.white),
+      return Chip(
+        label: Text(
+          'You',
+          style: TextStyle(
+            fontSize: isTablet ? 14 : 12,
+            color: Themecolor.white,
+          ),
+        ),
+        backgroundColor: Themecolor.purple,
       );
     }
 
-    // Show follow/unfollow button for other users (except when viewing own profile)
     if (!isOwnProfile) {
       return SizedBox(
-        width: 80,
+        width: isTablet ? 90 : 80,
         child: ElevatedButton(
           onPressed: () => _toggleFollow(userId),
           style: ElevatedButton.styleFrom(
-            backgroundColor: isFollowing ? Colors.grey[300] : Colors.blue,
-            foregroundColor: isFollowing ? Colors.black87 : Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            minimumSize: const Size(60, 32),
+            backgroundColor: isFollowing ? Themecolor.lavender : Themecolor.purple,
+            foregroundColor: isFollowing ? Themecolor.purple : Themecolor.white,
+            padding: EdgeInsets.symmetric(horizontal: isTablet ? 12 : 8),
+            minimumSize: Size(isTablet ? 70 : 60, isTablet ? 36 : 32),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
           ),
           child: Text(
             isFollowing ? 'Unfollow' : 'Follow',
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: isTablet ? 12 : 11,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       );
     }
 
-    // When viewing own profile, show unfollow button
     if (isOwnProfile) {
       return SizedBox(
-        width: 80,
+        width: isTablet ? 90 : 80,
         child: ElevatedButton(
           onPressed: () => _toggleFollow(userId),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[300],
-            foregroundColor: Colors.black87,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            minimumSize: const Size(60, 32),
+            backgroundColor: Themecolor.lavender,
+            foregroundColor: Themecolor.purple,
+            padding: EdgeInsets.symmetric(horizontal: isTablet ? 12 : 8),
+            minimumSize: Size(isTablet ? 70 : 60, isTablet ? 36 : 32),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
           ),
-          child: const Text(
+          child: Text(
             'Unfollow',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: isTablet ? 12 : 11,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       );

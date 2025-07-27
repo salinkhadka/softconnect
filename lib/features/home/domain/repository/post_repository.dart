@@ -28,4 +28,3 @@ abstract interface class IPostRepository {
 
   Future<Either<Failure, String>> uploadImage(File postImg);
 }
-

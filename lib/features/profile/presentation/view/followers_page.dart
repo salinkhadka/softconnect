@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:softconnect/app/constants/api_endpoints.dart';
 import 'package:softconnect/app/service_locator/service_locator.dart';
+import 'package:softconnect/app/theme/colors/themecolor.dart';
 import 'package:softconnect/features/friends/domain/entity/follow_entity.dart';
 import 'package:softconnect/features/friends/domain/use_case/get_followers_usecase.dart';
 import 'package:softconnect/features/friends/domain/use_case/follow_user_usecase.dart';
@@ -122,7 +124,7 @@ class _FollowersPageState extends State<FollowersPage> {
             setState(() {
               followingUsers.remove(targetUserId);
             });
-            _showSnackBar('Unfollowed successfully', Colors.green);
+            _showSnackBar('Unfollowed successfully',Color(0xFF37225C));
           },
         );
       } else {
@@ -139,7 +141,7 @@ class _FollowersPageState extends State<FollowersPage> {
             setState(() {
               followingUsers.add(targetUserId);
             });
-            _showSnackBar('Followed successfully', Colors.green);
+            _showSnackBar('Followed successfully',Color(0xFF37225C));
           },
         );
       }
@@ -160,7 +162,7 @@ class _FollowersPageState extends State<FollowersPage> {
 
   String getFullImageUrl(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) return '';
-    const baseUrl = 'http://10.0.2.2:2000';
+    const baseUrl = ApiEndpoints.serverAddress;
     return imagePath.startsWith('http')
         ? imagePath
         : '$baseUrl/${imagePath.replaceAll("\\", "/")}';
@@ -171,11 +173,13 @@ class _FollowersPageState extends State<FollowersPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.userName}\'s Followers'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: Themecolor.purple,
+        foregroundColor: Themecolor.white,
         elevation: 1,
       ),
+      backgroundColor: Themecolor.white,
       body: RefreshIndicator(
+        color: Themecolor.purple,
         onRefresh: _loadData,
         child: _buildBody(),
       ),
@@ -184,7 +188,7 @@ class _FollowersPageState extends State<FollowersPage> {
 
   Widget _buildBody() {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator(color: Themecolor.purple));
     }
 
     if (error != null) {
@@ -210,12 +214,16 @@ class _FollowersPageState extends State<FollowersPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+          Icon(Icons.error_outline, size: 64, color: Themecolor.lavender),
           const SizedBox(height: 16),
-          Text('Error: $error'),
+          Text('Error: $error', style: TextStyle(color: Themecolor.purple)),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _loadData,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Themecolor.purple,
+              foregroundColor: Themecolor.white,
+            ),
             child: const Text('Retry'),
           ),
         ],
@@ -224,15 +232,15 @@ class _FollowersPageState extends State<FollowersPage> {
   }
 
   Widget _buildEmptyWidget() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.people_outline, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
+          Icon(Icons.people_outline, size: 64, color: Themecolor.lavender),
+          const SizedBox(height: 16),
           Text(
             'No followers yet',
-            style: TextStyle(fontSize: 18, color: Colors.grey),
+            style: TextStyle(fontSize: 18, color: Themecolor.purple),
           ),
         ],
       ),
@@ -247,29 +255,32 @@ class _FollowersPageState extends State<FollowersPage> {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       elevation: 2,
+      color: Themecolor.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
           radius: 25,
+          backgroundColor: Themecolor.lavender,
           backgroundImage: profileImageUrl.isNotEmpty
               ? NetworkImage(profileImageUrl)
               : null,
           child: profileImageUrl.isEmpty
               ? Text(
                   follower.username![0].toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
+                    color: Themecolor.purple,
                   ),
                 )
               : null,
         ),
         title: Text(
           follower.username!,
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(fontWeight: FontWeight.w600, color: Themecolor.purple),
         ),
-        subtitle: Text('@${follower.username!}'),
+        subtitle: Text('@${follower.username!}', style: TextStyle(color: Themecolor.lavender)),
         trailing: _buildTrailingWidget(isCurrentUser, isFollowing, follower.followerId),
         onTap: () {
           Navigator.push(
@@ -287,10 +298,10 @@ class _FollowersPageState extends State<FollowersPage> {
 
   Widget? _buildTrailingWidget(bool isCurrentUser, bool isFollowing, String userId) {
     if (isCurrentUser) {
-      return const Chip(
-        label: Text('You', style: TextStyle(fontSize: 12)),
-        backgroundColor: Colors.blue,
-        labelStyle: TextStyle(color: Colors.white),
+      return Chip(
+        label: const Text('You', style: TextStyle(fontSize: 12)),
+        backgroundColor: Themecolor.purple,
+        labelStyle: const TextStyle(color: Colors.white),
       );
     }
 
@@ -299,8 +310,8 @@ class _FollowersPageState extends State<FollowersPage> {
       child: ElevatedButton(
         onPressed: () => _toggleFollow(userId),
         style: ElevatedButton.styleFrom(
-          backgroundColor: isFollowing ? Colors.grey[300] : Colors.blue,
-          foregroundColor: isFollowing ? Colors.black87 : Colors.white,
+          backgroundColor: isFollowing ? Themecolor.lavender : Themecolor.purple,
+          foregroundColor: isFollowing ? Themecolor.purple : Themecolor.white,
           padding: const EdgeInsets.symmetric(horizontal: 8),
           minimumSize: const Size(60, 32),
           shape: RoundedRectangleBorder(

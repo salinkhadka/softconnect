@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:softconnect/app/theme/colors/themecolor.dart';
 import 'package:softconnect/core/utils/validators.dart';
 import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_event.dart';
 import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_state.dart';
@@ -30,12 +31,12 @@ class SignupScreen extends StatelessWidget {
     String selectedProgram = programs[0];
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Themecolor.white,
       body: BlocBuilder<SignupViewModel, SignupState>(
         builder: (context, state) {
           if (state.message != null) {
             Future.microtask(() {
-              final color = state.isSuccess ? Colors.green : Colors.red;
+              final color = state.isSuccess ? Color(0xFF37225C) : Colors.red;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message!),
@@ -57,20 +58,26 @@ class SignupScreen extends StatelessWidget {
                         onTap: () => _showImageSourcePicker(context),
                         child: CircleAvatar(
                           radius: 40,
+                          backgroundColor: Themecolor.lavender,
                           backgroundImage: state.profilePhotoPath != null
                               ? FileImage(File(state.profilePhotoPath!))
                               : null,
                           child: state.profilePhotoPath == null
-                              ? const Icon(Icons.camera_alt)
+                              ? Icon(Icons.camera_alt, color: Themecolor.purple)
                               : null,
                         ),
                       ),
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: usernameController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Full Name',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(color: Themecolor.lavender),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Themecolor.purple, width: 2),
+                          ),
                         ),
                         validator: (val) =>
                             val == null || val.isEmpty ? 'Enter name' : null,
@@ -78,9 +85,14 @@ class SignupScreen extends StatelessWidget {
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: emailController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Email Address',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(color: Themecolor.lavender),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Themecolor.purple, width: 2),
+                          ),
                         ),
                         validator: (val) => val == null || !isValidEmail(val)
                             ? 'Enter a valid email'
@@ -89,9 +101,14 @@ class SignupScreen extends StatelessWidget {
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: studentIdController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Student ID',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(color: Themecolor.lavender),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Themecolor.purple, width: 2),
+                          ),
                         ),
                         keyboardType: TextInputType.number,
                         validator: (val) => val == null || !isValidStudentId(val)
@@ -110,17 +127,27 @@ class SignupScreen extends StatelessWidget {
                         onChanged: (value) {
                           if (value != null) selectedProgram = value;
                         },
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(color: Themecolor.lavender),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Themecolor.purple, width: 2),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: passwordController,
                         obscureText: true,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Password',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(color: Themecolor.lavender),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Themecolor.purple, width: 2),
+                          ),
                         ),
                         validator: (val) => val == null || !isValidPassword(val)
                             ? 'Password must be at least 6 characters'
@@ -130,9 +157,14 @@ class SignupScreen extends StatelessWidget {
                       TextFormField(
                         controller: confirmPasswordController,
                         obscureText: true,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Confirm Password',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(color: Themecolor.lavender),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Themecolor.purple, width: 2),
+                          ),
                         ),
                         validator: (val) => val == null ||
                                 !doPasswordsMatch(
@@ -145,6 +177,7 @@ class SignupScreen extends StatelessWidget {
                         children: [
                           Checkbox(
                             value: state.agreedToTerms,
+                            activeColor: Themecolor.purple,
                             onChanged: (val) {
                               if (val != null) {
                                 context
@@ -185,7 +218,8 @@ class SignupScreen extends StatelessWidget {
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF4B228D),
+                            backgroundColor: Themecolor.purple,
+                            foregroundColor: Themecolor.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           child: state.isLoading
@@ -202,7 +236,10 @@ class SignupScreen extends StatelessWidget {
                         onPressed: () {
                           Navigator.pop(context);
                         },
-                        child: const Text("Already have an account?"),
+                        child: Text(
+                          "Already have an account?",
+                          style: TextStyle(color: Themecolor.purple),
+                        ),
                       ),
                     ],
                   ),
@@ -218,11 +255,12 @@ class SignupScreen extends StatelessWidget {
   void _showImageSourcePicker(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Themecolor.white,
       builder: (_) => SafeArea(
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_library),
+              leading: Icon(Icons.photo_library, color: Themecolor.purple),
               title: const Text('Choose from Gallery'),
               onTap: () {
                 Navigator.pop(context);
@@ -230,7 +268,7 @@ class SignupScreen extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.camera_alt),
+              leading: Icon(Icons.camera_alt, color: Themecolor.purple),
               title: const Text('Take a Photo'),
               onTap: () {
                 Navigator.pop(context);
@@ -244,47 +282,45 @@ class SignupScreen extends StatelessWidget {
   }
 
   Future<void> _pickImage(BuildContext context, ImageSource source) async {
-  final picker = ImagePicker();
+    final picker = ImagePicker();
 
-  Permission permission;
+    Permission permission;
 
-  if (source == ImageSource.camera) {
-    permission = Permission.camera;
-  } else {
-    if (Platform.isAndroid && Platform.version.startsWith('13')) {
-      permission = Permission.photos;
-    } else if (Platform.isAndroid) {
-      permission = Permission.storage;
+    if (source == ImageSource.camera) {
+      permission = Permission.camera;
     } else {
-      permission = Permission.photos; // iOS
+      if (Platform.isAndroid && Platform.version.startsWith('13')) {
+        permission = Permission.photos;
+      } else if (Platform.isAndroid) {
+        permission = Permission.storage;
+      } else {
+        permission = Permission.photos; // iOS
+      }
     }
-  }
 
-  // Request permission
-  PermissionStatus status = await permission.request();
+    // Request permission
+    PermissionStatus status = await permission.request();
 
-  if (status.isGranted) {
-    final pickedFile = await picker.pickImage(source: source);
-    if (pickedFile != null) {
-      context.read<SignupViewModel>().add(ProfilePhotoChanged(pickedFile.path));
-    }
-  } else if (status.isDenied) {
-    // Show permission dialog again
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Permission denied. Please allow it to continue.')),
-    );
-  } else if (status.isPermanentlyDenied) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Permission permanently denied. Open app settings to enable it.'),
-        action: SnackBarAction(
-          label: 'Settings',
-          onPressed: () => openAppSettings(),
+    if (status.isGranted) {
+      final pickedFile = await picker.pickImage(source: source);
+      if (pickedFile != null) {
+        context.read<SignupViewModel>().add(ProfilePhotoChanged(pickedFile.path));
+      }
+    } else if (status.isDenied) {
+      // Show permission dialog again
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Permission denied. Please allow it to continue.')),
+      );
+    } else if (status.isPermanentlyDenied) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Permission permanently denied. Open app settings to enable it.'),
+          action: SnackBarAction(
+            label: 'Settings',
+            onPressed: () => openAppSettings(),
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
-}
-
-
 }

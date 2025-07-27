@@ -38,4 +38,3 @@ class DeleteMessageEvent extends MessageEvent {
   @override
   List<Object?> get props => [messageId];
 }
-

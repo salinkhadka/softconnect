@@ -69,4 +69,3 @@ class CommentViewModel extends Bloc<CommentEvent, CommentState> {
     );
   }
 }
-

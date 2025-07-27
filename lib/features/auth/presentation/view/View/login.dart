@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:softconnect/app/theme/colors/themecolor.dart';
 import 'package:softconnect/core/utils/validators.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_event.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_state.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_viewmodel.dart';
-import 'forgot_password.dart';  // Import ForgotPassword page
+import 'forgot_password.dart';
 
 class LoginScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  LoginScreen({super.key}); // Added key for best practice
+  LoginScreen({super.key});
 
   void _showSnackBar(BuildContext context, String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -25,7 +26,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Themecolor.white,
       body: BlocBuilder<LoginViewModel, LoginState>(
         builder: (context, state) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -46,7 +47,7 @@ class LoginScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(30),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF4B228D),
+                        color: Themecolor.purple,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Column(
@@ -78,9 +79,14 @@ class LoginScreen extends StatelessWidget {
                         children: [
                           TextFormField(
                             controller: emailController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Email',
-                              border: OutlineInputBorder(),
+                              border: OutlineInputBorder(
+                                borderSide: BorderSide(color: Themecolor.lavender),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Themecolor.purple, width: 2),
+                              ),
                             ),
                             keyboardType: TextInputType.emailAddress,
                             validator: (val) => val == null || !isValidEmail(val)
@@ -91,9 +97,14 @@ class LoginScreen extends StatelessWidget {
                           TextFormField(
                             controller: passwordController,
                             obscureText: true,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Password',
-                              border: OutlineInputBorder(),
+                              border: OutlineInputBorder(
+                                borderSide: BorderSide(color: Themecolor.lavender),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Themecolor.purple, width: 2),
+                              ),
                             ),
                             validator: (val) => val == null || val.isEmpty
                                 ? 'Enter Password'
@@ -104,7 +115,8 @@ class LoginScreen extends StatelessWidget {
                             width: double.infinity,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF4B228D),
+                                backgroundColor: Themecolor.purple,
+                                foregroundColor: Themecolor.white,
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                               ),
                               onPressed: state.isLoading
@@ -135,10 +147,17 @@ class LoginScreen extends StatelessWidget {
                                 ),
                               );
                             },
-                            child: const Text("Forgot password?"),
+                            child: Text(
+                              "Forgot password?",
+                              style: TextStyle(color: Themecolor.purple),
+                            ),
                           ),
                           const SizedBox(height: 10),
                           OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: Themecolor.purple),
+                              foregroundColor: Themecolor.purple,
+                            ),
                             onPressed: () {
                               context.read<LoginViewModel>().add(
                                     NavigateToSignUpEvent(context: context),

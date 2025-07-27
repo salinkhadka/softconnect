@@ -112,9 +112,9 @@ class FCMService {
   void _handleNotificationTap(String? payload) {
     log('Notification tapped with payload: $payload');
     
-    // Handle navigation based on payload
+   
     if (payload != null) {
-      // Parse payload and navigate accordingly
+      
       _handlePayload(payload);
     }
   }

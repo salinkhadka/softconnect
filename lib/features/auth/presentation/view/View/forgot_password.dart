@@ -37,7 +37,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
 
     result.fold(
       (failure) => showMySnackBar(context: context, message: "Failed: ${failure.message}", color: Colors.red),
-      (_) => showMySnackBar(context: context, message: "Reset link sent to $email", color: Colors.green),
+      (_) => showMySnackBar(context: context, message: "Reset link sent to $email", color: Color(0xFF37225C)),
     );
   }
 

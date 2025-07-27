@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import 'package:softconnect/app/constants/api_endpoints.dart';
 import 'package:softconnect/core/utils/network_image_util.dart';
 import 'package:softconnect/features/home/domain/entity/post_entity.dart';
 import 'package:softconnect/features/home/presentation/view/CommentButton.dart';
@@ -33,7 +34,7 @@ class PostComponent extends StatelessWidget {
 
   String getBackendBaseUrl() {
     if (Platform.isAndroid) {
-      return 'http://10.0.2.2:2000';
+      return ApiEndpoints.serverAddress;
     } else if (Platform.isIOS) {
       return 'http://localhost:2000';
     } else {

@@ -43,4 +43,3 @@ class FollowState extends Equatable {
   @override
   List<Object?> get props => [isLoading, followers, following, showFollowers, errorMessage];
 }
-

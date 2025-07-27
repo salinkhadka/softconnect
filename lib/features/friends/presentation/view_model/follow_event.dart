@@ -54,4 +54,3 @@ class ShowFollowersViewEvent extends FollowEvent {
 class ShowFollowingViewEvent extends FollowEvent {
   const ShowFollowingViewEvent();
 }
-
