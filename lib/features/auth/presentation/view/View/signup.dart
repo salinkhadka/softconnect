@@ -9,23 +9,15 @@ import 'package:softconnect/features/auth/presentation/view_model/signup_viewmod
 import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_state.dart';
 import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_viewmodel.dart';
 
-class SignupScreen extends StatefulWidget {
+class SignupScreen extends StatelessWidget {
   SignupScreen({Key? key}) : super(key: key);
 
-  @override
-  State<SignupScreen> createState() => _SignupScreenState();
-}
-
-class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final usernameController = TextEditingController();
   final studentIdController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
-
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
 
   final List<String> programs = [
     "Student",
@@ -35,27 +27,16 @@ class _SignupScreenState extends State<SignupScreen> {
   ];
 
   @override
-  void dispose() {
-    emailController.dispose();
-    usernameController.dispose();
-    studentIdController.dispose();
-    passwordController.dispose();
-    confirmPasswordController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    String selectedProgram = programs[0];
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: BlocBuilder<SignupViewModel, SignupState>(
         builder: (context, state) {
           if (state.message != null) {
-            Future.microtask(() {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
               final color = state.isSuccess 
                   ? theme.primaryColor 
                   : theme.colorScheme.error;
@@ -70,6 +51,8 @@ class _SignupScreenState extends State<SignupScreen> {
                   backgroundColor: color,
                 ),
               );
+              // Clear message after showing
+              context.read<SignupViewModel>().add(ClearMessage());
             });
           }
 
@@ -130,7 +113,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       const SizedBox(height: 10),
                       DropdownButtonFormField<String>(
-                        value: selectedProgram,
+                        value: state.selectedProgram ?? programs[0],
                         items: programs.map((program) {
                           return DropdownMenuItem<String>(
                             value: program,
@@ -141,7 +124,9 @@ class _SignupScreenState extends State<SignupScreen> {
                           );
                         }).toList(),
                         onChanged: (value) {
-                          if (value != null) selectedProgram = value;
+                          if (value != null) {
+                            context.read<SignupViewModel>().add(ProgramChanged(value));
+                          }
                         },
                         style: TextStyle(color: theme.colorScheme.onSurface),
                         dropdownColor: theme.colorScheme.surface,
@@ -173,16 +158,14 @@ class _SignupScreenState extends State<SignupScreen> {
                         context: context,
                         controller: passwordController,
                         labelText: 'Password',
-                        obscureText: _obscurePassword,
+                        obscureText: state.obscurePassword,
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                            state.obscurePassword ? Icons.visibility : Icons.visibility_off,
                             color: theme.colorScheme.onSurface.withOpacity(0.6),
                           ),
                           onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
+                            context.read<SignupViewModel>().add(PasswordVisibilityToggled());
                           },
                         ),
                         validator: (val) => val == null || !isValidPassword(val)
@@ -194,16 +177,14 @@ class _SignupScreenState extends State<SignupScreen> {
                         context: context,
                         controller: confirmPasswordController,
                         labelText: 'Confirm Password',
-                        obscureText: _obscureConfirmPassword,
+                        obscureText: state.obscureConfirmPassword,
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                            state.obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
                             color: theme.colorScheme.onSurface.withOpacity(0.6),
                           ),
                           onPressed: () {
-                            setState(() {
-                              _obscureConfirmPassword = !_obscureConfirmPassword;
-                            });
+                            context.read<SignupViewModel>().add(ConfirmPasswordVisibilityToggled());
                           },
                         ),
                         validator: (val) => val == null ||
@@ -247,16 +228,12 @@ class _SignupScreenState extends State<SignupScreen> {
                                   if (_formKey.currentState!.validate()) {
                                     context.read<SignupViewModel>().add(
                                           SignupButtonPressed(
-                                            email:
-                                                emailController.text.trim(),
-                                            username:
-                                                usernameController.text.trim(),
+                                            email: emailController.text.trim(),
+                                            username: usernameController.text.trim(),
                                             studentId: int.parse(
-                                                studentIdController.text
-                                                    .trim()),
-                                            password:
-                                                passwordController.text.trim(),
-                                            role: selectedProgram,
+                                                studentIdController.text.trim()),
+                                            password: passwordController.text.trim(),
+                                            role: state.selectedProgram ?? programs[0],
                                           ),
                                         );
                                   }

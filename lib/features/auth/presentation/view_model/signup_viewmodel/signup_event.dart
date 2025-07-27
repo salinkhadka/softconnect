@@ -46,3 +46,14 @@ class AgreedToTermsToggled extends SignupEvent {
   @override
   List<Object?> get props => [value];
 }
+
+class PasswordVisibilityToggled extends SignupEvent {}
+
+class ConfirmPasswordVisibilityToggled extends SignupEvent {}
+
+class ProgramChanged extends SignupEvent {
+  final String program;
+
+  ProgramChanged(this.program);
+}
+class ClearMessage extends SignupEvent {}

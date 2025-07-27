@@ -1,8 +1,9 @@
+// home_page.dart
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart'; // Add this import back
+import 'package:provider/provider.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:local_auth/local_auth.dart';
@@ -18,6 +19,7 @@ import 'package:softconnect/features/home/presentation/view_model/home_state.dar
 import 'package:softconnect/features/home/presentation/view_model/homepage_viewmodel.dart';
 import 'package:softconnect/features/notification/presentation/view/notification_page.dart';
 import 'package:softconnect/features/notification/presentation/view_model/notification_viewmodel.dart';
+import 'settings_bottom_sheet.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -46,10 +48,12 @@ class _HomePageState extends State<HomePage> {
 
   void _startListeningToShake() {
     _accelerometerSubscription = accelerometerEventStream().listen((event) {
-      double acceleration = sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
+      double acceleration =
+          sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
       if (acceleration > _shakeThreshold) {
         final now = DateTime.now();
-        if (_lastShakeTime == null || now.difference(_lastShakeTime!) > const Duration(seconds: 2)) {
+        if (_lastShakeTime == null ||
+            now.difference(_lastShakeTime!) > const Duration(seconds: 2)) {
           _lastShakeTime = now;
           _onShakeDetected();
         }
@@ -92,7 +96,8 @@ class _HomePageState extends State<HomePage> {
     );
 
     if (result == true && context.mounted) {
-      final feedViewModel = BlocProvider.of<FeedViewModel>(context, listen: false);
+      final feedViewModel =
+          BlocProvider.of<FeedViewModel>(context, listen: false);
       feedViewModel.add(LoadPostsEvent(userId));
     }
   }
@@ -114,9 +119,8 @@ class _HomePageState extends State<HomePage> {
 
   void _showSettingsBottomSheet(BuildContext context) {
     final homeViewModel = context.read<HomeViewModel>();
-    // Now we can get ThemeProvider from Provider context since it's provided in App.dart
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -156,7 +160,10 @@ class _HomePageState extends State<HomePage> {
             resizeToAvoidBottomInset: true,
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
-              title: const Text('SoftConnect'),
+              title: const Align(
+                alignment: Alignment.centerLeft,
+                child: Text('SoftConnect'),
+              ),
               backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
               foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
               actions: [
@@ -185,9 +192,15 @@ class _HomePageState extends State<HomePage> {
                     currentIndex: state.selectedIndex,
                     onTap: (index) =>
                         context.read<HomeViewModel>().onTabTapped(index),
-                    selectedItemColor: Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
-                    unselectedItemColor: Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,
-                    backgroundColor: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+                    selectedItemColor: Theme.of(context)
+                        .bottomNavigationBarTheme
+                        .selectedItemColor,
+                    unselectedItemColor: Theme.of(context)
+                        .bottomNavigationBarTheme
+                        .unselectedItemColor,
+                    backgroundColor: Theme.of(context)
+                        .bottomNavigationBarTheme
+                        .backgroundColor,
                     items: const [
                       BottomNavigationBarItem(
                           icon: Icon(Icons.home), label: 'Home'),
@@ -219,458 +232,6 @@ class _HomePageState extends State<HomePage> {
           );
         },
       ),
-    );
-  }
-}
-
-class SettingsBottomSheet extends StatefulWidget {
-  final LocalAuthentication localAuth;
-  final HomeViewModel homeViewModel;
-  final ThemeProvider themeProvider;
-
-  const SettingsBottomSheet({
-    super.key, 
-    required this.localAuth,
-    required this.homeViewModel,
-    required this.themeProvider,
-  });
-
-  @override
-  State<SettingsBottomSheet> createState() => _SettingsBottomSheetState();
-}
-
-class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
-  bool _isBiometricAvailable = false;
-  bool _hasBiometricEnabled = false;
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkBiometricStatus();
-  }
-
-  Future<void> _checkBiometricStatus() async {
-    try {
-      final bool isAvailable = await widget.localAuth.canCheckBiometrics;
-      final List<BiometricType> availableBiometrics = 
-          await widget.localAuth.getAvailableBiometrics();
-      
-      final prefs = await SharedPreferences.getInstance();
-      final hasEnabled = prefs.getBool('biometric_enabled') ?? false;
-      
-      if (mounted) {
-        setState(() {
-          _isBiometricAvailable = isAvailable && availableBiometrics.isNotEmpty;
-          _hasBiometricEnabled = hasEnabled;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isBiometricAvailable = false;
-          _hasBiometricEnabled = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _toggleBiometric() async {
-    if (!_isBiometricAvailable) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      if (_hasBiometricEnabled) {
-        _showDisableBiometricDialog();
-      } else {
-        await _enableBiometric();
-      }
-    } catch (e) {
-      if (mounted) {
-        _showSnackBar('Failed to toggle biometric setting', isError: true);
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _enableBiometric() async {
-    try {
-      final bool isAuthenticated = await widget.localAuth.authenticate(
-        localizedReason: 'Please authenticate to enable biometric login',
-        options: const AuthenticationOptions(
-          biometricOnly: true,
-          stickyAuth: true,
-        ),
-      );
-
-      if (!isAuthenticated) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-          _showSnackBar('Authentication failed', isError: true);
-        }
-        return;
-      }
-
-      await _showCredentialsDialog();
-
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        _showSnackBar('Biometric authentication failed: ${e.toString()}', isError: true);
-      }
-    }
-  }
-
-  Future<void> _showCredentialsDialog() async {
-    final TextEditingController emailController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    final result = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
-          title: Text(
-            'Enable Biometric Login',
-            style: Theme.of(context).dialogTheme.titleTextStyle,
-          ),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Please enter your login credentials to enable biometric authentication:',
-                  style: Theme.of(context).dialogTheme.contentTextStyle,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (val) => val == null || val.isEmpty
-                      ? 'Please enter your email'
-                      : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (val) => val == null || val.isEmpty
-                      ? 'Please enter your password'
-                      : null,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(false),
-            ),
-            TextButton(
-              child: const Text('Save & Enable'),
-              onPressed: () {
-                if (formKey.currentState!.validate()) {
-                  Navigator.of(context).pop(true);
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
-
-    if (result == true) {
-      await _saveCredentialsAndEnable(
-        emailController.text.trim(),
-        passwordController.text,
-      );
-    } else {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-
-    emailController.dispose();
-    passwordController.dispose();
-  }
-
-  Future<void> _saveCredentialsAndEnable(String email, String password) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('stored_username', email);
-      await prefs.setString('stored_password', password);
-      await prefs.setBool('biometric_enabled', true);
-      
-      if (mounted) {
-        setState(() {
-          _hasBiometricEnabled = true;
-          _isLoading = false;
-        });
-        _showSnackBar('Biometric login enabled successfully!');
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        _showSnackBar('Failed to enable biometric login', isError: true);
-      }
-    }
-  }
-
-  void _showDisableBiometricDialog() async {
-    final shouldDisable = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
-          title: Text(
-            'Disable Biometric Login',
-            style: Theme.of(context).dialogTheme.titleTextStyle,
-          ),
-          content: Text(
-            'Are you sure you want to disable biometric login? You will need to use your password to login in the future.',
-            style: Theme.of(context).dialogTheme.contentTextStyle,
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(false),
-            ),
-            TextButton(
-              child: Text(
-                'Disable',
-                style: TextStyle(color: Colors.red[600]),
-              ),
-              onPressed: () => Navigator.of(context).pop(true),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldDisable == true) {
-      await _disableBiometric();
-    } else {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _disableBiometric() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('stored_username');
-      await prefs.remove('stored_password');
-      await prefs.setBool('biometric_enabled', false);
-      
-      if (mounted) {
-        setState(() {
-          _hasBiometricEnabled = false;
-          _isLoading = false;
-        });
-        _showSnackBar('Biometric login disabled');
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        _showSnackBar('Failed to disable biometric login', isError: true);
-      }
-    }
-  }
-
-  void _showLogoutConfirmation() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
-          title: Text(
-            'Logout',
-            style: Theme.of(context).dialogTheme.titleTextStyle,
-          ),
-          content: Text(
-            'Are you sure you want to logout?',
-            style: Theme.of(context).dialogTheme.contentTextStyle,
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: Text(
-                'Logout',
-                style: TextStyle(color: Colors.red[600]),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
-                widget.homeViewModel.logout(context);
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Now we can use Consumer to listen to ThemeProvider changes
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        final isDarkMode = themeProvider.isDarkMode;
-        
-        return Container(
-          padding: const EdgeInsets.all(20),
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.8,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Settings',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).textTheme.titleLarge?.color,
-                ),
-              ),
-              const SizedBox(height: 20),
-              
-              // Dark Mode Toggle
-              ListTile(
-                leading: Icon(
-                  isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                  color: Theme.of(context).primaryColor,
-                  size: 28,
-                ),
-                title: Text(
-                  'Dark Mode',
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.titleMedium?.color,
-                  ),
-                ),
-                subtitle: Text(
-                  isDarkMode ? 'Dark theme enabled' : 'Light theme enabled',
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                  ),
-                ),
-                trailing: Switch(
-                  value: themeProvider.isDarkMode,
-                  onChanged: (value) => themeProvider.toggleTheme(),
-                  activeColor: Theme.of(context).primaryColor,
-                ),
-                onTap: () => themeProvider.toggleTheme(),
-              ),
-              const Divider(),
-              
-              // Biometric Settings
-              if (_isBiometricAvailable) ...[
-                ListTile(
-                  leading: Icon(
-                    Icons.fingerprint,
-                    color: Theme.of(context).primaryColor,
-                    size: 28,
-                  ),
-                  title: Text(
-                    'Biometric Login',
-                    style: TextStyle(
-                      color: Theme.of(context).textTheme.titleMedium?.color,
-                    ),
-                  ),
-                  subtitle: Text(
-                    _hasBiometricEnabled 
-                      ? 'Enabled - Use fingerprint to login' 
-                      : 'Disabled - Tap to enable biometric login',
-                    style: TextStyle(
-                      color: Theme.of(context).textTheme.bodySmall?.color,
-                    ),
-                  ),
-                  trailing: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Switch(
-                        value: _hasBiometricEnabled,
-                        onChanged: (_) => _toggleBiometric(),
-                        activeColor: Theme.of(context).primaryColor,
-                      ),
-                  onTap: _isLoading ? null : _toggleBiometric,
-                ),
-                const Divider(),
-              ],
-              
-              // Logout
-              ListTile(
-                leading: const Icon(
-                  Icons.logout,
-                  color: Colors.red,
-                  size: 28,
-                ),
-                title: const Text(
-                  'Logout',
-                  style: TextStyle(color: Colors.red),
-                ),
-                subtitle: Text(
-                  'Sign out of your account',
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                  ),
-                ),
-                onTap: _showLogoutConfirmation,
-              ),
-              
-              const SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
     );
   }
 }
