@@ -12,7 +12,6 @@ class ChangePassword extends StatefulWidget {
   @override
   State<ChangePassword> createState() => _ChangePasswordState();
 }
-
 class _ChangePasswordState extends State<ChangePassword> {
   final _verifyController = TextEditingController();
   final _newPasswordController = TextEditingController();

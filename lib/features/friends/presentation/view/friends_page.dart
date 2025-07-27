@@ -12,21 +12,12 @@ import 'package:softconnect/app/service_locator/service_locator.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
 import 'package:softconnect/features/profile/presentation/view_model/user_profile_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_view_model.dart';
+import 'package:softconnect/core/utils/getFullImageUrl.dart';
 
 class FriendsPage extends StatelessWidget {
   final String userId;
 
   const FriendsPage({super.key, required this.userId});
-
-  String getBackendBaseUrl() {
-    if (Platform.isAndroid) {
-      return ApiEndpoints.serverAddress;
-    } else if (Platform.isIOS) {
-      return 'http://localhost:2000';
-    } else {
-      return 'http://localhost:2000';
-    }
-  }
 
   void navigateToUserProfile(BuildContext context, String userId) {
     Navigator.push(
@@ -52,8 +43,6 @@ class FriendsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backendBaseUrl = getBackendBaseUrl();
-
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return Scaffold(
@@ -80,7 +69,6 @@ class FriendsPage extends StatelessWidget {
               return Column(
                 children: [
                   Container(
-                    color: Theme.of(context).scaffoldBackgroundColor,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: ToggleButtons(
                       isSelected: [state.showFollowers, !state.showFollowers],
@@ -99,11 +87,13 @@ class FriendsPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                       children: const [
                         Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                            child: Text('Followers')),
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          child: Text('Followers'),
+                        ),
                         Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                            child: Text('Following')),
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          child: Text('Following'),
+                        ),
                       ],
                     ),
                   ),
@@ -143,27 +133,13 @@ class FriendsPage extends StatelessWidget {
                                 ),
                                 itemBuilder: (context, index) {
                                   final follow = list[index];
-
                                   final username = follow.username ?? 'Unknown';
-                                  final photo = follow.profilePhoto;
                                   final createdAt = follow.createdAt.toLocal();
+                                  final imageUrl = getFullImageUrl(follow.profilePhoto);
 
-                                  // Build image URL only if photo is not null/empty
-                                  String? imageUrl;
-                                  if (photo != null && photo.isNotEmpty) {
-                                    imageUrl =
-                                        '$backendBaseUrl/${photo.replaceAll('\\', '/')}';
-                                  }
-
-                                  // Determine the user ID to navigate to
-                                  String targetUserId;
-                                  if (state.showFollowers) {
-                                    // For followers, navigate to the follower's profile
-                                    targetUserId = follow.followerId;
-                                  } else {
-                                    // For following, navigate to the followee's profile
-                                    targetUserId = follow.followeeId;
-                                  }
+                                  final targetUserId = state.showFollowers
+                                      ? follow.followerId
+                                      : follow.followeeId;
 
                                   return Card(
                                     color: Theme.of(context).cardColor,
@@ -176,10 +152,12 @@ class FriendsPage extends StatelessWidget {
                                       ),
                                       leading: GestureDetector(
                                         onTap: () => navigateToUserProfile(context, targetUserId),
-                                        child: (imageUrl != null)
+                                        child: imageUrl != null
                                             ? CircleAvatar(
                                                 radius: 22,
-                                                backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                                                backgroundColor: Theme.of(context)
+                                                    .primaryColor
+                                                    .withOpacity(0.1),
                                                 child: ClipOval(
                                                   child: Image.network(
                                                     imageUrl,
@@ -196,8 +174,7 @@ class FriendsPage extends StatelessWidget {
                                                         ),
                                                       );
                                                     },
-                                                    errorBuilder:
-                                                        (context, error, stackTrace) {
+                                                    errorBuilder: (context, error, stackTrace) {
                                                       return Icon(
                                                         Icons.person,
                                                         size: 32,
@@ -209,7 +186,9 @@ class FriendsPage extends StatelessWidget {
                                               )
                                             : CircleAvatar(
                                                 radius: 22,
-                                                backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                                                backgroundColor: Theme.of(context)
+                                                    .primaryColor
+                                                    .withOpacity(0.1),
                                                 child: Icon(
                                                   Icons.person,
                                                   color: Theme.of(context).primaryColor,
@@ -221,7 +200,10 @@ class FriendsPage extends StatelessWidget {
                                         child: Text(
                                           username,
                                           style: TextStyle(
-                                            color: Theme.of(context).textTheme.titleMedium?.color,
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.color,
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),

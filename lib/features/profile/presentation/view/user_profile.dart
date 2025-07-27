@@ -27,7 +27,7 @@ import 'package:softconnect/features/home/domain/entity/post_entity.dart';
 import 'package:softconnect/features/auth/presentation/view/View/change_password.dart';
 import 'package:softconnect/features/friends/domain/entity/follow_entity.dart';
 import 'package:softconnect/features/profile/presentation/view/profile_header_component.dart';
-
+import 'package:softconnect/core/utils/getFullImageUrl.dart';
 class UserProfilePage extends StatefulWidget {
   final String? userId;
 

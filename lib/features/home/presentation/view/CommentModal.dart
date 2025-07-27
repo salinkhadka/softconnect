@@ -13,6 +13,7 @@ import 'package:softconnect/features/profile/presentation/view/user_profile.dart
 import 'package:softconnect/app/service_locator/service_locator.dart';
 import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
 import 'package:softconnect/features/profile/presentation/view_model/user_profile_viewmodel.dart';
+import 'package:softconnect/core/utils/getFullImageUrl.dart';
 
 class CommentModal extends StatefulWidget {
   final String postId;
@@ -34,14 +35,6 @@ class _CommentModalState extends State<CommentModal> {
   String? replyingToCommentId;
   Set<String> expandedReplies = {};
   final TextEditingController _commentController = TextEditingController();
-
-  String getBackendBaseUrl() {
-    if (Platform.isAndroid) {
-      return ApiEndpoints.serverAddress;
-    } else {
-      return 'http://localhost:2000';
-    }
-  }
 
   void navigateToUserProfile(BuildContext context, String userId) {
     Navigator.push(
@@ -73,8 +66,6 @@ class _CommentModalState extends State<CommentModal> {
 
   @override
   Widget build(BuildContext context) {
-    final backendBaseUrl = getBackendBaseUrl();
-
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return DraggableScrollableSheet(
@@ -166,7 +157,7 @@ class _CommentModalState extends State<CommentModal> {
                                           .toList();
                                       final comment = topLevelComments[index];
 
-                                      return buildComment(comment, state, backendBaseUrl);
+                                      return buildComment(comment, state);
                                     },
                                   ),
                       ),
@@ -285,8 +276,7 @@ class _CommentModalState extends State<CommentModal> {
     );
   }
 
-  Widget buildComment(dynamic comment, CommentState state, String backendBaseUrl,
-      {bool isReply = false}) {
+  Widget buildComment(dynamic comment, CommentState state, {bool isReply = false}) {
     final replies =
         state.comments.where((c) => c.parentCommentId == comment.id).toList();
     final isExpanded = expandedReplies.contains(comment.id);
@@ -323,8 +313,7 @@ class _CommentModalState extends State<CommentModal> {
                               backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
                               child: ClipOval(
                                 child: NetworkImageWidget(
-                                  imageUrl:
-                                      '$backendBaseUrl/${comment.profilePhoto!.replaceAll('\\', '/')}',
+                                  imageUrl: getFullImageUrl(comment.profilePhoto),
                                   height: 40,
                                   width: 40,
                                   fit: BoxFit.cover,
@@ -532,7 +521,7 @@ class _CommentModalState extends State<CommentModal> {
           // Replies
           if (isExpanded)
             ...replies.map(
-              (reply) => buildComment(reply, state, backendBaseUrl, isReply: true),
+              (reply) => buildComment(reply, state, isReply: true),
             ),
         ],
       ),

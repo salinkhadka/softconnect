@@ -1,8 +1,7 @@
-import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:softconnect/app/constants/api_endpoints.dart';
 import 'package:softconnect/core/utils/network_image_util.dart';
+import 'package:softconnect/core/utils/getFullImageUrl.dart';
 import 'package:softconnect/features/home/domain/entity/post_entity.dart';
 import 'package:softconnect/features/home/presentation/view/CommentButton.dart';
 import 'package:softconnect/features/home/presentation/view/LikeButton.dart';
@@ -36,16 +35,6 @@ class PostComponent extends StatelessWidget {
     this.onDeletePressed,
   }) : super(key: key);
 
-  String getBackendBaseUrl() {
-    if (Platform.isAndroid) {
-      return ApiEndpoints.serverAddress;
-    } else if (Platform.isIOS) {
-      return 'http://localhost:2000';
-    } else {
-      return 'http://localhost:2000';
-    }
-  }
-
   void navigateToUserProfile(BuildContext context) {
     Navigator.push(
       context,
@@ -70,16 +59,8 @@ class PostComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backendBaseUrl = getBackendBaseUrl();
-
-    final imageUrl = (post.imageUrl != null && post.imageUrl!.isNotEmpty)
-        ? '$backendBaseUrl/${post.imageUrl!.replaceAll('\\', '/')}'
-        : null;
-
-    final profileImageUrl =
-        (post.user.profilePhoto != null && post.user.profilePhoto!.isNotEmpty)
-            ? '$backendBaseUrl/${post.user.profilePhoto!.replaceAll('\\', '/')}'
-            : null;
+    final imageUrl = getFullImageUrl(post.imageUrl);
+    final profileImageUrl = getFullImageUrl(post.user.profilePhoto);
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),

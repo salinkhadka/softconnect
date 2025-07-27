@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:softconnect/app/constants/api_endpoints.dart';
 import 'package:softconnect/app/theme/colors/themecolor.dart';
 import 'package:softconnect/features/notification/presentation/view_model/notification_viewmodel.dart';
+import 'package:softconnect/core/utils/getFullImageUrl.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});

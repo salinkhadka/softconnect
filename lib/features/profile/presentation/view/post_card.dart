@@ -5,6 +5,7 @@ import 'package:softconnect/features/home/domain/entity/post_entity.dart';
 import 'package:softconnect/features/home/presentation/view/LikeButton.dart';
 import 'package:softconnect/features/home/presentation/view/CommentButton.dart';
 import 'package:softconnect/core/utils/network_image_util.dart';
+import 'package:softconnect/core/utils/getFullImageUrl.dart';
 
 class PostCard extends StatelessWidget {
   final PostEntity post;
@@ -29,13 +30,6 @@ class PostCard extends StatelessWidget {
     this.onDeletePressed,
     this.onUpdatePressed,
   });
-
-  String getFullImageUrl(String? imagePath) {
-    if (imagePath == null || imagePath.isEmpty) return '';
-    return imagePath.contains('http')
-        ? imagePath
-        : ApiEndpoints.serverAddress+'/${imagePath.replaceAll("\\", "/")}';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,10 +58,10 @@ class PostCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// HEADER: User Info + PopupMenuButton
+              /// HEADER
               Row(
                 children: [
-                  profileImageUrl.isNotEmpty
+                  profileImageUrl != null && profileImageUrl.isNotEmpty
                       ? CircleAvatar(
                           radius: isTablet ? 24 : 20,
                           backgroundColor: Themecolor.lavender,
@@ -108,7 +102,6 @@ class PostCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // PopupMenuButton
                   PopupMenuButton<String>(
                     icon: Icon(
                       Icons.more_vert,
@@ -118,12 +111,12 @@ class PostCard extends StatelessWidget {
                     color: Themecolor.white,
                     onSelected: (value) {
                       if (value == 'delete') {
-                        if (onDeletePressed != null) onDeletePressed!();
+                        onDeletePressed?.call();
                       } else if (value == 'update') {
-                        if (onUpdatePressed != null) onUpdatePressed!();
+                        onUpdatePressed?.call();
                       }
                     },
-                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                    itemBuilder: (context) => <PopupMenuEntry<String>>[
                       PopupMenuItem<String>(
                         value: 'update',
                         child: Row(
@@ -163,7 +156,7 @@ class PostCard extends StatelessWidget {
 
               SizedBox(height: isTablet ? 12 : 10),
 
-              /// POST TEXT
+              /// CONTENT
               if (post.content.isNotEmpty)
                 Padding(
                   padding: EdgeInsets.only(bottom: isTablet ? 12 : 10),
@@ -177,8 +170,8 @@ class PostCard extends StatelessWidget {
                   ),
                 ),
 
-              /// POST IMAGE
-              if (fullImageUrl.isNotEmpty)
+              /// IMAGE
+              if (fullImageUrl != null && fullImageUrl.isNotEmpty)
                 Container(
                   margin: EdgeInsets.only(bottom: isTablet ? 16 : 12),
                   child: ClipRRect(
@@ -223,7 +216,7 @@ class PostCard extends StatelessWidget {
                   ),
                 ),
 
-              /// LIKE + COMMENT ACTIONS
+              /// ACTIONS
               Container(
                 padding: EdgeInsets.symmetric(
                   horizontal: isTablet ? 8 : 4,
