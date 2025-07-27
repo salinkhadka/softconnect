@@ -8,6 +8,10 @@ import 'package:softconnect/core/utils/network_image_util.dart';
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_event.dart';
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_state.dart';
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_view_model.dart';
+import 'package:softconnect/features/profile/presentation/view/user_profile.dart';
+import 'package:softconnect/app/service_locator/service_locator.dart';
+import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
+import 'package:softconnect/features/profile/presentation/view_model/user_profile_viewmodel.dart';
 
 class CommentModal extends StatefulWidget {
   final String postId;
@@ -38,6 +42,28 @@ class _CommentModalState extends State<CommentModal> {
     }
   }
 
+  void navigateToUserProfile(BuildContext context, String userId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            BlocProvider<UserProfileViewModel>(
+              create: (_) => serviceLocator<UserProfileViewModel>(),
+            ),
+            BlocProvider<FeedViewModel>(
+              create: (_) => serviceLocator<FeedViewModel>(),
+            ),
+            BlocProvider<CommentViewModel>(
+              create: (_) => serviceLocator<CommentViewModel>(),
+            ),
+          ],
+          child: UserProfilePage(userId: userId),
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -47,8 +73,6 @@ class _CommentModalState extends State<CommentModal> {
   @override
   Widget build(BuildContext context) {
     final backendBaseUrl = getBackendBaseUrl();
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 600;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.5,
@@ -70,10 +94,7 @@ class _CommentModalState extends State<CommentModal> {
                 children: [
                   // Header
                   Container(
-                    padding: EdgeInsets.symmetric(
-                      vertical: isTablet ? 16 : 12,
-                      horizontal: isTablet ? 20 : 16,
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                     decoration: BoxDecoration(
                       color: Themecolor.purple,
                       borderRadius:
@@ -83,17 +104,17 @@ class _CommentModalState extends State<CommentModal> {
                       children: [
                         Container(
                           width: 4,
-                          height: isTablet ? 24 : 20,
+                          height: 20,
                           decoration: BoxDecoration(
                             color: Themecolor.white,
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
-                        SizedBox(width: isTablet ? 16 : 12),
-                        Text(
+                        const SizedBox(width: 12),
+                        const Text(
                           "Comments",
                           style: TextStyle(
-                            fontSize: isTablet ? 20 : 18,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Themecolor.white,
                           ),
@@ -105,26 +126,25 @@ class _CommentModalState extends State<CommentModal> {
                   // Comments List
                   Expanded(
                     child: state.isLoading
-                        ? Center(
-                            child: CircularProgressIndicator(
-                                color: Themecolor.purple),
+                        ? const Center(
+                            child: CircularProgressIndicator(color: Themecolor.purple),
                           )
                         : state.comments.isEmpty
                             ? Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
+                                  children: const [
                                     Icon(
                                       Icons.comment_outlined,
-                                      size: isTablet ? 64 : 48,
+                                      size: 48,
                                       color: Themecolor.lavender,
                                     ),
-                                    SizedBox(height: isTablet ? 16 : 12),
+                                    SizedBox(height: 12),
                                     Text(
                                       'No comments yet',
                                       style: TextStyle(
                                         color: Themecolor.purple,
-                                        fontSize: isTablet ? 18 : 16,
+                                        fontSize: 16,
                                       ),
                                     ),
                                   ],
@@ -132,10 +152,7 @@ class _CommentModalState extends State<CommentModal> {
                               )
                             : ListView.builder(
                                 controller: scrollController,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: isTablet ? 20 : 16,
-                                  vertical: isTablet ? 12 : 8,
-                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 itemCount: state.comments
                                     .where((c) => c.parentCommentId == null)
                                     .length,
@@ -145,8 +162,7 @@ class _CommentModalState extends State<CommentModal> {
                                       .toList();
                                   final comment = topLevelComments[index];
 
-                                  return buildComment(
-                                      comment, state, backendBaseUrl, isTablet);
+                                  return buildComment(comment, state, backendBaseUrl);
                                 },
                               ),
                   ),
@@ -155,11 +171,10 @@ class _CommentModalState extends State<CommentModal> {
                   SafeArea(
                     child: Container(
                       padding: EdgeInsets.only(
-                        left: isTablet ? 20 : 12,
-                        right: isTablet ? 20 : 12,
-                        bottom: MediaQuery.of(context).viewInsets.bottom +
-                            (isTablet ? 12 : 8),
-                        top: isTablet ? 12 : 8,
+                        left: 12,
+                        right: 12,
+                        bottom: MediaQuery.of(context).viewInsets.bottom + 8,
+                        top: 8,
                       ),
                       decoration: BoxDecoration(
                         color: Themecolor.white,
@@ -175,62 +190,55 @@ class _CommentModalState extends State<CommentModal> {
                           Expanded(
                             child: TextField(
                               controller: _commentController,
-                              style: TextStyle(
-                                fontSize: isTablet ? 16 : 14,
+                              style: const TextStyle(
+                                fontSize: 14,
                                 color: Themecolor.purple,
                               ),
                               decoration: InputDecoration(
                                 hintText: "Add a comment...",
-                                hintStyle: TextStyle(
+                                hintStyle: const TextStyle(
                                   color: Themecolor.lavender,
-                                  fontSize: isTablet ? 16 : 14,
+                                  fontSize: 14,
                                 ),
                                 border: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(isTablet ? 25 : 20),
-                                  borderSide:
-                                      BorderSide(color: Themecolor.lavender),
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: const BorderSide(color: Themecolor.lavender),
                                 ),
                                 focusedBorder: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(isTablet ? 25 : 20),
-                                  borderSide: BorderSide(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: const BorderSide(
                                       color: Themecolor.purple, width: 2),
                                 ),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: isTablet ? 20 : 16,
-                                  vertical: isTablet ? 12 : 8,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
                                 ),
                               ),
                               maxLines: 1,
                             ),
                           ),
-                          SizedBox(width: isTablet ? 12 : 8),
+                          const SizedBox(width: 8),
                           Container(
                             decoration: BoxDecoration(
                               color: Themecolor.purple,
-                              borderRadius:
-                                  BorderRadius.circular(isTablet ? 25 : 20),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Themecolor.purple,
                                 foregroundColor: Themecolor.white,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(isTablet ? 25 : 20),
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: isTablet ? 20 : 16,
-                                  vertical: isTablet ? 14 : 12,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
                                 ),
                               ),
                               onPressed: () {
                                 final content = _commentController.text.trim();
                                 if (content.isNotEmpty) {
-                                  context
-                                      .read<CommentViewModel>()
-                                      .add(AddComment(
+                                  context.read<CommentViewModel>().add(AddComment(
                                         userId: widget.userId,
                                         postId: widget.postId,
                                         content: content,
@@ -239,10 +247,10 @@ class _CommentModalState extends State<CommentModal> {
                                   FocusScope.of(context).unfocus();
                                 }
                               },
-                              child: Text(
+                              child: const Text(
                                 "Post",
                                 style: TextStyle(
-                                  fontSize: isTablet ? 16 : 14,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -261,20 +269,19 @@ class _CommentModalState extends State<CommentModal> {
     );
   }
 
-  Widget buildComment(
-      dynamic comment, CommentState state, String backendBaseUrl, bool isTablet,
+  Widget buildComment(dynamic comment, CommentState state, String backendBaseUrl,
       {bool isReply = false}) {
     final replies =
         state.comments.where((c) => c.parentCommentId == comment.id).toList();
     final isExpanded = expandedReplies.contains(comment.id);
 
     return Container(
-      margin: EdgeInsets.only(bottom: isTablet ? 12 : 8),
+      margin: EdgeInsets.only(bottom: 8, left: isReply ? 32 : 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: EdgeInsets.all(isTablet ? 16 : 12),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isReply
                   ? Themecolor.lavender.withOpacity(0.05)
@@ -285,118 +292,108 @@ class _CommentModalState extends State<CommentModal> {
                 width: 1,
               ),
             ),
-            margin: EdgeInsets.only(left: isReply ? (isTablet ? 40 : 32) : 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Comment Header
+                // Comment Header with clickable avatar and username
                 Row(
                   children: [
-                    comment.profilePhoto != null &&
-                            comment.profilePhoto!.isNotEmpty
-                        ? CircleAvatar(
-                            radius: isTablet
-                                ? (isReply ? 18 : 22)
-                                : (isReply ? 16 : 20),
-                            backgroundColor: Themecolor.lavender,
-                            child: ClipOval(
-                              child: NetworkImageWidget(
-                                imageUrl:
-                                    '$backendBaseUrl/${comment.profilePhoto!.replaceAll('\\', '/')}',
-                                height: isTablet
-                                    ? (isReply ? 36 : 44)
-                                    : (isReply ? 32 : 40),
-                                width: isTablet
-                                    ? (isReply ? 36 : 44)
-                                    : (isReply ? 32 : 40),
-                                fit: BoxFit.cover,
-                                placeholder: Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+                    GestureDetector(
+                      onTap: () => navigateToUserProfile(context, comment.userId),
+                      child: comment.profilePhoto != null &&
+                              comment.profilePhoto!.isNotEmpty
+                          ? CircleAvatar(
+                              radius: 20,
+                              backgroundColor: Themecolor.lavender,
+                              child: ClipOval(
+                                child: NetworkImageWidget(
+                                  imageUrl:
+                                      '$backendBaseUrl/${comment.profilePhoto!.replaceAll('\\', '/')}',
+                                  height: 40,
+                                  width: 40,
+                                  fit: BoxFit.cover,
+                                  placeholder: Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Themecolor.purple,
+                                    ),
+                                  ),
+                                  errorWidget: Icon(
+                                    Icons.account_circle,
+                                    size: 40,
                                     color: Themecolor.purple,
                                   ),
                                 ),
-                                errorWidget: Icon(
-                                  Icons.account_circle,
-                                  size: isTablet
-                                      ? (isReply ? 36 : 44)
-                                      : (isReply ? 32 : 40),
+                              ),
+                            )
+                          : CircleAvatar(
+                              radius: 20,
+                              backgroundColor: Themecolor.lavender,
+                              child: Text(
+                                comment.username != null && comment.username!.isNotEmpty
+                                    ? comment.username![0].toUpperCase()
+                                    : '?',
+                                style: const TextStyle(
+                                  fontSize: 18,
                                   color: Themecolor.purple,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
-                          )
-                        : CircleAvatar(
-                            radius: isTablet
-                                ? (isReply ? 18 : 22)
-                                : (isReply ? 16 : 20),
-                            backgroundColor: Themecolor.lavender,
-                            child: Text(
-                              comment.username != null &&
-                                      comment.username!.isNotEmpty
-                                  ? comment.username![0].toUpperCase()
-                                  : '?',
-                              style: TextStyle(
-                                fontSize: isTablet
-                                    ? (isReply ? 16 : 20)
-                                    : (isReply ? 14 : 18),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => navigateToUserProfile(context, comment.userId),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '@${comment.username ?? 'anonymous'}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
                                 color: Themecolor.purple,
-                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ),
-                    SizedBox(width: isTablet ? 12 : 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '@${comment.username ?? 'anonymous'}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: isTablet ? 16 : 14,
-                              color: Themecolor.purple,
+                            Text(
+                              DateFormat('yyyy-MM-dd hh:mm a').format(comment.createdAt),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey[600],
+                              ),
                             ),
-                          ),
-                          Text(
-                            DateFormat('yyyy-MM-dd hh:mm a')
-                                .format(comment.createdAt),
-                            style: TextStyle(
-                              fontSize: isTablet ? 12 : 10,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                    // Action Buttons
+
+                    // Action Buttons (Reply, Delete)
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         TextButton(
-                          child: Text(
+                          child: const Text(
                             'Reply',
                             style: TextStyle(
                               color: Themecolor.purple,
-                              fontSize: isTablet ? 14 : 12,
+                              fontSize: 12,
                             ),
                           ),
                           onPressed: () {
                             setState(() {
                               replyingToCommentId =
-                                  replyingToCommentId == comment.id
-                                      ? null
-                                      : comment.id;
+                                  replyingToCommentId == comment.id ? null : comment.id;
                             });
                           },
                         ),
                         if (comment.userId == widget.userId ||
                             widget.postOwnerUserId == widget.userId)
                           IconButton(
-                            icon: Icon(
+                            icon: const Icon(
                               Icons.delete,
                               color: Colors.red,
-                              size: isTablet ? 20 : 18,
+                              size: 18,
                             ),
                             onPressed: () async {
                               final shouldDelete = await showDialog<bool>(
@@ -438,13 +435,13 @@ class _CommentModalState extends State<CommentModal> {
                   ],
                 ),
 
-                SizedBox(height: isTablet ? 12 : 8),
+                const SizedBox(height: 8),
 
                 // Comment Content
                 Text(
                   comment.content,
-                  style: TextStyle(
-                    fontSize: isTablet ? 16 : 14,
+                  style: const TextStyle(
+                    fontSize: 14,
                     color: Themecolor.purple,
                     height: 1.4,
                   ),
@@ -456,12 +453,8 @@ class _CommentModalState extends State<CommentModal> {
           // Reply Input
           if (replyingToCommentId == comment.id)
             Container(
-              margin: EdgeInsets.only(
-                left: isTablet ? (isReply ? 56 : 40) : (isReply ? 48 : 32),
-                top: isTablet ? 12 : 8,
-              ),
+              margin: const EdgeInsets.only(top: 8, left: 40),
               child: ReplyTextField(
-                isTablet: isTablet,
                 onReply: (replyContent) {
                   context.read<CommentViewModel>().add(
                         AddComment(
@@ -481,10 +474,7 @@ class _CommentModalState extends State<CommentModal> {
           // Show/Hide Replies Button
           if (replies.isNotEmpty)
             Container(
-              margin: EdgeInsets.only(
-                left: isTablet ? (isReply ? 56 : 40) : (isReply ? 48 : 32),
-                top: isTablet ? 8 : 4,
-              ),
+              margin: const EdgeInsets.only(top: 4, left: 40),
               child: TextButton(
                 onPressed: () {
                   setState(() {
@@ -499,8 +489,8 @@ class _CommentModalState extends State<CommentModal> {
                   isExpanded
                       ? "Hide replies"
                       : "View ${replies.length} repl${replies.length > 1 ? 'ies' : 'y'}",
-                  style: TextStyle(
-                    fontSize: isTablet ? 14 : 12,
+                  style: const TextStyle(
+                    fontSize: 12,
                     color: Themecolor.purple,
                     fontWeight: FontWeight.w500,
                   ),
@@ -511,8 +501,7 @@ class _CommentModalState extends State<CommentModal> {
           // Replies
           if (isExpanded)
             ...replies.map(
-              (reply) => buildComment(reply, state, backendBaseUrl, isTablet,
-                  isReply: true),
+              (reply) => buildComment(reply, state, backendBaseUrl, isReply: true),
             ),
         ],
       ),
@@ -522,12 +511,10 @@ class _CommentModalState extends State<CommentModal> {
 
 class ReplyTextField extends StatefulWidget {
   final Function(String) onReply;
-  final bool isTablet;
 
   const ReplyTextField({
     Key? key,
     required this.onReply,
-    required this.isTablet,
   }) : super(key: key);
 
   @override
@@ -540,7 +527,7 @@ class _ReplyTextFieldState extends State<ReplyTextField> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(widget.isTablet ? 16 : 12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Themecolor.white,
         borderRadius: BorderRadius.circular(12),
@@ -554,46 +541,41 @@ class _ReplyTextFieldState extends State<ReplyTextField> {
           Expanded(
             child: TextField(
               controller: _controller,
-              style: TextStyle(
-                fontSize: widget.isTablet ? 16 : 14,
+              style: const TextStyle(
+                fontSize: 14,
                 color: Themecolor.purple,
               ),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Write a reply...',
                 hintStyle: TextStyle(
                   color: Themecolor.lavender,
-                  fontSize: widget.isTablet ? 16 : 14,
+                  fontSize: 14,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(widget.isTablet ? 25 : 20),
+                  borderRadius: BorderRadius.all(Radius.circular(20)),
                   borderSide: BorderSide(color: Themecolor.lavender),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(widget.isTablet ? 25 : 20),
+                  borderRadius: BorderRadius.all(Radius.circular(20)),
                   borderSide: BorderSide(color: Themecolor.purple, width: 2),
                 ),
                 contentPadding: EdgeInsets.symmetric(
-                  horizontal: widget.isTablet ? 20 : 16,
-                  vertical: widget.isTablet ? 12 : 8,
+                  horizontal: 16,
+                  vertical: 8,
                 ),
               ),
               maxLines: 1,
             ),
           ),
-          SizedBox(width: widget.isTablet ? 12 : 8),
+          const SizedBox(width: 8),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Themecolor.purple,
               foregroundColor: Themecolor.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(widget.isTablet ? 25 : 20),
+                borderRadius: BorderRadius.circular(20),
               ),
-              padding: EdgeInsets.symmetric(
-                horizontal: widget.isTablet ? 20 : 16,
-                vertical: widget.isTablet ? 14 : 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
             onPressed: () {
               final text = _controller.text.trim();
@@ -603,10 +585,10 @@ class _ReplyTextFieldState extends State<ReplyTextField> {
                 FocusScope.of(context).unfocus();
               }
             },
-            child: Text(
+            child: const Text(
               'Reply',
               style: TextStyle(
-                fontSize: widget.isTablet ? 14 : 12,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
             ),

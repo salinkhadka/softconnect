@@ -6,6 +6,11 @@ import 'package:softconnect/app/theme/colors/themecolor.dart';
 import 'package:softconnect/features/message/presentation/view_model/message_view_model/message_event.dart';
 import 'package:softconnect/features/message/presentation/view_model/message_view_model/message_state.dart';
 import 'package:softconnect/features/message/presentation/view_model/message_view_model/message_view_model.dart';
+import 'package:softconnect/features/profile/presentation/view/user_profile.dart';
+import 'package:softconnect/app/service_locator/service_locator.dart';
+import 'package:softconnect/features/home/presentation/view_model/Feed_view_model/feed_viewmodel.dart';
+import 'package:softconnect/features/profile/presentation/view_model/user_profile_viewmodel.dart';
+import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_view_model.dart';
 
 class MessagePage extends StatefulWidget {
   final String otherUserId;
@@ -31,6 +36,28 @@ class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
   Timer? _refreshTimer;
   bool _isTyping = false;
   bool _isAppInForeground = true;
+
+  void navigateToUserProfile(BuildContext context, String userId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            BlocProvider<UserProfileViewModel>(
+              create: (_) => serviceLocator<UserProfileViewModel>(),
+            ),
+            BlocProvider<FeedViewModel>(
+              create: (_) => serviceLocator<FeedViewModel>(),
+            ),
+            BlocProvider<CommentViewModel>(
+              create: (_) => serviceLocator<CommentViewModel>(),
+            ),
+          ],
+          child: UserProfilePage(userId: userId),
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -290,29 +317,34 @@ class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
           foregroundColor: Themecolor.white,
           title: Row(
             children: [
-              if (widget.otherUserPhoto != null && widget.otherUserPhoto!.isNotEmpty)
-                CircleAvatar(
-                  radius: isTablet ? 20 : 16,
-                  backgroundColor: Themecolor.lavender,
-                  backgroundImage: NetworkImage(widget.otherUserPhoto!),
-                )
-              else
-                CircleAvatar(
-                  radius: isTablet ? 20 : 16,
-                  backgroundColor: Themecolor.lavender,
-                  child: Icon(
-                    Icons.person,
-                    color: Themecolor.purple,
-                    size: isTablet ? 24 : 20,
-                  ),
-                ),
+              GestureDetector(
+                onTap: () => navigateToUserProfile(context, widget.otherUserId),
+                child: widget.otherUserPhoto != null && widget.otherUserPhoto!.isNotEmpty
+                    ? CircleAvatar(
+                        radius: isTablet ? 20 : 16,
+                        backgroundColor: Themecolor.lavender,
+                        backgroundImage: NetworkImage(widget.otherUserPhoto!),
+                      )
+                    : CircleAvatar(
+                        radius: isTablet ? 20 : 16,
+                        backgroundColor: Themecolor.lavender,
+                        child: Icon(
+                          Icons.person,
+                          color: Themecolor.purple,
+                          size: isTablet ? 24 : 20,
+                        ),
+                      ),
+              ),
               SizedBox(width: isTablet ? 12 : 8),
               Expanded(
-                child: Text(
-                  widget.otherUserName,
-                  style: TextStyle(
-                    fontSize: isTablet ? 20 : 18,
-                    fontWeight: FontWeight.w600,
+                child: GestureDetector(
+                  onTap: () => navigateToUserProfile(context, widget.otherUserId),
+                  child: Text(
+                    widget.otherUserName,
+                    style: TextStyle(
+                      fontSize: isTablet ? 20 : 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),

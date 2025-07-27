@@ -24,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   
   bool _isBiometricAvailable = false;
   bool _hasStoredCredentials = false;
+  bool _biometricEnabled = false;
 
   @override
   void initState() {
@@ -55,12 +56,13 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _checkStoredCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     final hasCredentials = prefs.containsKey('stored_username') && 
-                          prefs.containsKey('stored_password') &&
-                          prefs.getBool('biometric_enabled') == true;
+                          prefs.containsKey('stored_password');
+    final biometricEnabled = prefs.getBool('biometric_enabled') ?? false;
     
     if (mounted) {
       setState(() {
-        _hasStoredCredentials = hasCredentials;
+        _hasStoredCredentials = hasCredentials && biometricEnabled;
+        _biometricEnabled = biometricEnabled;
       });
     }
   }
@@ -136,6 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   _showSnackBar(context, 'Biometric login enabled!');
                   setState(() {
                     _hasStoredCredentials = true;
+                    _biometricEnabled = true;
                   });
                 }
               },
@@ -163,17 +166,17 @@ class _LoginScreenState extends State<LoginScreen> {
         listener: (context, state) {
           if (state.isSuccess) {
             _showSnackBar(context, "Login Successful");
-            // Show biometric setup dialog only if biometrics are available,
-            // credentials aren't stored, login was successful via form, and widget is still mounted
+            // Show biometric setup dialog if:
+            // 1. Biometrics are available
+            // 2. User logged in via form (not biometric)
+            // 3. Either no biometric is enabled OR credentials were entered manually
+            // 4. Widget is still mounted
             if (_isBiometricAvailable && 
-                !_hasStoredCredentials && 
-                emailController.text.isNotEmpty &&
+                emailController.text.isNotEmpty && // Form was used
                 mounted) {
-              Future.delayed(const Duration(milliseconds: 500), () {
-                if (mounted) {
-                  _showBiometricSetupDialog();
-                }
-              });
+              
+              // Check if biometric should be offered
+              _checkIfShouldOfferBiometric();
             }
           }
           if (state.errorMessage != null) {
@@ -374,6 +377,20 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Future<void> _checkIfShouldOfferBiometric() async {
+    final prefs = await SharedPreferences.getInstance();
+    final biometricEnabled = prefs.getBool('biometric_enabled') ?? false;
+    
+    // Offer biometric setup if it's not currently enabled
+    if (!biometricEnabled) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _showBiometricSetupDialog();
+        }
+      });
+    }
+  }
+
   void _showBiometricSettingsDialog() {
     if (!mounted) return;
     
@@ -399,6 +416,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (mounted) {
                   setState(() {
                     _hasStoredCredentials = false;
+                    _biometricEnabled = false;
                   });
                   
                   Navigator.of(context).pop();
