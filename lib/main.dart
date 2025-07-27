@@ -19,9 +19,14 @@ void main() async {
   // Handle background messages
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
+  // Initialize Hive before setting up service locator
   await HiveService().init();
+  
+  // Initialize FCM
   await FCMService().initialize();
+  
+  // Setup service locator (this will register ThemeProvider)
   await setupServiceLocator();
 
-  runApp(App());
+  runApp(const App());
 }

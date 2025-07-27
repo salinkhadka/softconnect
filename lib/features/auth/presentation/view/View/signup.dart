@@ -9,15 +9,23 @@ import 'package:softconnect/features/auth/presentation/view_model/signup_viewmod
 import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_state.dart';
 import 'package:softconnect/features/auth/presentation/view_model/signup_viewmodel/signup_viewmodel.dart';
 
-class SignupScreen extends StatelessWidget {
+class SignupScreen extends StatefulWidget {
   SignupScreen({Key? key}) : super(key: key);
 
+  @override
+  State<SignupScreen> createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final usernameController = TextEditingController();
   final studentIdController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   final List<String> programs = [
     "Student",
@@ -27,19 +35,38 @@ class SignupScreen extends StatelessWidget {
   ];
 
   @override
+  void dispose() {
+    emailController.dispose();
+    usernameController.dispose();
+    studentIdController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     String selectedProgram = programs[0];
 
     return Scaffold(
-      backgroundColor: Themecolor.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: BlocBuilder<SignupViewModel, SignupState>(
         builder: (context, state) {
           if (state.message != null) {
             Future.microtask(() {
-              final color = state.isSuccess ? Color(0xFF37225C) : Colors.red;
+              final color = state.isSuccess 
+                  ? theme.primaryColor 
+                  : theme.colorScheme.error;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.message!),
+                  content: Text(
+                    state.message!,
+                    style: TextStyle(
+                      color: theme.colorScheme.onError,
+                    ),
+                  ),
                   backgroundColor: color,
                 ),
               );
@@ -58,58 +85,44 @@ class SignupScreen extends StatelessWidget {
                         onTap: () => _showImageSourcePicker(context),
                         child: CircleAvatar(
                           radius: 40,
-                          backgroundColor: Themecolor.lavender,
+                          backgroundColor: isDark 
+                              ? theme.colorScheme.surfaceVariant
+                              : Themecolor.lavender,
                           backgroundImage: state.profilePhotoPath != null
                               ? FileImage(File(state.profilePhotoPath!))
                               : null,
                           child: state.profilePhotoPath == null
-                              ? Icon(Icons.camera_alt, color: Themecolor.purple)
+                              ? Icon(
+                                  Icons.camera_alt, 
+                                  color: theme.primaryColor,
+                                  size: 28,
+                                )
                               : null,
                         ),
                       ),
                       const SizedBox(height: 10),
-                      TextFormField(
+                      _buildTextField(
+                        context: context,
                         controller: usernameController,
-                        decoration: InputDecoration(
-                          labelText: 'Full Name',
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Themecolor.lavender),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Themecolor.purple, width: 2),
-                          ),
-                        ),
+                        labelText: 'Full Name',
                         validator: (val) =>
                             val == null || val.isEmpty ? 'Enter name' : null,
                       ),
                       const SizedBox(height: 10),
-                      TextFormField(
+                      _buildTextField(
+                        context: context,
                         controller: emailController,
-                        decoration: InputDecoration(
-                          labelText: 'Email Address',
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Themecolor.lavender),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Themecolor.purple, width: 2),
-                          ),
-                        ),
+                        labelText: 'Email Address',
+                        keyboardType: TextInputType.emailAddress,
                         validator: (val) => val == null || !isValidEmail(val)
                             ? 'Enter a valid email'
                             : null,
                       ),
                       const SizedBox(height: 10),
-                      TextFormField(
+                      _buildTextField(
+                        context: context,
                         controller: studentIdController,
-                        decoration: InputDecoration(
-                          labelText: 'Student ID',
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Themecolor.lavender),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Themecolor.purple, width: 2),
-                          ),
-                        ),
+                        labelText: 'Student ID',
                         keyboardType: TextInputType.number,
                         validator: (val) => val == null || !isValidStudentId(val)
                             ? 'Enter valid 6-digit student ID'
@@ -121,50 +134,77 @@ class SignupScreen extends StatelessWidget {
                         items: programs.map((program) {
                           return DropdownMenuItem<String>(
                             value: program,
-                            child: Text(program),
+                            child: Text(
+                              program,
+                              style: TextStyle(color: theme.colorScheme.onSurface),
+                            ),
                           );
                         }).toList(),
                         onChanged: (value) {
                           if (value != null) selectedProgram = value;
                         },
+                        style: TextStyle(color: theme.colorScheme.onSurface),
+                        dropdownColor: theme.colorScheme.surface,
                         decoration: InputDecoration(
+                          labelText: 'Role',
+                          labelStyle: TextStyle(color: theme.colorScheme.onSurface),
                           border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Themecolor.lavender),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.outline,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.outline,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Themecolor.purple, width: 2),
+                            borderSide: BorderSide(
+                              color: theme.primaryColor, 
+                              width: 2,
+                            ),
                           ),
+                          filled: true,
+                          fillColor: theme.colorScheme.surface,
                         ),
                       ),
                       const SizedBox(height: 10),
-                      TextFormField(
+                      _buildTextField(
+                        context: context,
                         controller: passwordController,
-                        obscureText: true,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Themecolor.lavender),
+                        labelText: 'Password',
+                        obscureText: _obscurePassword,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Themecolor.purple, width: 2),
-                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
                         ),
                         validator: (val) => val == null || !isValidPassword(val)
                             ? 'Password must be at least 6 characters'
                             : null,
                       ),
                       const SizedBox(height: 10),
-                      TextFormField(
+                      _buildTextField(
+                        context: context,
                         controller: confirmPasswordController,
-                        obscureText: true,
-                        decoration: InputDecoration(
-                          labelText: 'Confirm Password',
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Themecolor.lavender),
+                        labelText: 'Confirm Password',
+                        obscureText: _obscureConfirmPassword,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Themecolor.purple, width: 2),
-                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscureConfirmPassword = !_obscureConfirmPassword;
+                            });
+                          },
                         ),
                         validator: (val) => val == null ||
                                 !doPasswordsMatch(
@@ -177,7 +217,8 @@ class SignupScreen extends StatelessWidget {
                         children: [
                           Checkbox(
                             value: state.agreedToTerms,
-                            activeColor: Themecolor.purple,
+                            activeColor: theme.primaryColor,
+                            checkColor: theme.colorScheme.onPrimary,
                             onChanged: (val) {
                               if (val != null) {
                                 context
@@ -186,9 +227,12 @@ class SignupScreen extends StatelessWidget {
                               }
                             },
                           ),
-                          const Expanded(
+                          Expanded(
                             child: Text(
                               "I agree to terms and conditions of SoftConnect",
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface,
+                              ),
                             ),
                           ),
                         ],
@@ -218,27 +262,46 @@ class SignupScreen extends StatelessWidget {
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Themecolor.purple,
-                            foregroundColor: Themecolor.white,
+                            backgroundColor: theme.primaryColor,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                            disabledBackgroundColor: theme.colorScheme.outline,
                             padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                           child: state.isLoading
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white,
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: theme.colorScheme.onPrimary,
+                                  ),
                                 )
-                              : const Text(
+                              : Text(
                                   'Signup',
-                                  style: TextStyle(color: Colors.white),
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onPrimary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                         ),
                       ),
+                      const SizedBox(height: 10),
                       TextButton(
                         onPressed: () {
                           Navigator.pop(context);
                         },
+                        style: TextButton.styleFrom(
+                          foregroundColor: theme.primaryColor,
+                        ),
                         child: Text(
                           "Already have an account?",
-                          style: TextStyle(color: Themecolor.purple),
+                          style: TextStyle(
+                            color: theme.primaryColor,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
@@ -252,24 +315,77 @@ class SignupScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildTextField({
+    required BuildContext context,
+    required TextEditingController controller,
+    required String labelText,
+    TextInputType? keyboardType,
+    bool obscureText = false,
+    Widget? suffixIcon,
+    String? Function(String?)? validator,
+  }) {
+    final theme = Theme.of(context);
+    
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      obscureText: obscureText,
+      style: TextStyle(color: theme.colorScheme.onSurface),
+      decoration: InputDecoration(
+        labelText: labelText,
+        labelStyle: TextStyle(color: theme.colorScheme.onSurface),
+        suffixIcon: suffixIcon,
+        border: OutlineInputBorder(
+          borderSide: BorderSide(color: theme.colorScheme.outline),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: theme.colorScheme.outline),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: theme.primaryColor, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: theme.colorScheme.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: theme.colorScheme.error, width: 2),
+        ),
+        filled: true,
+        fillColor: theme.colorScheme.surface,
+      ),
+      validator: validator,
+    );
+  }
+
   void _showImageSourcePicker(BuildContext context) {
+    final theme = Theme.of(context);
+    
     showModalBottomSheet(
       context: context,
-      backgroundColor: Themecolor.white,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (_) => SafeArea(
         child: Wrap(
           children: [
             ListTile(
-              leading: Icon(Icons.photo_library, color: Themecolor.purple),
-              title: const Text('Choose from Gallery'),
+              leading: Icon(Icons.photo_library, color: theme.primaryColor),
+              title: Text(
+                'Choose from Gallery',
+                style: TextStyle(color: theme.colorScheme.onSurface),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(context, ImageSource.gallery);
               },
             ),
             ListTile(
-              leading: Icon(Icons.camera_alt, color: Themecolor.purple),
-              title: const Text('Take a Photo'),
+              leading: Icon(Icons.camera_alt, color: theme.primaryColor),
+              title: Text(
+                'Take a Photo',
+                style: TextStyle(color: theme.colorScheme.onSurface),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(context, ImageSource.camera);
@@ -283,6 +399,7 @@ class SignupScreen extends StatelessWidget {
 
   Future<void> _pickImage(BuildContext context, ImageSource source) async {
     final picker = ImagePicker();
+    final theme = Theme.of(context);
 
     Permission permission;
 
@@ -309,14 +426,19 @@ class SignupScreen extends StatelessWidget {
     } else if (status.isDenied) {
       // Show permission dialog again
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Permission denied. Please allow it to continue.')),
+        SnackBar(
+          content: const Text('Permission denied. Please allow it to continue.'),
+          backgroundColor: theme.colorScheme.error,
+        ),
       );
     } else if (status.isPermanentlyDenied) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Permission permanently denied. Open app settings to enable it.'),
+          backgroundColor: theme.colorScheme.error,
           action: SnackBarAction(
             label: 'Settings',
+            textColor: theme.colorScheme.onError,
             onPressed: () => openAppSettings(),
           ),
         ),

@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:softconnect/app/theme/colors/themecolor.dart';
+import 'package:softconnect/app/theme/theme_provider.dart';
 import 'package:softconnect/features/message/presentation/view_model/message_view_model/message_event.dart';
 import 'package:softconnect/features/message/presentation/view_model/message_view_model/message_state.dart';
 import 'package:softconnect/features/message/presentation/view_model/message_view_model/message_view_model.dart';
@@ -173,20 +174,26 @@ class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: Themecolor.white,
+        backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
         title: Text(
           "Delete Message",
-          style: TextStyle(color: Themecolor.purple),
+          style: TextStyle(
+            color: Theme.of(context).dialogTheme.titleTextStyle?.color,
+          ),
         ),
         content: Text(
           "Are you sure you want to delete this message?",
-          style: TextStyle(color: Themecolor.purple),
+          style: TextStyle(
+            color: Theme.of(context).dialogTheme.contentTextStyle?.color,
+          ),
         ),
         actions: [
           TextButton(
             child: Text(
               "Cancel",
-              style: TextStyle(color: Themecolor.lavender),
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+              ),
             ),
             onPressed: () => Navigator.pop(context),
           ),
@@ -218,73 +225,92 @@ class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
   }
 
   Widget _buildMessageInput(bool isTablet) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isTablet ? 16 : 12,
-        vertical: isTablet ? 12 : 8,
-      ),
-      decoration: BoxDecoration(
-        color: Themecolor.white,
-        border: Border(
-          top: BorderSide(
-            color: Themecolor.lavender.withOpacity(0.3),
-            width: 1,
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: isTablet ? 16 : 12,
+            vertical: isTablet ? 12 : 8,
           ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              focusNode: _focusNode,
-              minLines: 1,
-              maxLines: 5,
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => _sendMessage(),
-              style: TextStyle(
-                fontSize: isTablet ? 16 : 14,
-                color: Themecolor.purple,
-              ),
-              decoration: InputDecoration(
-                hintText: "Type a message",
-                hintStyle: TextStyle(
-                  color: Themecolor.lavender,
-                  fontSize: isTablet ? 16 : 14,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(isTablet ? 25 : 20),
-                  borderSide: BorderSide(color: Themecolor.lavender),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(isTablet ? 25 : 20),
-                  borderSide: BorderSide(color: Themecolor.purple, width: 2),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: isTablet ? 20 : 16,
-                  vertical: isTablet ? 12 : 10,
-                ),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            border: Border(
+              top: BorderSide(
+                color: Theme.of(context).dividerColor,
+                width: 1,
               ),
             ),
           ),
-          SizedBox(width: isTablet ? 12 : 8),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            decoration: BoxDecoration(
-              color: _isTyping ? Themecolor.purple : Themecolor.lavender,
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: Icon(
-                Icons.send,
-                color: Themecolor.white,
-                size: isTablet ? 24 : 20,
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _messageController,
+                  focusNode: _focusNode,
+                  minLines: 1,
+                  maxLines: 5,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => _sendMessage(),
+                  style: TextStyle(
+                    fontSize: isTablet ? 16 : 14,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: "Type a message",
+                    hintStyle: TextStyle(
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                      fontSize: isTablet ? 16 : 14,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(isTablet ? 25 : 20),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(isTablet ? 25 : 20),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(isTablet ? 25 : 20),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).primaryColor,
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: Theme.of(context).cardColor,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: isTablet ? 20 : 16,
+                      vertical: isTablet ? 12 : 10,
+                    ),
+                  ),
+                ),
               ),
-              onPressed: _isTyping ? _sendMessage : null,
-            ),
+              SizedBox(width: isTablet ? 12 : 8),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  color: _isTyping 
+                    ? Theme.of(context).primaryColor 
+                    : Theme.of(context).primaryColor.withOpacity(0.3),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.send,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    size: isTablet ? 24 : 20,
+                  ),
+                  onPressed: _isTyping ? _sendMessage : null,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -293,217 +319,234 @@ class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
 
-    return BlocListener<MessageViewModel, MessageState>(
-      listener: (context, state) {
-        if (state is MessageErrorState) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        if (state is MessageSentState || state is MessageDeletedState) {
-          context.read<MessageViewModel>().add(
-            LoadMessagesEvent(currentUserId, widget.otherUserId),
-          );
-          _scrollToBottom();
-        }
-      },
-      child: Scaffold(
-        backgroundColor: Themecolor.white,
-        appBar: AppBar(
-          backgroundColor: Themecolor.purple,
-          foregroundColor: Themecolor.white,
-          title: Row(
-            children: [
-              GestureDetector(
-                onTap: () => navigateToUserProfile(context, widget.otherUserId),
-                child: widget.otherUserPhoto != null && widget.otherUserPhoto!.isNotEmpty
-                    ? CircleAvatar(
-                        radius: isTablet ? 20 : 16,
-                        backgroundColor: Themecolor.lavender,
-                        backgroundImage: NetworkImage(widget.otherUserPhoto!),
-                      )
-                    : CircleAvatar(
-                        radius: isTablet ? 20 : 16,
-                        backgroundColor: Themecolor.lavender,
-                        child: Icon(
-                          Icons.person,
-                          color: Themecolor.purple,
-                          size: isTablet ? 24 : 20,
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return BlocListener<MessageViewModel, MessageState>(
+          listener: (context, state) {
+            if (state is MessageErrorState) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+            if (state is MessageSentState || state is MessageDeletedState) {
+              context.read<MessageViewModel>().add(
+                LoadMessagesEvent(currentUserId, widget.otherUserId),
+              );
+              _scrollToBottom();
+            }
+          },
+          child: Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+              foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
+              elevation: Theme.of(context).appBarTheme.elevation,
+              title: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => navigateToUserProfile(context, widget.otherUserId),
+                    child: widget.otherUserPhoto != null && widget.otherUserPhoto!.isNotEmpty
+                        ? CircleAvatar(
+                            radius: isTablet ? 20 : 16,
+                            backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                            backgroundImage: NetworkImage(widget.otherUserPhoto!),
+                          )
+                        : CircleAvatar(
+                            radius: isTablet ? 20 : 16,
+                            backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                            child: Icon(
+                              Icons.person,
+                              color: Theme.of(context).primaryColor,
+                              size: isTablet ? 24 : 20,
+                            ),
+                          ),
+                  ),
+                  SizedBox(width: isTablet ? 12 : 8),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => navigateToUserProfile(context, widget.otherUserId),
+                      child: Text(
+                        widget.otherUserName,
+                        style: TextStyle(
+                          fontSize: isTablet ? 20 : 18,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).appBarTheme.foregroundColor,
                         ),
                       ),
-              ),
-              SizedBox(width: isTablet ? 12 : 8),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => navigateToUserProfile(context, widget.otherUserId),
-                  child: Text(
-                    widget.otherUserName,
-                    style: TextStyle(
-                      fontSize: isTablet ? 20 : 18,
-                      fontWeight: FontWeight.w600,
                     ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        body: currentUserId.isEmpty
-            ? Center(
-                child: CircularProgressIndicator(color: Themecolor.purple),
-              )
-            : Column(
-                children: [
-                  Expanded(
-                    child: BlocBuilder<MessageViewModel, MessageState>(
-                      builder: (context, state) {
-                        if (state is MessageLoadingState) {
-                          return Center(
-                            child: CircularProgressIndicator(color: Themecolor.purple),
-                          );
-                        } else if (state is MessageLoadedMessagesState) {
-                          final messages = state.messages;
-
-                          if (messages.isEmpty) {
-                            return Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.chat_bubble_outline,
-                                    size: isTablet ? 80 : 64,
-                                    color: Themecolor.lavender,
-                                  ),
-                                  SizedBox(height: isTablet ? 24 : 16),
-                                  Text(
-                                    "No messages yet.",
-                                    style: TextStyle(
-                                      color: Themecolor.purple,
-                                      fontSize: isTablet ? 18 : 16,
-                                    ),
-                                  ),
-                                  SizedBox(height: isTablet ? 12 : 8),
-                                  Text(
-                                    "Send a message to start the conversation!",
-                                    style: TextStyle(
-                                      color: Themecolor.lavender,
-                                      fontSize: isTablet ? 14 : 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-
-                          return ListView.builder(
-                            controller: _scrollController,
-                            reverse: true,
-                            padding: EdgeInsets.all(isTablet ? 16 : 12),
-                            itemCount: messages.length,
-                            itemBuilder: (context, index) {
-                              final message = messages[messages.length - 1 - index];
-                              final isMe = message.sender == currentUserId;
-
-                              return GestureDetector(
-                                onLongPress: isMe ? () => _confirmDelete(message.id) : null,
-                                child: Align(
-                                  alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                                  child: Container(
-                                    margin: EdgeInsets.symmetric(
-                                      vertical: isTablet ? 6 : 4,
-                                    ),
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: isTablet ? 12 : 10,
-                                      horizontal: isTablet ? 16 : 14,
-                                    ),
-                                    constraints: BoxConstraints(
-                                      maxWidth: MediaQuery.of(context).size.width * (isTablet ? 0.6 : 0.7),
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isMe ? Themecolor.purple : Themecolor.lavender.withOpacity(0.3),
-                                      borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(isTablet ? 16 : 12),
-                                        topRight: Radius.circular(isTablet ? 16 : 12),
-                                        bottomLeft: Radius.circular(isMe ? (isTablet ? 16 : 12) : (isTablet ? 4 : 2)),
-                                        bottomRight: Radius.circular(isMe ? (isTablet ? 4 : 2) : (isTablet ? 16 : 12)),
-                                      ),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          message.content,
-                                          style: TextStyle(
-                                            color: isMe ? Themecolor.white : Themecolor.purple,
-                                            fontSize: isTablet ? 16 : 14,
-                                          ),
-                                        ),
-                                        SizedBox(height: isTablet ? 6 : 4),
-                                        Text(
-                                          timeAgo(message.createdAt.toLocal()),
-                                          style: TextStyle(
-                                            fontSize: isTablet ? 12 : 10,
-                                            color: isMe 
-                                                ? Themecolor.white.withOpacity(0.7) 
-                                                : Themecolor.purple.withOpacity(0.6),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        } else if (state is MessageErrorState) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.error_outline,
-                                  size: isTablet ? 80 : 64,
-                                  color: Colors.red,
-                                ),
-                                SizedBox(height: isTablet ? 24 : 16),
-                                Text(
-                                  'Error: ${state.message}',
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    fontSize: isTablet ? 18 : 16,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                SizedBox(height: isTablet ? 16 : 12),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    context.read<MessageViewModel>().add(
-                                      LoadMessagesEvent(currentUserId, widget.otherUserId),
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Themecolor.purple,
-                                    foregroundColor: Themecolor.white,
-                                  ),
-                                  child: const Text('Retry'),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                        return const SizedBox();
-                      },
-                    ),
-                  ),
-                  SafeArea(
-                    child: _buildMessageInput(isTablet),
                   ),
                 ],
               ),
-      ),
+            ),
+            body: currentUserId.isEmpty
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  )
+                : Column(
+                    children: [
+                      Expanded(
+                        child: BlocBuilder<MessageViewModel, MessageState>(
+                          builder: (context, state) {
+                            if (state is MessageLoadingState) {
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                              );
+                            } else if (state is MessageLoadedMessagesState) {
+                              final messages = state.messages;
+
+                              if (messages.isEmpty) {
+                                return Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.chat_bubble_outline,
+                                        size: isTablet ? 80 : 64,
+                                        color: Theme.of(context).primaryColor.withOpacity(0.3),
+                                      ),
+                                      SizedBox(height: isTablet ? 24 : 16),
+                                      Text(
+                                        "No messages yet.",
+                                        style: TextStyle(
+                                          color: Theme.of(context).textTheme.titleMedium?.color,
+                                          fontSize: isTablet ? 18 : 16,
+                                        ),
+                                      ),
+                                      SizedBox(height: isTablet ? 12 : 8),
+                                      Text(
+                                        "Send a message to start the conversation!",
+                                        style: TextStyle(
+                                          color: Theme.of(context).textTheme.bodySmall?.color,
+                                          fontSize: isTablet ? 14 : 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+
+                              return Container(
+                                color: Theme.of(context).scaffoldBackgroundColor,
+                                child: ListView.builder(
+                                  controller: _scrollController,
+                                  reverse: true,
+                                  padding: EdgeInsets.all(isTablet ? 16 : 12),
+                                  itemCount: messages.length,
+                                  itemBuilder: (context, index) {
+                                    final message = messages[messages.length - 1 - index];
+                                    final isMe = message.sender == currentUserId;
+
+                                    return GestureDetector(
+                                      onLongPress: isMe ? () => _confirmDelete(message.id) : null,
+                                      child: Align(
+                                        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                                        child: Container(
+                                          margin: EdgeInsets.symmetric(
+                                            vertical: isTablet ? 6 : 4,
+                                          ),
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: isTablet ? 12 : 10,
+                                            horizontal: isTablet ? 16 : 14,
+                                          ),
+                                          constraints: BoxConstraints(
+                                            maxWidth: MediaQuery.of(context).size.width * (isTablet ? 0.6 : 0.7),
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: isMe 
+                                              ? Theme.of(context).primaryColor 
+                                              : Theme.of(context).cardColor,
+                                            borderRadius: BorderRadius.only(
+                                              topLeft: Radius.circular(isTablet ? 16 : 12),
+                                              topRight: Radius.circular(isTablet ? 16 : 12),
+                                              bottomLeft: Radius.circular(isMe ? (isTablet ? 16 : 12) : (isTablet ? 4 : 2)),
+                                              bottomRight: Radius.circular(isMe ? (isTablet ? 4 : 2) : (isTablet ? 16 : 12)),
+                                            ),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                message.content,
+                                                style: TextStyle(
+                                                  color: isMe 
+                                                    ? Theme.of(context).colorScheme.onPrimary
+                                                    : Theme.of(context).textTheme.bodyMedium?.color,
+                                                  fontSize: isTablet ? 16 : 14,
+                                                ),
+                                              ),
+                                              SizedBox(height: isTablet ? 6 : 4),
+                                              Text(
+                                                timeAgo(message.createdAt.toLocal()),
+                                                style: TextStyle(
+                                                  fontSize: isTablet ? 12 : 10,
+                                                  color: isMe 
+                                                      ? Theme.of(context).colorScheme.onPrimary.withOpacity(0.7) 
+                                                      : Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            } else if (state is MessageErrorState) {
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.error_outline,
+                                      size: isTablet ? 80 : 64,
+                                      color: Colors.red,
+                                    ),
+                                    SizedBox(height: isTablet ? 24 : 16),
+                                    Text(
+                                      'Error: ${state.message}',
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontSize: isTablet ? 18 : 16,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    SizedBox(height: isTablet ? 16 : 12),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        context.read<MessageViewModel>().add(
+                                          LoadMessagesEvent(currentUserId, widget.otherUserId),
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Theme.of(context).primaryColor,
+                                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                                      ),
+                                      child: const Text('Retry'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                            return const SizedBox();
+                          },
+                        ),
+                      ),
+                      SafeArea(
+                        child: _buildMessageInput(isTablet),
+                      ),
+                    ],
+                  ),
+          ),
+        );
+      },
     );
   }
 }

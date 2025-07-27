@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:softconnect/app/theme/colors/themecolor.dart';
+import 'package:provider/provider.dart';
+import 'package:softconnect/app/theme/theme_provider.dart';
 import 'package:softconnect/features/home/domain/use_case/getPostsUseCase.dart';
 
 class CreatePostModal extends StatefulWidget {
@@ -99,10 +100,10 @@ class _CreatePostModalState extends State<CreatePostModal> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Post created successfully'),
-              backgroundColor:Color(0xFF37225C),
+              backgroundColor: Theme.of(context).primaryColor,
             ),
           );
-          Navigator.of(context).pop(true); 
+          Navigator.of(context).pop(true);
         },
       );
     } catch (e) {
@@ -129,177 +130,197 @@ class _CreatePostModalState extends State<CreatePostModal> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
 
-    return AlertDialog(
-      backgroundColor: Themecolor.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: Themecolor.lavender.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      title: Text(
-        "Create Post",
-        style: TextStyle(
-          color: Themecolor.purple,
-          fontSize: isTablet ? 22 : 20,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      content: SizedBox(
-        width: isTablet ? 500 : double.maxFinite,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _contentController,
-                maxLines: isTablet ? 6 : 4,
-                style: TextStyle(
-                  fontSize: isTablet ? 16 : 14,
-                  color: Themecolor.purple,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'What\'s on your mind?',
-                  labelStyle: TextStyle(
-                    color: Themecolor.lavender,
-                    fontSize: isTablet ? 16 : 14,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Themecolor.lavender),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Themecolor.purple, width: 2),
-                  ),
-                  contentPadding: EdgeInsets.all(isTablet ? 16 : 12),
-                ),
-              ),
-              SizedBox(height: isTablet ? 16 : 10),
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: isTablet ? 16 : 12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Themecolor.lavender),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: DropdownButton<String>(
-                  value: _privacy,
-                  isExpanded: true,
-                  underline: const SizedBox(),
-                  style: TextStyle(
-                    color: Themecolor.purple,
-                    fontSize: isTablet ? 16 : 14,
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'Public', child: Text('Public')),
-                    DropdownMenuItem(value: 'Private', child: Text('Private')),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _privacy = value;
-                      });
-                    }
-                  },
-                ),
-              ),
-              SizedBox(height: isTablet ? 16 : 10),
-              if (_selectedImage != null)
-                Container(
-                  margin: EdgeInsets.only(bottom: isTablet ? 16 : 10),
-                  height: isTablet ? 200 : 150,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Themecolor.lavender.withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.file(
-                      _selectedImage!,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              Container(
-                width: double.infinity,
-                child: TextButton.icon(
-                  onPressed: _pickImage,
-                  icon: Icon(
-                    Icons.image,
-                    color: Themecolor.purple,
-                    size: isTablet ? 24 : 20,
-                  ),
-                  label: Text(
-                    "Add Image",
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).dialogBackgroundColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          title: Text(
+            "Create Post",
+            style: TextStyle(
+              color: Theme.of(context).textTheme.headlineSmall?.color,
+              fontSize: isTablet ? 22 : 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: SizedBox(
+            width: isTablet ? 500 : double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _contentController,
+                    maxLines: isTablet ? 6 : 4,
                     style: TextStyle(
-                      color: Themecolor.purple,
                       fontSize: isTablet ? 16 : 14,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'What\'s on your mind?',
+                      labelStyle: TextStyle(
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                        fontSize: isTablet ? 16 : 14,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).primaryColor,
+                          width: 2,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                        ),
+                      ),
+                      contentPadding: EdgeInsets.all(isTablet ? 16 : 12),
                     ),
                   ),
-                  style: TextButton.styleFrom(
-                    backgroundColor: Themecolor.lavender.withOpacity(0.1),
-                    padding: EdgeInsets.symmetric(
-                      vertical: isTablet ? 16 : 12,
-                      horizontal: isTablet ? 20 : 16,
-                    ),
-                    shape: RoundedRectangleBorder(
+                  SizedBox(height: isTablet ? 16 : 10),
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(horizontal: isTablet ? 16 : 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Theme.of(context).dividerColor,
+                      ),
                       borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: Themecolor.lavender.withOpacity(0.3),
-                        width: 1,
+                    ),
+                    child: DropdownButton<String>(
+                      value: _privacy,
+                      isExpanded: true,
+                      underline: const SizedBox(),
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                        fontSize: isTablet ? 16 : 14,
+                      ),
+                      dropdownColor: Theme.of(context).cardColor,
+                      items: const [
+                        DropdownMenuItem(value: 'Public', child: Text('Public')),
+                        DropdownMenuItem(value: 'Private', child: Text('Private')),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _privacy = value;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                  SizedBox(height: isTablet ? 16 : 10),
+                  if (_selectedImage != null)
+                    Container(
+                      margin: EdgeInsets.only(bottom: isTablet ? 16 : 10),
+                      height: isTablet ? 200 : 150,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          _selectedImage!,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  Container(
+                    width: double.infinity,
+                    child: TextButton.icon(
+                      onPressed: _pickImage,
+                      icon: Icon(
+                        Icons.image,
+                        color: Theme.of(context).primaryColor,
+                        size: isTablet ? 24 : 20,
+                      ),
+                      label: Text(
+                        "Add Image",
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontSize: isTablet ? 16 : 14,
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                        padding: EdgeInsets.symmetric(
+                          vertical: isTablet ? 16 : 12,
+                          horizontal: isTablet ? 20 : 16,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: Theme.of(context).dividerColor.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
                       ),
                     ),
                   ),
+                  if (_isLoading)
+                    Padding(
+                      padding: EdgeInsets.only(top: isTablet ? 20 : 16),
+                      child: CircularProgressIndicator(
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: _isLoading ? null : () => Navigator.pop(context),
+              child: Text(
+                "Cancel",
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                  fontSize: isTablet ? 16 : 14,
                 ),
               ),
-              if (_isLoading)
-                Padding(
-                  padding: EdgeInsets.only(top: isTablet ? 20 : 16),
-                  child: CircularProgressIndicator(color: Themecolor.purple),
+            ),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _submitPost,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isTablet ? 24 : 20,
+                  vertical: isTablet ? 14 : 12,
                 ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: _isLoading ? null : () => Navigator.pop(context),
-          child: Text(
-            "Cancel",
-            style: TextStyle(
-              color: Themecolor.lavender,
-              fontSize: isTablet ? 16 : 14,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                "Post",
+                style: TextStyle(
+                  fontSize: isTablet ? 16 : 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-          ),
-        ),
-        ElevatedButton(
-          onPressed: _isLoading ? null : _submitPost,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Themecolor.purple,
-            foregroundColor: Themecolor.white,
-            padding: EdgeInsets.symmetric(
-              horizontal: isTablet ? 24 : 20,
-              vertical: isTablet ? 14 : 12,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: Text(
-            "Post",
-            style: TextStyle(
-              fontSize: isTablet ? 16 : 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

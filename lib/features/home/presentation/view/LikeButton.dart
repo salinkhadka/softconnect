@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:softconnect/app/theme/colors/themecolor.dart';
 
 class LikeButton extends StatelessWidget {
   final String postId;
@@ -25,7 +24,9 @@ class LikeButton extends StatelessWidget {
       onPressed: isLoading ? null : onPressed,
       icon: Icon(
         isLiked ? Icons.thumb_up : Icons.thumb_up_alt_outlined,
-        color: isLiked ? Themecolor.purple : Themecolor.lavender,
+        color: isLiked 
+            ? Theme.of(context).primaryColor 
+            : Theme.of(context).primaryColor.withOpacity(0.7),
       ),
       label: isLoading
           ? SizedBox(
@@ -33,13 +34,23 @@ class LikeButton extends StatelessWidget {
               height: 12,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Themecolor.purple,
+                color: Theme.of(context).primaryColor,
               ),
             )
           : Text(
               likeCount.toString(),
-              style: TextStyle(color: Themecolor.purple),
+              style: TextStyle(
+                color: Theme.of(context).primaryColor,
+                fontWeight: FontWeight.w500,
+              ),
             ),
+      style: TextButton.styleFrom(
+        foregroundColor: Theme.of(context).primaryColor,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        backgroundColor: isLiked 
+            ? Theme.of(context).primaryColor.withOpacity(0.1) 
+            : Colors.transparent,
+      ),
     );
   }
 }

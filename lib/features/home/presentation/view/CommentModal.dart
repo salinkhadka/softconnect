@@ -2,8 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:softconnect/app/constants/api_endpoints.dart';
-import 'package:softconnect/app/theme/colors/themecolor.dart';
+import 'package:softconnect/app/theme/theme_provider.dart';
 import 'package:softconnect/core/utils/network_image_util.dart';
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_event.dart';
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_state.dart';
@@ -74,196 +75,211 @@ class _CommentModalState extends State<CommentModal> {
   Widget build(BuildContext context) {
     final backendBaseUrl = getBackendBaseUrl();
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.5,
-      minChildSize: 0.3,
-      maxChildSize: 0.9,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Themecolor.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            border: Border.all(
-              color: Themecolor.lavender.withOpacity(0.3),
-              width: 1,
-            ),
-          ),
-          child: BlocBuilder<CommentViewModel, CommentState>(
-            builder: (context, state) {
-              return Column(
-                children: [
-                  // Header
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Themecolor.purple,
-                      borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(16)),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Themecolor.white,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.5,
+          minChildSize: 0.3,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: BlocBuilder<CommentViewModel, CommentState>(
+                builder: (context, state) {
+                  return Column(
+                    children: [
+                      // Header
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                         ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          "Comments",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Themecolor.white,
-                          ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 4,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              "Comments",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
 
-                  // Comments List
-                  Expanded(
-                    child: state.isLoading
-                        ? const Center(
-                            child: CircularProgressIndicator(color: Themecolor.purple),
-                          )
-                        : state.comments.isEmpty
+                      // Comments List
+                      Expanded(
+                        child: state.isLoading
                             ? Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
-                                    Icon(
-                                      Icons.comment_outlined,
-                                      size: 48,
-                                      color: Themecolor.lavender,
-                                    ),
-                                    SizedBox(height: 12),
-                                    Text(
-                                      'No comments yet',
-                                      style: TextStyle(
-                                        color: Themecolor.purple,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ],
+                                child: CircularProgressIndicator(
+                                  color: Theme.of(context).primaryColor,
                                 ),
                               )
-                            : ListView.builder(
-                                controller: scrollController,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                itemCount: state.comments
-                                    .where((c) => c.parentCommentId == null)
-                                    .length,
-                                itemBuilder: (context, index) {
-                                  final topLevelComments = state.comments
-                                      .where((c) => c.parentCommentId == null)
-                                      .toList();
-                                  final comment = topLevelComments[index];
+                            : state.comments.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.comment_outlined,
+                                          size: 48,
+                                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          'No comments yet',
+                                          style: TextStyle(
+                                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    controller: scrollController,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    itemCount: state.comments
+                                        .where((c) => c.parentCommentId == null)
+                                        .length,
+                                    itemBuilder: (context, index) {
+                                      final topLevelComments = state.comments
+                                          .where((c) => c.parentCommentId == null)
+                                          .toList();
+                                      final comment = topLevelComments[index];
 
-                                  return buildComment(comment, state, backendBaseUrl);
-                                },
-                              ),
-                  ),
-
-                  // Input Section
-                  SafeArea(
-                    child: Container(
-                      padding: EdgeInsets.only(
-                        left: 12,
-                        right: 12,
-                        bottom: MediaQuery.of(context).viewInsets.bottom + 8,
-                        top: 8,
+                                      return buildComment(comment, state, backendBaseUrl);
+                                    },
+                                  ),
                       ),
-                      decoration: BoxDecoration(
-                        color: Themecolor.white,
-                        border: Border(
-                          top: BorderSide(
-                            color: Themecolor.lavender.withOpacity(0.3),
-                            width: 1,
+
+                      // Input Section
+                      SafeArea(
+                        child: Container(
+                          padding: EdgeInsets.only(
+                            left: 12,
+                            right: 12,
+                            bottom: MediaQuery.of(context).viewInsets.bottom + 8,
+                            top: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).scaffoldBackgroundColor,
+                            border: Border(
+                              top: BorderSide(
+                                color: Theme.of(context).dividerColor.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _commentController,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: "Add a comment...",
+                                    hintStyle: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                                      fontSize: 14,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                      borderSide: BorderSide(
+                                        color: Theme.of(context).dividerColor,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                      borderSide: BorderSide(
+                                        color: Theme.of(context).primaryColor,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                      borderSide: BorderSide(
+                                        color: Theme.of(context).dividerColor,
+                                      ),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                  ),
+                                  maxLines: 1,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).primaryColor,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Theme.of(context).primaryColor,
+                                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    final content = _commentController.text.trim();
+                                    if (content.isNotEmpty) {
+                                      context.read<CommentViewModel>().add(AddComment(
+                                            userId: widget.userId,
+                                            postId: widget.postId,
+                                            content: content,
+                                          ));
+                                      _commentController.clear();
+                                      FocusScope.of(context).unfocus();
+                                    }
+                                  },
+                                  child: const Text(
+                                    "Post",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _commentController,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Themecolor.purple,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: "Add a comment...",
-                                hintStyle: const TextStyle(
-                                  color: Themecolor.lavender,
-                                  fontSize: 14,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                  borderSide: const BorderSide(color: Themecolor.lavender),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                  borderSide: const BorderSide(
-                                      color: Themecolor.purple, width: 2),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                              ),
-                              maxLines: 1,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Themecolor.purple,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Themecolor.purple,
-                                foregroundColor: Themecolor.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                              ),
-                              onPressed: () {
-                                final content = _commentController.text.trim();
-                                if (content.isNotEmpty) {
-                                  context.read<CommentViewModel>().add(AddComment(
-                                        userId: widget.userId,
-                                        postId: widget.postId,
-                                        content: content,
-                                      ));
-                                  _commentController.clear();
-                                  FocusScope.of(context).unfocus();
-                                }
-                              },
-                              child: const Text(
-                                "Post",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
+                    ],
+                  );
+                },
+              ),
+            );
+          },
         );
       },
     );
@@ -284,11 +300,11 @@ class _CommentModalState extends State<CommentModal> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isReply
-                  ? Themecolor.lavender.withOpacity(0.05)
-                  : Themecolor.white,
+                  ? Theme.of(context).primaryColor.withOpacity(0.05)
+                  : Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: Themecolor.lavender.withOpacity(0.2),
+                color: Theme.of(context).dividerColor.withOpacity(0.2),
                 width: 1,
               ),
             ),
@@ -304,7 +320,7 @@ class _CommentModalState extends State<CommentModal> {
                               comment.profilePhoto!.isNotEmpty
                           ? CircleAvatar(
                               radius: 20,
-                              backgroundColor: Themecolor.lavender,
+                              backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
                               child: ClipOval(
                                 child: NetworkImageWidget(
                                   imageUrl:
@@ -315,27 +331,27 @@ class _CommentModalState extends State<CommentModal> {
                                   placeholder: Center(
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: Themecolor.purple,
+                                      color: Theme.of(context).primaryColor,
                                     ),
                                   ),
                                   errorWidget: Icon(
                                     Icons.account_circle,
                                     size: 40,
-                                    color: Themecolor.purple,
+                                    color: Theme.of(context).primaryColor,
                                   ),
                                 ),
                               ),
                             )
                           : CircleAvatar(
                               radius: 20,
-                              backgroundColor: Themecolor.lavender,
+                              backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
                               child: Text(
                                 comment.username != null && comment.username!.isNotEmpty
                                     ? comment.username![0].toUpperCase()
                                     : '?',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
-                                  color: Themecolor.purple,
+                                  color: Theme.of(context).primaryColor,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -350,17 +366,17 @@ class _CommentModalState extends State<CommentModal> {
                           children: [
                             Text(
                               '@${comment.username ?? 'anonymous'}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
-                                color: Themecolor.purple,
+                                color: Theme.of(context).textTheme.titleMedium?.color,
                               ),
                             ),
                             Text(
                               DateFormat('yyyy-MM-dd hh:mm a').format(comment.createdAt),
                               style: TextStyle(
                                 fontSize: 10,
-                                color: Colors.grey[600],
+                                color: Theme.of(context).textTheme.bodySmall?.color,
                               ),
                             ),
                           ],
@@ -373,10 +389,10 @@ class _CommentModalState extends State<CommentModal> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         TextButton(
-                          child: const Text(
+                          child: Text(
                             'Reply',
                             style: TextStyle(
-                              color: Themecolor.purple,
+                              color: Theme.of(context).primaryColor,
                               fontSize: 12,
                             ),
                           ),
@@ -399,14 +415,29 @@ class _CommentModalState extends State<CommentModal> {
                               final shouldDelete = await showDialog<bool>(
                                 context: context,
                                 builder: (context) => AlertDialog(
-                                  title: const Text("Delete Comment"),
-                                  content: const Text(
-                                      "Are you sure you want to delete this comment?"),
+                                  backgroundColor: Theme.of(context).dialogBackgroundColor,
+                                  title: Text(
+                                    "Delete Comment",
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.titleLarge?.color,
+                                    ),
+                                  ),
+                                  content: Text(
+                                    "Are you sure you want to delete this comment?",
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                                    ),
+                                  ),
                                   actions: [
                                     TextButton(
                                       onPressed: () =>
                                           Navigator.of(context).pop(false),
-                                      child: const Text("Cancel"),
+                                      child: Text(
+                                        "Cancel",
+                                        style: TextStyle(
+                                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                                        ),
+                                      ),
                                     ),
                                     TextButton(
                                       onPressed: () =>
@@ -440,9 +471,9 @@ class _CommentModalState extends State<CommentModal> {
                 // Comment Content
                 Text(
                   comment.content,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: Themecolor.purple,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                     height: 1.4,
                   ),
                 ),
@@ -489,9 +520,9 @@ class _CommentModalState extends State<CommentModal> {
                   isExpanded
                       ? "Hide replies"
                       : "View ${replies.length} repl${replies.length > 1 ? 'ies' : 'y'}",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Themecolor.purple,
+                    color: Theme.of(context).primaryColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -526,75 +557,90 @@ class _ReplyTextFieldState extends State<ReplyTextField> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Themecolor.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Themecolor.lavender.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Themecolor.purple,
-              ),
-              decoration: const InputDecoration(
-                hintText: 'Write a reply...',
-                hintStyle: TextStyle(
-                  color: Themecolor.lavender,
-                  fontSize: 14,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(20)),
-                  borderSide: BorderSide(color: Themecolor.lavender),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(20)),
-                  borderSide: BorderSide(color: Themecolor.purple, width: 2),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-              ),
-              maxLines: 1,
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withOpacity(0.3),
+              width: 1,
             ),
           ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Themecolor.purple,
-              foregroundColor: Themecolor.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Write a reply...',
+                    hintStyle: TextStyle(
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                      fontSize: 14,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: const BorderRadius.all(Radius.circular(20)),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: const BorderRadius.all(Radius.circular(20)),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).primaryColor,
+                        width: 2,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: const BorderRadius.all(Radius.circular(20)),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                  ),
+                  maxLines: 1,
+                ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            onPressed: () {
-              final text = _controller.text.trim();
-              if (text.isNotEmpty) {
-                widget.onReply(text);
-                _controller.clear();
-                FocusScope.of(context).unfocus();
-              }
-            },
-            child: const Text(
-              'Reply',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+              const SizedBox(width: 8),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                onPressed: () {
+                  final text = _controller.text.trim();
+                  if (text.isNotEmpty) {
+                    widget.onReply(text);
+                    _controller.clear();
+                    FocusScope.of(context).unfocus();
+                  }
+                },
+                child: const Text(
+                  'Reply',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

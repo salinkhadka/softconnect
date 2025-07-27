@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:softconnect/app/theme/theme_provider.dart';
 
 import 'package:softconnect/core/network/api_service.dart';
 import 'package:softconnect/core/network/hive_service.dart';
@@ -100,6 +101,9 @@ Future<void> _initCoreServices() async {
   serviceLocator.registerLazySingleton(() => HiveService());
   serviceLocator.registerLazySingleton<Dio>(() => Dio());
   serviceLocator.registerLazySingleton(() => ApiService(serviceLocator<Dio>()));
+  
+  // Register ThemeProvider as a singleton
+  serviceLocator.registerLazySingleton<ThemeProvider>(() => ThemeProvider());
 }
 
 // =========================================================================

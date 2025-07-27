@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:softconnect/app/service_locator/service_locator.dart';
+import 'package:softconnect/app/theme/theme_provider.dart';
 import 'package:softconnect/features/friends/presentation/view/friends_page.dart';
 import 'package:softconnect/features/friends/presentation/view_model/follow_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view/FeedPage.dart';
@@ -29,32 +31,54 @@ class HomeState {
     return HomeState(
       selectedIndex: 0,
       views: [
-        BlocProvider<FeedViewModel>(
-          create: (_) => serviceLocator<FeedViewModel>(),
-          child: FeedPage(currentUserId: userId),
-        ),
-        BlocProvider<FollowViewModel>(
-          create: (_) => serviceLocator<FollowViewModel>(),
-          child: FriendsPage(userId: userId),
-        ),
-        BlocProvider<InboxViewModel>(
-          create: (_) => serviceLocator<InboxViewModel>(),
-          child: InboxPage(),
-        ),
-        MultiBlocProvider(
-          providers: [
-            BlocProvider<UserProfileViewModel>(
-              create: (_) => serviceLocator<UserProfileViewModel>(),
-            ),
-            BlocProvider<FeedViewModel>(
+        // Feed Page with theme support
+        Consumer<ThemeProvider>(
+          builder: (context, themeProvider, child) {
+            return BlocProvider(
               create: (_) => serviceLocator<FeedViewModel>(),
-            ),
-            BlocProvider<CommentViewModel>(
-              create: (_) => serviceLocator<CommentViewModel>(),
-            ),
-
-          ],
-          child: UserProfilePage(userId: userId),
+              child: FeedPage(currentUserId: userId),
+            );
+          },
+        ),
+        
+        // Friends Page with theme support
+        Consumer<ThemeProvider>(
+          builder: (context, themeProvider, child) {
+            return BlocProvider(
+              create: (_) => serviceLocator<FollowViewModel>(),
+              child: FriendsPage(userId: userId),
+            );
+          },
+        ),
+        
+        // Inbox Page with theme support
+        Consumer<ThemeProvider>(
+          builder: (context, themeProvider, child) {
+            return BlocProvider(
+              create: (_) => serviceLocator<InboxViewModel>(),
+              child: InboxPage(),
+            );
+          },
+        ),
+        
+        // User Profile Page with theme support
+        Consumer<ThemeProvider>(
+          builder: (context, themeProvider, child) {
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider(
+                  create: (_) => serviceLocator<UserProfileViewModel>(),
+                ),
+                BlocProvider(
+                  create: (_) => serviceLocator<CommentViewModel>(),
+                ),
+                BlocProvider(
+                  create: (_) => serviceLocator<FeedViewModel>(),
+                ),
+              ],
+              child: UserProfilePage(userId: userId),
+            );
+          },
         ),
       ],
     );
