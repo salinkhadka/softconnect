@@ -6,7 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:softconnect/app/constants/api_endpoints.dart';
 import 'package:softconnect/app/service_locator/service_locator.dart';
-import 'package:softconnect/core/utils/network_image_util.dart';
+// import 'package:softconnect/core/utils/network_image_util.dart';
 import 'package:softconnect/features/friends/domain/use_case/follow_user_usecase.dart';
 import 'package:softconnect/features/friends/domain/use_case/get_followers_usecase.dart';
 import 'package:softconnect/features/friends/domain/use_case/get_following_usecase.dart';
@@ -20,8 +20,8 @@ import 'package:softconnect/features/message/presentation/view_model/message_vie
 import 'package:softconnect/features/profile/presentation/view_model/user_profile_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_view_model.dart';
 import 'package:softconnect/features/home/domain/entity/post_entity.dart';
-import 'package:softconnect/features/profile/presentation/view/followers_page.dart';
-import 'package:softconnect/features/profile/presentation/view/following_page.dart';
+// import 'package:softconnect/features/profile/presentation/view/followers_page.dart';
+// import 'package:softconnect/features/profile/presentation/view/following_page.dart';
 import 'package:softconnect/features/auth/presentation/view/View/change_password.dart';
 import 'package:softconnect/features/friends/domain/entity/follow_entity.dart';
 import 'package:softconnect/features/profile/presentation/view/profile_header_component.dart';
@@ -222,6 +222,65 @@ class _UserProfilePageState extends State<UserProfilePage> {
       setState(() {
         isLoadingFollow = false;
       });
+    }
+  }
+
+  // Handle message button press with follow check
+  void _handleMessagePress() {
+    final user = context.read<UserProfileViewModel>().state.user;
+    
+    if (!isFollowing) {
+      // Show toast message if not following
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                color: Colors.white,
+                size: 20,
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'You must follow this user to send messages',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF37225C),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          duration: Duration(seconds: 3),
+          margin: EdgeInsets.all(16),
+        ),
+      );
+      return;
+    }
+
+    // If following, proceed to message page
+    if (user != null) {
+      final messageViewModel = serviceLocator<MessageViewModel>();
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: messageViewModel,
+            child: MessagePage(
+              otherUserId: user.userId!,
+              otherUserName: user.username,
+              otherUserPhoto: getFullImageUrl(user.profilePhoto),
+            ),
+          ),
+        ),
+      );
     }
   }
 
@@ -836,40 +895,32 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                   SizedBox(width: isTablet ? 16 : 12),
                                   Expanded(
                                     child: OutlinedButton.icon(
-                                      onPressed: () {
-                                        final messageViewModel =
-                                            serviceLocator<MessageViewModel>();
-
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => BlocProvider.value(
-                                              value: messageViewModel,
-                                              child: MessagePage(
-                                                otherUserId: user.userId!,
-                                                otherUserName: user.username,
-                                                otherUserPhoto:
-                                                    getFullImageUrl(user.profilePhoto),
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
+                                      onPressed: _handleMessagePress,
                                       icon: Icon(
                                         Icons.message,
                                         size: isTablet ? 20 : 18,
+                                        color: isFollowing 
+                                            ? const Color(0xFF37225C) 
+                                            : const Color(0xFF37225C).withOpacity(0.5),
                                       ),
                                       label: Text(
                                         'Message',
                                         style: TextStyle(
                                           fontSize: isTablet ? 16 : 14,
                                           fontWeight: FontWeight.w600,
+                                          color: isFollowing 
+                                              ? const Color(0xFF37225C) 
+                                              : const Color(0xFF37225C).withOpacity(0.5),
                                         ),
                                       ),
                                       style: OutlinedButton.styleFrom(
-                                        foregroundColor: const Color(0xFF37225C),
-                                        side: const BorderSide(
-                                          color: Color(0xFF37225C),
+                                        foregroundColor: isFollowing 
+                                            ? const Color(0xFF37225C) 
+                                            : const Color(0xFF37225C).withOpacity(0.5),
+                                        side: BorderSide(
+                                          color: isFollowing 
+                                              ? const Color(0xFF37225C) 
+                                              : const Color(0xFF37225C).withOpacity(0.3),
                                           width: 2,
                                         ),
                                         padding: EdgeInsets.symmetric(
@@ -878,6 +929,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(12),
                                         ),
+                                        backgroundColor: isFollowing 
+                                            ? Colors.transparent 
+                                            : const Color(0xFFB8A6E6).withOpacity(0.1),
                                       ),
                                     ),
                                   ),
