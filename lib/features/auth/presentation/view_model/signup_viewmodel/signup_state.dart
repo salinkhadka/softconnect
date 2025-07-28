@@ -1,5 +1,6 @@
-// signup_state.dart
-class SignupState {
+import 'package:equatable/equatable.dart';
+
+class SignupState extends Equatable {
   final bool isLoading;
   final bool isSuccess;
   final String? message;
@@ -54,4 +55,16 @@ class SignupState {
       selectedProgram: selectedProgram ?? this.selectedProgram,
     );
   }
+
+  @override
+  List<Object?> get props => [
+        isLoading,
+        isSuccess,
+        message,
+        profilePhotoPath,
+        agreedToTerms,
+        obscurePassword,
+        obscureConfirmPassword,
+        selectedProgram,
+      ];
 }

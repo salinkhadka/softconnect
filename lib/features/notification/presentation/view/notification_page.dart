@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import 'package:softconnect/app/constants/api_endpoints.dart';
-import 'package:softconnect/app/theme/colors/themecolor.dart';
+import 'package:softconnect/app/theme/theme_provider.dart';
 import 'package:softconnect/features/notification/presentation/view_model/notification_viewmodel.dart';
 import 'package:softconnect/core/utils/getFullImageUrl.dart';
 
@@ -89,7 +90,6 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
       setState(() {
         _processingNotifications.add(notificationId);
       });
-
       try {
         await context.read<NotificationViewModel>().markNotificationRead(notificationId, _userId!);
       } finally {
@@ -107,7 +107,6 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
       setState(() {
         _processingNotifications.add(notificationId);
       });
-
       try {
         await context.read<NotificationViewModel>().deleteNotification(notificationId, _userId!);
       } finally {
@@ -123,7 +122,6 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
   String _formatDate(DateTime dt) {
     final now = DateTime.now();
     final diff = now.difference(dt);
-
     if (diff.inMinutes < 1) return 'Just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
     if (diff.inHours < 24) return '${diff.inHours}h ago';
@@ -131,8 +129,9 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
     return DateFormat.yMMMd().format(dt);
   }
 
-  Widget _buildNotificationItem(notification, bool isTablet) {
+  Widget _buildNotificationItem(notification, bool isTablet, BuildContext context) {
     final isProcessing = _processingNotifications.contains(notification.id);
+    final theme = Theme.of(context);
     
     return Dismissible(
       key: ValueKey(notification.id),
@@ -173,7 +172,7 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
         return await showDialog<bool>(
               context: context,
               builder: (context) => AlertDialog(
-                backgroundColor: Themecolor.white,
+                backgroundColor: theme.dialogBackgroundColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -184,7 +183,7 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
                     Text(
                       'Delete Notification?',
                       style: TextStyle(
-                        color: Themecolor.purple,
+                        color: theme.textTheme.titleLarge?.color,
                         fontSize: isTablet ? 20 : 18,
                         fontWeight: FontWeight.w600,
                       ),
@@ -194,7 +193,7 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
                 content: Text(
                   'This action cannot be undone. Are you sure you want to delete this notification?',
                   style: TextStyle(
-                    color: Themecolor.purple,
+                    color: theme.textTheme.bodyMedium?.color,
                     fontSize: isTablet ? 16 : 14,
                   ),
                 ),
@@ -204,7 +203,7 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
                     child: Text(
                       'Cancel',
                       style: TextStyle(
-                        color: Themecolor.lavender,
+                        color: theme.textTheme.bodyMedium?.color,
                         fontSize: isTablet ? 16 : 14,
                         fontWeight: FontWeight.w500,
                       ),
@@ -239,18 +238,18 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
         child: Card(
           elevation: notification.isRead ? 2 : 6,
           color: isProcessing
-              ? Themecolor.lavender.withOpacity(0.1)
+              ? theme.primaryColor.withOpacity(0.1)
               : notification.isRead
-                  ? Themecolor.white
-                  : Themecolor.lavender.withOpacity(0.05),
+                  ? theme.cardColor
+                  : theme.primaryColor.withOpacity(0.05),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
               color: isProcessing
-                  ? Themecolor.purple.withOpacity(0.3)
+                  ? theme.primaryColor.withOpacity(0.3)
                   : notification.isRead
                       ? Colors.transparent
-                      : Themecolor.purple.withOpacity(0.2),
+                      : theme.primaryColor.withOpacity(0.2),
               width: notification.isRead ? 0 : 2,
             ),
           ),
@@ -265,7 +264,7 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
                   children: [
                     CircleAvatar(
                       radius: isTablet ? 28 : 24,
-                      backgroundColor: Themecolor.lavender,
+                      backgroundColor: theme.primaryColor.withOpacity(0.1),
                       backgroundImage: (notification.sender.profilePhoto != null &&
                               notification.sender.profilePhoto!.isNotEmpty)
                           ? NetworkImage(getFullImageUrl(notification.sender.profilePhoto))
@@ -274,7 +273,7 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
                               notification.sender.profilePhoto!.isEmpty)
                           ? Icon(
                               Icons.person,
-                              color: Themecolor.purple,
+                              color: theme.primaryColor,
                               size: isTablet ? 28 : 24,
                             )
                           : null,
@@ -287,9 +286,9 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
                           width: isTablet ? 12 : 10,
                           height: isTablet ? 12 : 10,
                           decoration: BoxDecoration(
-                            color: Themecolor.purple,
+                            color: theme.primaryColor,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
+                            border: Border.all(color: theme.scaffoldBackgroundColor, width: 2),
                           ),
                         ),
                       ),
@@ -300,7 +299,7 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
                   style: TextStyle(
                     fontWeight: notification.isRead ? FontWeight.w500 : FontWeight.bold,
                     fontSize: isTablet ? 16 : 14,
-                    color: Themecolor.purple,
+                    color: theme.textTheme.titleMedium?.color,
                   ),
                 ),
                 subtitle: Padding(
@@ -313,7 +312,7 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
                           Icon(
                             Icons.person_outline,
                             size: isTablet ? 16 : 14,
-                            color: Colors.grey[600],
+                            color: theme.textTheme.bodySmall?.color,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
@@ -321,7 +320,7 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
                               notification.sender.username,
                               style: TextStyle(
                                 fontSize: isTablet ? 14 : 12,
-                                color: Colors.grey[700],
+                                color: theme.textTheme.bodyMedium?.color,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -329,14 +328,14 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: Themecolor.lavender.withOpacity(0.3),
+                              color: theme.primaryColor.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               notification.type,
                               style: TextStyle(
                                 fontSize: isTablet ? 12 : 10,
-                                color: Themecolor.purple,
+                                color: theme.primaryColor,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -349,14 +348,14 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
                           Icon(
                             Icons.access_time,
                             size: isTablet ? 14 : 12,
-                            color: Colors.grey[500],
+                            color: theme.textTheme.bodySmall?.color,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             _formatDate(notification.createdAt),
                             style: TextStyle(
                               fontSize: isTablet ? 12 : 10,
-                              color: Colors.grey[600],
+                              color: theme.textTheme.bodySmall?.color,
                             ),
                           ),
                         ],
@@ -368,13 +367,13 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
                   padding: EdgeInsets.all(isTablet ? 8 : 6),
                   decoration: BoxDecoration(
                     color: notification.isRead
-                        ? Themecolor.lavender.withOpacity(0.2)
-                        : Themecolor.purple.withOpacity(0.1),
+                        ? theme.primaryColor.withOpacity(0.1)
+                        : theme.primaryColor.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     notification.isRead ? Icons.mark_email_read : Icons.mark_email_unread,
-                    color: notification.isRead ? Themecolor.lavender : Themecolor.purple,
+                    color: theme.primaryColor,
                     size: isTablet ? 20 : 18,
                   ),
                 ),
@@ -388,7 +387,7 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.7),
+                      color: theme.scaffoldBackgroundColor.withOpacity(0.7),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Center(
@@ -396,7 +395,7 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
                         width: isTablet ? 24 : 20,
                         height: isTablet ? 24 : 20,
                         child: CircularProgressIndicator(
-                          color: Themecolor.purple,
+                          color: theme.primaryColor,
                           strokeWidth: 2,
                         ),
                       ),
@@ -415,192 +414,198 @@ class _NotificationPageState extends State<NotificationPage> with TickerProvider
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
 
-    return Scaffold(
-      backgroundColor: Themecolor.white,
-      appBar: AppBar(
-        title: Text(
-          'Notifications',
-          style: TextStyle(
-            fontSize: isTablet ? 22 : 20,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        backgroundColor: Themecolor.purple,
-        foregroundColor: Themecolor.white,
-        elevation: 0,
-        actions: [
-          AnimatedBuilder(
-            animation: _refreshAnimation,
-            builder: (context, child) {
-              return Transform.rotate(
-                angle: _refreshAnimation.value * 2 * 3.14159,
-                child: IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: _refresh,
-                  tooltip: 'Refresh notifications',
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: BlocConsumer<NotificationViewModel, NotificationState>(
-        listener: (context, state) {
-          if (state is NotificationError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        final theme = Theme.of(context);
+        
+        return Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          appBar: AppBar(
+            title: Text(
+              'Notifications',
+              style: TextStyle(
+                fontSize: isTablet ? 22 : 20,
+                fontWeight: FontWeight.w600,
+                color: theme.appBarTheme.foregroundColor,
               ),
-            );
-          }
-        },
-        builder: (context, state) {
-          if (state is NotificationLoading) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    color: Themecolor.purple,
-                    strokeWidth: 3,
-                  ),
-                  SizedBox(height: isTablet ? 24 : 16),
-                  Text(
-                    'Loading notifications...',
-                    style: TextStyle(
-                      color: Themecolor.lavender,
-                      fontSize: isTablet ? 16 : 14,
+            ),
+            backgroundColor: theme.appBarTheme.backgroundColor,
+            foregroundColor: theme.appBarTheme.foregroundColor,
+            elevation: theme.appBarTheme.elevation,
+            actions: [
+              AnimatedBuilder(
+                animation: _refreshAnimation,
+                builder: (context, child) {
+                  return Transform.rotate(
+                    angle: _refreshAnimation.value * 2 * 3.14159,
+                    child: IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: _refresh,
+                      tooltip: 'Refresh notifications',
                     ),
-                  ),
-                ],
-              ),
-            );
-          } else if (state is NotificationLoaded) {
-            final notifications = state.notifications;
-            if (notifications.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(isTablet ? 32 : 24),
-                      decoration: BoxDecoration(
-                        color: Themecolor.lavender.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.notifications_none_outlined,
-                        size: isTablet ? 80 : 64,
-                        color: Themecolor.lavender,
-                      ),
-                    ),
-                    SizedBox(height: isTablet ? 24 : 16),
-                    Text(
-                      'No notifications yet',
-                      style: TextStyle(
-                        color: Themecolor.purple,
-                        fontSize: isTablet ? 20 : 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: isTablet ? 12 : 8),
-                    Text(
-                      'When you receive notifications, they\'ll appear here',
-                      style: TextStyle(
-                        color: Themecolor.lavender,
-                        fontSize: isTablet ? 16 : 14,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return RefreshIndicator(
-              color: Themecolor.purple,
-              backgroundColor: Themecolor.white,
-              onRefresh: _refresh,
-              child: ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.symmetric(
-                  horizontal: isTablet ? 24 : 16,
-                  vertical: isTablet ? 16 : 12,
-                ),
-                itemCount: notifications.length,
-                itemBuilder: (context, index) {
-                  final notification = notifications[index];
-                  return _buildNotificationItem(notification, isTablet);
+                  );
                 },
               ),
-            );
-          } else if (state is NotificationError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(isTablet ? 32 : 24),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.error_outline,
-                      size: isTablet ? 80 : 64,
-                      color: Colors.red,
+            ],
+          ),
+          body: BlocConsumer<NotificationViewModel, NotificationState>(
+            listener: (context, state) {
+              if (state is NotificationError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  SizedBox(height: isTablet ? 24 : 16),
-                  Text(
-                    'Something went wrong',
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontSize: isTablet ? 20 : 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: isTablet ? 12 : 8),
-                  Text(
-                    state.message,
-                    style: TextStyle(
-                      color: Colors.red.shade700,
-                      fontSize: isTablet ? 16 : 14,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: isTablet ? 24 : 16),
-                  ElevatedButton.icon(
-                    onPressed: _refresh,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Themecolor.purple,
-                      foregroundColor: Themecolor.white,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isTablet ? 24 : 16,
-                        vertical: isTablet ? 16 : 12,
+                );
+              }
+            },
+            builder: (context, state) {
+              if (state is NotificationLoading) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        color: theme.primaryColor,
+                        strokeWidth: 3,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      SizedBox(height: isTablet ? 24 : 16),
+                      Text(
+                        'Loading notifications...',
+                        style: TextStyle(
+                          color: theme.textTheme.bodyMedium?.color,
+                          fontSize: isTablet ? 16 : 14,
+                        ),
                       ),
-                    ),
-                    icon: const Icon(Icons.refresh),
-                    label: const Text(
-                      'Try Again',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          }
-          return const SizedBox.shrink();
-        },
-      ),
+                );
+              } else if (state is NotificationLoaded) {
+                final notifications = state.notifications;
+                if (notifications.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(isTablet ? 32 : 24),
+                          decoration: BoxDecoration(
+                            color: theme.primaryColor.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.notifications_none_outlined,
+                            size: isTablet ? 80 : 64,
+                            color: theme.primaryColor.withOpacity(0.6),
+                          ),
+                        ),
+                        SizedBox(height: isTablet ? 24 : 16),
+                        Text(
+                          'No notifications yet',
+                          style: TextStyle(
+                            color: theme.textTheme.titleLarge?.color,
+                            fontSize: isTablet ? 20 : 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SizedBox(height: isTablet ? 12 : 8),
+                        Text(
+                          'When you receive notifications, they\'ll appear here',
+                          style: TextStyle(
+                            color: theme.textTheme.bodyMedium?.color,
+                            fontSize: isTablet ? 16 : 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return RefreshIndicator(
+                  color: theme.primaryColor,
+                  backgroundColor: theme.scaffoldBackgroundColor,
+                  onRefresh: _refresh,
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isTablet ? 24 : 16,
+                      vertical: isTablet ? 16 : 12,
+                    ),
+                    itemCount: notifications.length,
+                    itemBuilder: (context, index) {
+                      final notification = notifications[index];
+                      return _buildNotificationItem(notification, isTablet, context);
+                    },
+                  ),
+                );
+              } else if (state is NotificationError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(isTablet ? 32 : 24),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.error_outline,
+                          size: isTablet ? 80 : 64,
+                          color: Colors.red,
+                        ),
+                      ),
+                      SizedBox(height: isTablet ? 24 : 16),
+                      Text(
+                        'Something went wrong',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontSize: isTablet ? 20 : 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: isTablet ? 12 : 8),
+                      Text(
+                        state.message,
+                        style: TextStyle(
+                          color: Colors.red.shade700,
+                          fontSize: isTablet ? 16 : 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: isTablet ? 24 : 16),
+                      ElevatedButton.icon(
+                        onPressed: _refresh,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.primaryColor,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isTablet ? 24 : 16,
+                            vertical: isTablet ? 16 : 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text(
+                          'Try Again',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        );
+      },
     );
   }
 }

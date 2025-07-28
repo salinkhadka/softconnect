@@ -23,6 +23,5 @@ class LoginUserEvent extends LoginEvent {
 }
 class NavigateToSignUpEvent extends LoginEvent {
   final BuildContext context;
-
   NavigateToSignUpEvent({required this.context});
 }

@@ -12,7 +12,7 @@ class SplashViewModel extends Cubit<SplashState> {
 
   Future<void> decideNavigation() async {
     // Add a 2-second delay to simulate splash screen wait time
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 5));
 
     final prefs = await SharedPreferences.getInstance();
     
