@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "1038978543621",
+    "project_id": "softconnect-1082b",
+    "storage_bucket": "softconnect-1082b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1038978543621:android:6cac2a9191b7a0ad946c6c",
+        "android_client_info": {
+          "package_name": "com.salin.firstproject.softconnect"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1038978543621-fjm3s3e7p316tcsdilbtb1l7222refg8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.salin.firstproject.softconnect",
+            "certificate_hash": "c5ab9bbc0883bd4cc4f3586237b1649b65bbad39"
+          }
+        },
+        {
+          "client_id": "1038978543621-8pbd5mlcglf3si47g690cndqkp0udfgd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAiH_OuwlwuWtUinpnBHhi889CFdQ6mB4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1038978543621-8pbd5mlcglf3si47g690cndqkp0udfgd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1038978543621-8ksb3tdasa529125cm4bc3sieksfbs64.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.salin.firstproject.softconnect"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
