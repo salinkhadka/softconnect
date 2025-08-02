@@ -130,4 +130,34 @@ class HomeViewModel extends Cubit<HomeState> {
       );
     }
   }
+  void confirmAndLogout(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext dialogContext) {
+      return AlertDialog(
+        title: const Text('Confirm Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop(); // Dismiss dialog
+            },
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: () {
+              Navigator.of(dialogContext).pop(); // Close dialog
+              logoutAndClearBiometrics(context); // Proceed with logout
+            },
+            child: const Text('Logout'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
 }

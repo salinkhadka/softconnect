@@ -31,263 +31,381 @@ class SignupScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: BlocBuilder<SignupViewModel, SignupState>(
-        builder: (context, state) {
-          if (state.message != null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              final color = state.isSuccess 
-                  ? theme.primaryColor 
-                  : theme.colorScheme.error;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    state.message!,
-                    style: TextStyle(
-                      color: theme.colorScheme.onError,
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: BlocBuilder<SignupViewModel, SignupState>(
+          builder: (context, state) {
+            if (state.message != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final color = state.isSuccess 
+                    ? theme.primaryColor 
+                    : theme.colorScheme.error;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      state.message!,
+                      style: TextStyle(
+                        color: theme.colorScheme.onError,
+                      ),
                     ),
+                    backgroundColor: color,
                   ),
-                  backgroundColor: color,
-                ),
-              );
-              // Clear message after showing
-              context.read<SignupViewModel>().add(ClearMessage());
-            });
-          }
-
-          return Padding(
-            padding: const EdgeInsets.all(20),
-            child: Center(
-              child: SingleChildScrollView(
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      GestureDetector(
-                        onTap: () => _showImageSourcePicker(context),
-                        child: CircleAvatar(
-                          radius: 40,
-                          backgroundColor: isDark 
-                              ? theme.colorScheme.surfaceVariant
-                              : Themecolor.lavender,
-                          backgroundImage: state.profilePhotoPath != null
-                              ? FileImage(File(state.profilePhotoPath!))
-                              : null,
-                          child: state.profilePhotoPath == null
-                              ? Icon(
-                                  Icons.camera_alt, 
-                                  color: theme.primaryColor,
-                                  size: 28,
-                                )
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      _buildTextField(
-                        context: context,
-                        controller: usernameController,
-                        labelText: 'Full Name',
-                        validator: (val) =>
-                            val == null || val.isEmpty ? 'Enter name' : null,
-                      ),
-                      const SizedBox(height: 10),
-                      _buildTextField(
-                        context: context,
-                        controller: emailController,
-                        labelText: 'Email Address',
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (val) => val == null || !isValidEmail(val)
-                            ? 'Enter a valid email'
-                            : null,
-                      ),
-                      const SizedBox(height: 10),
-                      _buildTextField(
-                        context: context,
-                        controller: studentIdController,
-                        labelText: 'Student ID',
-                        keyboardType: TextInputType.number,
-                        validator: (val) => val == null || !isValidStudentId(val)
-                            ? 'Enter valid 6-digit student ID'
-                            : null,
-                      ),
-                      const SizedBox(height: 10),
-                      DropdownButtonFormField<String>(
-                        value: state.selectedProgram ?? programs[0],
-                        items: programs.map((program) {
-                          return DropdownMenuItem<String>(
-                            value: program,
-                            child: Text(
-                              program,
-                              style: TextStyle(color: theme.colorScheme.onSurface),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            context.read<SignupViewModel>().add(ProgramChanged(value));
-                          }
-                        },
-                        style: TextStyle(color: theme.colorScheme.onSurface),
-                        dropdownColor: theme.colorScheme.surface,
-                        decoration: InputDecoration(
-                          labelText: 'Role',
-                          labelStyle: TextStyle(color: theme.colorScheme.onSurface),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.outline,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: theme.colorScheme.outline,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: theme.primaryColor, 
-                              width: 2,
-                            ),
-                          ),
-                          filled: true,
-                          fillColor: theme.colorScheme.surface,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      _buildTextField(
-                        context: context,
-                        controller: passwordController,
-                        labelText: 'Password',
-                        obscureText: state.obscurePassword,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            state.obscurePassword ? Icons.visibility : Icons.visibility_off,
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
-                          ),
-                          onPressed: () {
-                            context.read<SignupViewModel>().add(PasswordVisibilityToggled());
-                          },
-                        ),
-                        validator: (val) => val == null || !isValidPassword(val)
-                            ? 'Password must be at least 6 characters'
-                            : null,
-                      ),
-                      const SizedBox(height: 10),
-                      _buildTextField(
-                        context: context,
-                        controller: confirmPasswordController,
-                        labelText: 'Confirm Password',
-                        obscureText: state.obscureConfirmPassword,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            state.obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
-                          ),
-                          onPressed: () {
-                            context.read<SignupViewModel>().add(ConfirmPasswordVisibilityToggled());
-                          },
-                        ),
-                        validator: (val) => val == null ||
-                                !doPasswordsMatch(
-                                    val, passwordController.text)
-                            ? 'Passwords do not match'
-                            : null,
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: state.agreedToTerms,
-                            activeColor: theme.primaryColor,
-                            checkColor: theme.colorScheme.onPrimary,
-                            onChanged: (val) {
-                              if (val != null) {
-                                context
-                                    .read<SignupViewModel>()
-                                    .add(AgreedToTermsToggled(val));
-                              }
-                            },
-                          ),
-                          Expanded(
-                            child: Text(
-                              "I agree to terms and conditions of SoftConnect",
-                              style: TextStyle(
-                                color: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: state.isLoading || !state.agreedToTerms
-                              ? null
-                              : () {
-                                  if (_formKey.currentState!.validate()) {
-                                    context.read<SignupViewModel>().add(
-                                          SignupButtonPressed(
-                                            email: emailController.text.trim(),
-                                            username: usernameController.text.trim(),
-                                            studentId: int.parse(
-                                                studentIdController.text.trim()),
-                                            password: passwordController.text.trim(),
-                                            role: state.selectedProgram ?? programs[0],
-                                          ),
-                                        );
-                                  }
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.primaryColor,
-                            foregroundColor: theme.colorScheme.onPrimary,
-                            disabledBackgroundColor: theme.colorScheme.outline,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: state.isLoading
-                              ? SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: theme.colorScheme.onPrimary,
-                                  ),
-                                )
-                              : Text(
-                                  'Signup',
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onPrimary,
-                                    fontWeight: FontWeight.w600,
+                );
+                // Clear message after showing
+                context.read<SignupViewModel>().add(ClearMessage());
+              });
+            }
+      
+            return Padding(
+              padding: const EdgeInsets.all(20),
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        // Enhanced Profile Image Container
+                        GestureDetector(
+                          onTap: () => _showImageSourcePicker(context),
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Outer glow effect
+                                Container(
+                                  width: 90,
+                                  height: 90,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: theme.primaryColor.withOpacity(0.3),
+                                        blurRadius: 20,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
                                   ),
                                 ),
+                                // Main avatar container
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: state.profilePhotoPath != null 
+                                        ? null 
+                                        : LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              theme.primaryColor.withOpacity(0.1),
+                                              theme.primaryColor.withOpacity(0.05),
+                                            ],
+                                          ),
+                                    border: Border.all(
+                                      color: theme.primaryColor.withOpacity(0.3),
+                                      width: 2,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ClipOval(
+                                    child: state.profilePhotoPath != null
+                                        ? Stack(
+                                            fit: StackFit.expand,
+                                            children: [
+                                              Image.file(
+                                                File(state.profilePhotoPath!),
+                                                fit: BoxFit.cover,
+                                              ),
+                                              // Overlay for edit hint
+                                              Container(
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    begin: Alignment.topCenter,
+                                                    end: Alignment.bottomCenter,
+                                                    colors: [
+                                                      Colors.transparent,
+                                                      Colors.black.withOpacity(0.3),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        : Container(
+                                            decoration: BoxDecoration(
+                                              gradient: RadialGradient(
+                                                colors: [
+                                                  theme.primaryColor.withOpacity(0.1),
+                                                  theme.primaryColor.withOpacity(0.05),
+                                                ],
+                                              ),
+                                            ),
+                                            child: Icon(
+                                              Icons.person_add_alt_1,
+                                              color: theme.primaryColor,
+                                              size: 32,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                                // Camera icon overlay
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Container(
+                                    width: 28,
+                                    height: 28,
+                                    decoration: BoxDecoration(
+                                      color: theme.primaryColor,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: theme.scaffoldBackgroundColor,
+                                        width: 2,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      Icons.camera_alt,
+                                      color: theme.colorScheme.onPrimary,
+                                      size: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: theme.primaryColor,
-                        ),
-                        child: Text(
-                          "Already have an account?",
+                        // Helper text
+                        Text(
+                          state.profilePhotoPath != null ? 'Tap to change photo' : 'Tap to add photo',
                           style: TextStyle(
-                            color: theme.primaryColor,
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 20),
+                        _buildTextField(
+                          context: context,
+                          controller: usernameController,
+                          labelText: 'Username',
+                          validator: (val) =>
+                              val == null || val.isEmpty ? 'Enter name' : null,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildTextField(
+                          context: context,
+                          controller: emailController,
+                          labelText: 'Email Address',
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (val) => val == null || !isValidEmail(val)
+                              ? 'Enter a valid email'
+                              : null,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildTextField(
+                          context: context,
+                          controller: studentIdController,
+                          labelText: 'Student ID',
+                          keyboardType: TextInputType.number,
+                          validator: (val) => val == null || !isValidStudentId(val)
+                              ? 'Enter valid 6-digit student ID'
+                              : null,
+                        ),
+                        const SizedBox(height: 10),
+                        DropdownButtonFormField<String>(
+                          value: state.selectedProgram ?? programs[0],
+                          items: programs.map((program) {
+                            return DropdownMenuItem<String>(
+                              value: program,
+                              child: Text(
+                                program,
+                                style: TextStyle(color: theme.colorScheme.onSurface),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              context.read<SignupViewModel>().add(ProgramChanged(value));
+                            }
+                          },
+                          style: TextStyle(color: theme.colorScheme.onSurface),
+                          dropdownColor: theme.colorScheme.surface,
+                          decoration: InputDecoration(
+                            labelText: 'Role',
+                            labelStyle: TextStyle(color: theme.colorScheme.onSurface),
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: theme.colorScheme.outline,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: theme.colorScheme.outline,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: theme.primaryColor, 
+                                width: 2,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: theme.colorScheme.surface,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildTextField(
+                          context: context,
+                          controller: passwordController,
+                          labelText: 'Password',
+                          obscureText: state.obscurePassword,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              state.obscurePassword ? Icons.visibility : Icons.visibility_off,
+                              color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                            onPressed: () {
+                              context.read<SignupViewModel>().add(PasswordVisibilityToggled());
+                            },
+                          ),
+                          validator: (val) => val == null || !isValidPassword(val)
+                              ? 'Password must be at least 6 characters'
+                              : null,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildTextField(
+                          context: context,
+                          controller: confirmPasswordController,
+                          labelText: 'Confirm Password',
+                          obscureText: state.obscureConfirmPassword,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              state.obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                              color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                            onPressed: () {
+                              context.read<SignupViewModel>().add(ConfirmPasswordVisibilityToggled());
+                            },
+                          ),
+                          validator: (val) => val == null ||
+                                  !doPasswordsMatch(
+                                      val, passwordController.text)
+                              ? 'Passwords do not match'
+                              : null,
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: state.agreedToTerms,
+                              activeColor: theme.primaryColor,
+                              checkColor: theme.colorScheme.onPrimary,
+                              onChanged: (val) {
+                                if (val != null) {
+                                  context
+                                      .read<SignupViewModel>()
+                                      .add(AgreedToTermsToggled(val));
+                                }
+                              },
+                            ),
+                            Expanded(
+                              child: Text(
+                                "I agree to terms and conditions of SoftConnect",
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: state.isLoading || !state.agreedToTerms
+                                ? null
+                                : () {
+                                    if (_formKey.currentState!.validate()) {
+                                      context.read<SignupViewModel>().add(
+                                            SignupButtonPressed(
+                                              email: emailController.text.trim(),
+                                              username: usernameController.text.trim(),
+                                              studentId: int.parse(
+                                                  studentIdController.text.trim()),
+                                              password: passwordController.text.trim(),
+                                              role: state.selectedProgram ?? programs[0],
+                                            ),
+                                          );
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.primaryColor,
+                              foregroundColor: theme.colorScheme.onPrimary,
+                              disabledBackgroundColor: theme.colorScheme.outline,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: state.isLoading
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: theme.colorScheme.onPrimary,
+                                    ),
+                                  )
+                                : Text(
+                                    'Signup',
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onPrimary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: theme.primaryColor,
+                          ),
+                          child: Text(
+                            "Already have an account?",
+                            style: TextStyle(
+                              color: theme.primaryColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

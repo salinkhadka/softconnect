@@ -8,7 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:softconnect/app/constants/api_endpoints.dart';
 import 'package:softconnect/app/service_locator/service_locator.dart';
 import 'package:softconnect/app/theme/theme_provider.dart';
-// import 'package:softconnect/core/utils/network_image_util.dart';
 import 'package:softconnect/features/friends/domain/use_case/follow_user_usecase.dart';
 import 'package:softconnect/features/friends/domain/use_case/get_followers_usecase.dart';
 import 'package:softconnect/features/friends/domain/use_case/get_following_usecase.dart';
@@ -22,8 +21,6 @@ import 'package:softconnect/features/message/presentation/view_model/message_vie
 import 'package:softconnect/features/profile/presentation/view_model/user_profile_viewmodel.dart';
 import 'package:softconnect/features/home/presentation/view_model/Comment_view_model/comment_view_model.dart';
 import 'package:softconnect/features/home/domain/entity/post_entity.dart';
-// import 'package:softconnect/features/profile/presentation/view/followers_page.dart';
-// import 'package:softconnect/features/profile/presentation/view/following_page.dart';
 import 'package:softconnect/features/auth/presentation/view/View/change_password.dart';
 import 'package:softconnect/features/friends/domain/entity/follow_entity.dart';
 import 'package:softconnect/features/profile/presentation/view/profile_header_component.dart';
@@ -485,8 +482,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
                         ),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'Public', child: Text('Public')),
-                        DropdownMenuItem(value: 'Private', child: Text('Private')),
+                        DropdownMenuItem(value: 'public', child: Text('public')),
+                        DropdownMenuItem(value: 'private', child: Text('private')),
                         DropdownMenuItem(value: 'Friends', child: Text('Friends Only')),
                       ],
                       onChanged: (value) {
@@ -758,9 +755,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
                               ],
                               _infoRow("Role", user.role, isTablet),
                               SizedBox(height: isTablet ? 16 : 12),
-                              _infoRow("Followers", '${followers.length}', isTablet),
+                              _infoRow("Followers", '${user.followersCount}', isTablet),
                               SizedBox(height: isTablet ? 16 : 12),
-                              _infoRow("Following", '${following.length}', isTablet),
+                              _infoRow("Following", '${user.followingCount}', isTablet),
                             ],
                           ),
                         ),

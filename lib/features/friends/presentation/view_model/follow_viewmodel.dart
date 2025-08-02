@@ -89,15 +89,20 @@ class FollowViewModel extends Bloc<FollowEvent, FollowState> {
         );
       },
       (_) {
-        final updatedFollowing = List.of(state.following)
-          ..removeWhere((f) => f.followeeId == event.followeeId);
+        // Only update the list if we currently have following data
+        if (state.following != null) {
+          final updatedFollowing = List.of(state.following!)
+            ..removeWhere((f) => f.followeeId == event.followeeId);
 
-        emit(state.copyWith(isLoading: false, following: updatedFollowing));
+          emit(state.copyWith(isLoading: false, following: updatedFollowing));
+        } else {
+          emit(state.copyWith(isLoading: false));
+        }
 
         showMySnackBar(
           context: event.context,
           message: "Unfollowed successfully!",
-          color:Color(0xFF37225C),
+          color: Color(0xFF37225C),
         );
       },
     );
@@ -121,8 +126,17 @@ class FollowViewModel extends Bloc<FollowEvent, FollowState> {
     if (emit.isDone) return;
 
     result.fold(
-      (failure) => emit(state.copyWith(isLoading: false, errorMessage: failure.message)),
-      (followers) => emit(state.copyWith(isLoading: false, followers: followers, errorMessage: null)),
+      (failure) => emit(state.copyWith(
+        isLoading: false, 
+        errorMessage: failure.message,
+        hasInitiallyLoaded: true,
+      )),
+      (followers) => emit(state.copyWith(
+        isLoading: false, 
+        followers: followers, 
+        errorMessage: null,
+        hasInitiallyLoaded: true,
+      )),
     );
   }
 
@@ -144,56 +158,107 @@ class FollowViewModel extends Bloc<FollowEvent, FollowState> {
     if (emit.isDone) return;
 
     result.fold(
-      (failure) => emit(state.copyWith(isLoading: false, errorMessage: failure.message)),
-      (following) => emit(state.copyWith(isLoading: false, following: following, errorMessage: null)),
+      (failure) => emit(state.copyWith(
+        isLoading: false, 
+        errorMessage: failure.message,
+        hasInitiallyLoaded: true,
+      )),
+      (following) => emit(state.copyWith(
+        isLoading: false, 
+        following: following, 
+        errorMessage: null,
+        hasInitiallyLoaded: true,
+      )),
     );
   }
 
-  // New handler for ShowFollowersViewEvent
   Future<void> _onShowFollowersView(
     ShowFollowersViewEvent event,
     Emitter<FollowState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true, showFollowers: true, errorMessage: null));
+    // Set showFollowers to true immediately
+    emit(state.copyWith(showFollowers: true));
 
-    final userId = await _getUserIdFromPrefs();
+    // Only fetch if we don't have followers data yet
+    if (state.followers == null) {
+      emit(state.copyWith(isLoading: true, showFollowers: true, errorMessage: null));
 
-    if (userId == null) {
-      emit(state.copyWith(isLoading: false, errorMessage: "User ID not found. Please login.", showFollowers: true));
-      return;
+      final userId = await _getUserIdFromPrefs();
+
+      if (userId == null) {
+        emit(state.copyWith(
+          isLoading: false, 
+          errorMessage: "User ID not found. Please login.", 
+          showFollowers: true,
+          hasInitiallyLoaded: true,
+        ));
+        return;
+      }
+
+      final result = await _getFollowersUseCase(GetFollowersParams(userId));
+
+      if (emit.isDone) return;
+
+      result.fold(
+        (failure) => emit(state.copyWith(
+          isLoading: false, 
+          errorMessage: failure.message, 
+          showFollowers: true,
+          hasInitiallyLoaded: true,
+        )),
+        (followers) => emit(state.copyWith(
+          isLoading: false, 
+          followers: followers, 
+          errorMessage: null, 
+          showFollowers: true,
+          hasInitiallyLoaded: true,
+        )),
+      );
     }
-
-    final result = await _getFollowersUseCase(GetFollowersParams(userId));
-
-    if (emit.isDone) return;
-
-    result.fold(
-      (failure) => emit(state.copyWith(isLoading: false, errorMessage: failure.message, showFollowers: true)),
-      (followers) => emit(state.copyWith(isLoading: false, followers: followers, errorMessage: null, showFollowers: true)),
-    );
   }
 
-  // New handler for ShowFollowingViewEvent
   Future<void> _onShowFollowingView(
     ShowFollowingViewEvent event,
     Emitter<FollowState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true, showFollowers: false, errorMessage: null));
+    // Set showFollowers to false immediately
+    emit(state.copyWith(showFollowers: false));
 
-    final userId = await _getUserIdFromPrefs();
+    // Only fetch if we don't have following data yet
+    if (state.following == null) {
+      emit(state.copyWith(isLoading: true, showFollowers: false, errorMessage: null));
 
-    if (userId == null) {
-      emit(state.copyWith(isLoading: false, errorMessage: "User ID not found. Please login.", showFollowers: false));
-      return;
+      final userId = await _getUserIdFromPrefs();
+
+      if (userId == null) {
+        emit(state.copyWith(
+          isLoading: false, 
+          errorMessage: "User ID not found. Please login.", 
+          showFollowers: false,
+          hasInitiallyLoaded: true,
+        ));
+        return;
+      }
+
+      final result = await _getFollowingUseCase(GetFollowingParams(userId));
+
+      if (emit.isDone) return;
+
+      result.fold(
+        (failure) => emit(state.copyWith(
+          isLoading: false, 
+          errorMessage: failure.message, 
+          showFollowers: false,
+          hasInitiallyLoaded: true,
+        )),
+        (following) => emit(state.copyWith(
+          isLoading: false, 
+          following: following, 
+          errorMessage: null, 
+          showFollowers: false,
+          hasInitiallyLoaded: true,
+        )),
+      );
     }
-
-    final result = await _getFollowingUseCase(GetFollowingParams(userId));
-
-    if (emit.isDone) return;
-
-    result.fold(
-      (failure) => emit(state.copyWith(isLoading: false, errorMessage: failure.message, showFollowers: false)),
-      (following) => emit(state.copyWith(isLoading: false, following: following, errorMessage: null, showFollowers: false)),
-    );
   }
 }

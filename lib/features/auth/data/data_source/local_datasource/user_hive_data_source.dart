@@ -73,6 +73,12 @@ class UserHiveDataSource implements IUserDataSource {
     // TODO: implement verifyPassword
     throw UnimplementedError();
   }
+  
+  @override
+  Future<Map<String, dynamic>> googleLogin(String idToken) {
+    // TODO: implement googleLogin
+    throw UnimplementedError();
+  }
 
   // @override
   // Future<UserEntity> getCurrentUser(String id) async {

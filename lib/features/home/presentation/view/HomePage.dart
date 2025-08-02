@@ -63,7 +63,7 @@ class _HomePageState extends State<HomePage> {
 
   void _onShakeDetected() {
     final homeViewModel = context.read<HomeViewModel>();
-    homeViewModel.logout(context);
+    homeViewModel.confirmAndLogout(context); // now asks for confirmation
   }
 
   Future<String?> _getCurrentUserId() async {

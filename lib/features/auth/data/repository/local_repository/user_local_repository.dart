@@ -73,4 +73,10 @@ class UserLocalRepository implements IUserRepository {
     // TODO: implement verifyPassword
     throw UnimplementedError();
   }
+  
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> googleLogin(String idToken) {
+    // TODO: implement googleLogin
+    throw UnimplementedError();
+  }
 }

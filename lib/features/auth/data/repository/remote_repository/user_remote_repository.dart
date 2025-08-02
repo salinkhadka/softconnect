@@ -53,6 +53,15 @@ class UserRemoteRepository implements IUserRepository {
       return Left(RemoteDatabaseFailure(message: e.toString()));
     }
   }
+  @override
+Future<Either<Failure, Map<String, dynamic>>> googleLogin(String idToken) async {
+  try {
+    final result = await _remoteDataSource.googleLogin(idToken);
+    return Right(result);
+  } catch (e) {
+    return Left(RemoteDatabaseFailure(message: e.toString()));
+  }
+}
 
   @override
   Future<Either<Failure, List<UserEntity>>> searchUsers(String query) async {

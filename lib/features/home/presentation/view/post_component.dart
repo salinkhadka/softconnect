@@ -170,21 +170,22 @@ class PostComponent extends StatelessWidget {
                 style: const TextStyle(fontSize: 15),
               ),
 
-            const SizedBox(height: 10),
-
-            if (imageUrl != null)
+            // Only show image section if there's actually an image URL
+            if (post.imageUrl != null && post.imageUrl!.isNotEmpty) ...[
+              const SizedBox(height: 10),
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: AspectRatio(
                   aspectRatio: 4 / 3,
                   child: NetworkImageWidget(
-                    imageUrl: imageUrl,
+                    imageUrl: imageUrl!,
                     fit: BoxFit.cover,
                     placeholder: const Center(child: CircularProgressIndicator()),
                     errorWidget: const Center(child: Text('Failed to load image')),
                   ),
                 ),
               ),
+            ],
 
             const SizedBox(height: 12),
 

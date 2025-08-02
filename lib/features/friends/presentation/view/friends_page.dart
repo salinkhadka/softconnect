@@ -60,10 +60,11 @@ class FriendsPage extends StatelessWidget {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: BlocBuilder<FollowViewModel, FollowState>(
             builder: (context, state) {
-              if (!state.isLoading &&
-                  state.followers.isEmpty &&
-                  state.following.isEmpty) {
-                context.read<FollowViewModel>().add(ShowFollowersViewEvent());
+              // Only trigger initial load if we haven't loaded anything yet
+              if (!state.hasInitiallyLoaded && !state.isLoading) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  context.read<FollowViewModel>().add(ShowFollowersViewEvent());
+                });
               }
 
               return Column(
@@ -107,9 +108,22 @@ class FriendsPage extends StatelessWidget {
                           )
                         : Builder(
                             builder: (_) {
-                              final list =
-                                  state.showFollowers ? state.followers : state.following;
+                              final list = state.showFollowers ? state.followers : state.following;
 
+                              // Check if the data is null (not fetched yet)
+                              if (list == null) {
+                                return Center(
+                                  child: Text(
+                                    'No data available',
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              // Check if the list is empty (fetched but no items)
                               if (list.isEmpty) {
                                 return Center(
                                   child: Text(
@@ -233,12 +247,6 @@ class FriendsPage extends StatelessWidget {
                                                         context: context,
                                                       ),
                                                     );
-                                                Future.delayed(
-                                                    const Duration(milliseconds: 500), () {
-                                                  context
-                                                      .read<FollowViewModel>()
-                                                      .add(ShowFollowingViewEvent());
-                                                });
                                               },
                                               child: const Text('Unfollow'),
                                             )

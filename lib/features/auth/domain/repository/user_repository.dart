@@ -24,4 +24,5 @@ abstract interface class IUserRepository {
 
   Future<Either<Failure, String>> verifyPassword(
       String userId, String currentPassword);
+      Future<Either<Failure, Map<String, dynamic>>> googleLogin(String idToken);
 }

@@ -15,28 +15,19 @@ class FCMService {
   // Initialize FCM
   Future<void> initialize() async {
     try {
-      // Request notification permissions
       await _requestPermission();
-      
-      // Initialize local notifications
       await _initializeLocalNotifications();
-      
-      // Get FCM token
+
       String? token = await getToken();
       log('FCM Token: $token');
-      
-      // Configure message handlers
+
       _configureMessageHandlers();
-      
-      // Subscribe to topic (optional)
       await subscribeToTopic('general');
-      
     } catch (e) {
       log('Error initializing FCM: $e');
     }
   }
 
-  // Request notification permissions
   Future<void> _requestPermission() async {
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
       alert: true,
@@ -50,10 +41,9 @@ class FCMService {
     log('Notification permission status: ${settings.authorizationStatus}');
   }
 
-  // Initialize local notifications
   Future<void> _initializeLocalNotifications() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@drawable/ic_foreground'); // Custom icon here
 
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
@@ -76,15 +66,10 @@ class FCMService {
     );
   }
 
-  // Configure message handlers
   void _configureMessageHandlers() {
-    // Handle messages when app is in foreground
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-
-    // Handle notification taps when app is in background or terminated
     FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundMessage);
 
-    // Handle initial message if app was opened from notification
     FirebaseMessaging.instance.getInitialMessage().then((message) {
       if (message != null) {
         _handleBackgroundMessage(message);
@@ -92,34 +77,23 @@ class FCMService {
     });
   }
 
-  // Handle messages when app is in foreground
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
     log('Received foreground message: ${message.messageId}');
-    
-    // Show local notification
     await _showLocalNotification(message);
   }
 
-  // Handle messages when app is opened from background
   void _handleBackgroundMessage(RemoteMessage message) {
     log('Opened from background message: ${message.messageId}');
-    
-    // Navigate to specific screen based on message data
     _navigateBasedOnMessage(message);
   }
 
-  // Handle notification tap
   void _handleNotificationTap(String? payload) {
     log('Notification tapped with payload: $payload');
-    
-   
     if (payload != null) {
-      
       _handlePayload(payload);
     }
   }
 
-  // Show local notification
   Future<void> _showLocalNotification(RemoteMessage message) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
@@ -129,6 +103,7 @@ class FCMService {
       importance: Importance.high,
       priority: Priority.high,
       showWhen: true,
+      icon: '@drawable/ic_foreground', // Custom icon
     );
 
     const DarwinNotificationDetails iOSPlatformChannelSpecifics =
@@ -152,39 +127,30 @@ class FCMService {
     );
   }
 
-  // Navigate based on message data
   void _navigateBasedOnMessage(RemoteMessage message) {
-    // Example navigation logic
     final data = message.data;
-    
+
     if (data.containsKey('screen')) {
       switch (data['screen']) {
         case 'profile':
-          // Navigate to profile screen
           log('Navigate to profile');
           break;
         case 'chat':
-          // Navigate to chat screen
           log('Navigate to chat with user: ${data['userId'] ?? ''}');
           break;
         case 'notification':
-          // Navigate to notifications screen
           log('Navigate to notifications');
           break;
         default:
-          // Navigate to home screen
           log('Navigate to home');
       }
     }
   }
 
-  // Handle payload from local notification
   void _handlePayload(String payload) {
-    // Parse and handle payload
     log('Handling payload: $payload');
   }
 
-  // Get FCM token
   Future<String?> getToken() async {
     try {
       String? token = await _firebaseMessaging.getToken();
@@ -195,7 +161,6 @@ class FCMService {
     }
   }
 
-  // Subscribe to a topic
   Future<void> subscribeToTopic(String topic) async {
     try {
       await _firebaseMessaging.subscribeToTopic(topic);
@@ -205,7 +170,6 @@ class FCMService {
     }
   }
 
-  // Unsubscribe from a topic
   Future<void> unsubscribeFromTopic(String topic) async {
     try {
       await _firebaseMessaging.unsubscribeFromTopic(topic);
@@ -215,31 +179,22 @@ class FCMService {
     }
   }
 
-  // Send token to your backend server
   Future<void> sendTokenToServer(String token, String userId) async {
     try {
-      // Make API call to your backend to save the token
-      // Example:
-      // await ApiService().saveUserToken(userId, token);
       log('Token sent to server for user: $userId');
     } catch (e) {
       log('Error sending token to server: $e');
     }
   }
 
-  // Listen for token refresh
   void listenForTokenRefresh() {
     _firebaseMessaging.onTokenRefresh.listen((String token) {
       log('FCM Token refreshed: $token');
-      // Send new token to your server
-      // sendTokenToServer(token, currentUserId);
     });
   }
 }
 
-// Background message handler (must be top-level function)
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   log('Handling background message: ${message.messageId}');
-  // Handle the message when app is completely terminated
 }

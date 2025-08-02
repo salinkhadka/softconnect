@@ -6,6 +6,7 @@ import 'package:softconnect/app/theme/theme_provider.dart';
 
 import 'package:softconnect/core/network/api_service.dart';
 import 'package:softconnect/core/network/hive_service.dart';
+import 'package:softconnect/features/auth/domain/use_case/google_login_usecase.dart';
 import 'package:softconnect/features/home/data/data_source/local_datasource/post_lcoal_datasource.dart';
 
 // --- DATA SOURCE & REPO CONTRACTS (INTERFACES) ---
@@ -79,6 +80,7 @@ import 'package:softconnect/features/message/presentation/view_model/message_vie
 import 'package:softconnect/features/notification/presentation/view_model/notification_viewmodel.dart';
 import 'package:softconnect/features/profile/presentation/view_model/user_profile_viewmodel.dart';
 import 'package:softconnect/features/splash/presentation/view_model/splash_viewmodel.dart';
+import 'package:softconnect/google_auth_service.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -101,7 +103,7 @@ Future<void> _initCoreServices() async {
   serviceLocator.registerLazySingleton(() => HiveService());
   serviceLocator.registerLazySingleton<Dio>(() => Dio());
   serviceLocator.registerLazySingleton(() => ApiService(serviceLocator<Dio>()));
-  
+
   // Register ThemeProvider as a singleton
   serviceLocator.registerLazySingleton<ThemeProvider>(() => ThemeProvider());
 }
@@ -275,6 +277,16 @@ Future<void> _initAuthModule() async {
       remoteDataSource: serviceLocator<UserRemoteDataSource>(),
     ),
   );
+  serviceLocator.registerLazySingleton<GoogleAuthService>(
+    () => GoogleAuthService(),
+  );
+
+  // Register Google Login Use Case
+  serviceLocator.registerLazySingleton<GoogleLoginUsecase>(
+    () => GoogleLoginUsecase(
+      userRepository: serviceLocator<IUserRepository>(),
+    ),
+  );
   serviceLocator.registerLazySingleton<UserLoginUsecase>(
     () => UserLoginUsecase(userRepository: serviceLocator<IUserRepository>()),
   );
@@ -298,7 +310,10 @@ Future<void> _initAuthModule() async {
     () => SearchUsersUsecase(userRepository: serviceLocator<IUserRepository>()),
   );
   serviceLocator.registerFactory<LoginViewModel>(
-    () => LoginViewModel(userLoginUsecase: serviceLocator<UserLoginUsecase>()),
+    () => LoginViewModel(
+        userLoginUsecase: serviceLocator<UserLoginUsecase>(),
+        googleLoginUsecase: serviceLocator<GoogleLoginUsecase>(),
+        googleAuthService: serviceLocator<GoogleAuthService>()),
   );
   serviceLocator.registerFactory<SignupViewModel>(
     () => SignupViewModel(

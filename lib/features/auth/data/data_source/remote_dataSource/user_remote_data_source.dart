@@ -216,4 +216,33 @@ Future<Map<String, dynamic>> loginUser(String username, String password) async {
       throw Exception('Verify password failed: ${e.message}');
     }
   }
+  @override
+Future<Map<String, dynamic>> googleLogin(String idToken) async {
+  try {
+    final response = await _apiService.dio.post(
+      ApiEndpoints.googleLogin,
+      data: {
+        "idToken": idToken,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final token = response.data['token'];
+      final userData = response.data['data'];
+      final userApiModel = UserApiModel.fromJson(userData);
+      final userEntity = userApiModel.toEntity();
+
+      return {
+        'token': token,
+        'user': userEntity,
+      };
+    } else {
+      throw Exception(response.statusMessage);
+    }
+  } on DioException catch (e) {
+    throw Exception('Failed to login with Google: ${e.message}');
+  } catch (e) {
+    throw Exception('Failed to login with Google: $e');
+  }
+}
 }

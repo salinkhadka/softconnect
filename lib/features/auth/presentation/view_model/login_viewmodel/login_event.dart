@@ -25,3 +25,9 @@ class NavigateToSignUpEvent extends LoginEvent {
   final BuildContext context;
   NavigateToSignUpEvent({required this.context});
 }
+// Add this new event
+class GoogleLoginEvent extends LoginEvent {
+  final BuildContext context;
+
+  GoogleLoginEvent({required this.context});
+}

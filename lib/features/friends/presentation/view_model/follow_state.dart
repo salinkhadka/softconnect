@@ -1,28 +1,34 @@
-import 'package:equatable/equatable.dart';
+// Update your FollowState class like this:
+
 import 'package:softconnect/features/friends/domain/entity/follow_entity.dart';
 
-class FollowState extends Equatable {
+class FollowState {
   final bool isLoading;
-  final List<FollowEntity> followers;
-  final List<FollowEntity> following;
-  final bool showFollowers;  // <--- new flag
+  final List<FollowEntity>? followers; // Make nullable
+  final List<FollowEntity>? following; // Make nullable
+  final bool showFollowers;
   final String? errorMessage;
+  final bool hasInitiallyLoaded; // Add this flag
 
   const FollowState({
     required this.isLoading,
-    required this.followers,
-    required this.following,
-    this.showFollowers = true, // default to showing followers
+    this.followers,
+    this.following,
+    required this.showFollowers,
     this.errorMessage,
+    required this.hasInitiallyLoaded,
   });
 
-  factory FollowState.initial() => FollowState(
-        isLoading: false,
-        followers: [],
-        following: [],
-        showFollowers: true,
-        errorMessage: null,
-      );
+  factory FollowState.initial() {
+    return const FollowState(
+      isLoading: false,
+      followers: null, // Start with null
+      following: null, // Start with null
+      showFollowers: true,
+      errorMessage: null,
+      hasInitiallyLoaded: false,
+    );
+  }
 
   FollowState copyWith({
     bool? isLoading,
@@ -30,16 +36,15 @@ class FollowState extends Equatable {
     List<FollowEntity>? following,
     bool? showFollowers,
     String? errorMessage,
+    bool? hasInitiallyLoaded,
   }) {
     return FollowState(
       isLoading: isLoading ?? this.isLoading,
       followers: followers ?? this.followers,
       following: following ?? this.following,
       showFollowers: showFollowers ?? this.showFollowers,
-      errorMessage: errorMessage,
+      errorMessage: errorMessage ?? this.errorMessage,
+      hasInitiallyLoaded: hasInitiallyLoaded ?? this.hasInitiallyLoaded,
     );
   }
-
-  @override
-  List<Object?> get props => [isLoading, followers, following, showFollowers, errorMessage];
 }

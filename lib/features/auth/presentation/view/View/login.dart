@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:softconnect/app/theme/theme_provider.dart';
 import 'package:softconnect/core/utils/validators.dart';
+import 'package:softconnect/features/auth/presentation/view/View/google_signin_button.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_event.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_state.dart';
 import 'package:softconnect/features/auth/presentation/view_model/login_viewmodel/login_viewmodel.dart';
@@ -118,270 +119,306 @@ class _LoginScreenState extends State<LoginScreen> {
       builder: (context, themeProvider, child) {
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          body: BlocListener<LoginViewModel, LoginState>(
-            listener: (context, state) {
-              if (state.isSuccess) {
-                _showSnackBar(context, "Login Successful");
-              }
-              if (state.errorMessage != null) {
-                _showSnackBar(context, state.errorMessage!, isError: true);
-              }
-            },
-            child: BlocBuilder<LoginViewModel, LoginState>(
-              builder: (context, state) {
-                return Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Center(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(30),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).primaryColor,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Column(
-                              children: [
-                                Text(
-                                  "SC",
-                                  style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onPrimary,
-                                    fontSize: 40,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  "SoftConnect",
-                                  style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onPrimary,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                                Text(
-                                  "Building Bridges at Softwarica",
-                                  style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 30),
-                          
-                          // Biometric Login Button
-                          if (_isBiometricAvailable && _hasStoredCredentials) ...[
+          body: SafeArea(
+            child: BlocListener<LoginViewModel, LoginState>(
+              listener: (context, state) {
+                if (state.isSuccess) {
+                  _showSnackBar(context, "Login Successful");
+                }
+                if (state.errorMessage != null) {
+                  _showSnackBar(context, state.errorMessage!, isError: true);
+                }
+              },
+              child: BlocBuilder<LoginViewModel, LoginState>(
+                builder: (context, state) {
+                  return Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Center(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
                             Container(
-                              width: double.infinity,
-                              margin: const EdgeInsets.only(bottom: 20),
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-                                  foregroundColor: Theme.of(context).primaryColor,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  side: BorderSide(color: Theme.of(context).primaryColor),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
+                              padding: const EdgeInsets.all(30),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).primaryColor,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    "SC",
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onPrimary,
+                                      fontSize: 40,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                                onPressed: state.isLoading ? null : _authenticateWithBiometrics,
-                                icon: const Icon(Icons.fingerprint, size: 24),
-                                label: const Text(
-                                  'Login with Fingerprint',
-                                  style: TextStyle(fontSize: 16),
-                                ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    "SoftConnect",
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onPrimary,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Building Bridges at Softwarica",
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
+                            const SizedBox(height: 30),
                             
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Divider(
-                                    color: Theme.of(context).dividerColor,
+                            // Biometric Login Button
+                            if (_isBiometricAvailable && _hasStoredCredentials) ...[
+                              Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.only(bottom: 20),
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                                    foregroundColor: Theme.of(context).primaryColor,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    side: BorderSide(color: Theme.of(context).primaryColor),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  onPressed: state.isLoading ? null : _authenticateWithBiometrics,
+                                  icon: const Icon(Icons.fingerprint, size: 24),
+                                  label: const Text(
+                                    'Login with Fingerprint',
+                                    style: TextStyle(fontSize: 16),
                                   ),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  child: Text(
-                                    'OR',
-                                    style: TextStyle(
-                                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                              ),
+                              
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Divider(
+                                      color: Theme.of(context).dividerColor,
                                     ),
                                   ),
-                                ),
-                                Expanded(
-                                  child: Divider(
-                                    color: Theme.of(context).dividerColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-
-                          Form(
-                            key: _formKey,
-                            child: Column(
-                              children: [
-                                TextFormField(
-                                  controller: emailController,
-                                  style: TextStyle(
-                                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                                  ),
-                                  decoration: InputDecoration(
-                                    labelText: 'Email',
-                                    labelStyle: TextStyle(
-                                      color: Theme.of(context).textTheme.bodyMedium?.color,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Theme.of(context).dividerColor,
-                                      ),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Theme.of(context).dividerColor,
-                                      ),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Theme.of(context).primaryColor,
-                                        width: 2,
-                                      ),
-                                    ),
-                                    filled: true,
-                                    fillColor: Theme.of(context).cardColor,
-                                  ),
-                                  keyboardType: TextInputType.emailAddress,
-                                  validator: (val) => val == null || !isValidEmail(val)
-                                      ? 'Enter valid email'
-                                      : null,
-                                ),
-                                const SizedBox(height: 16),
-                                TextFormField(
-                                  controller: passwordController,
-                                  obscureText: _obscurePassword,
-                                  style: TextStyle(
-                                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                                  ),
-                                  decoration: InputDecoration(
-                                    labelText: 'Password',
-                                    labelStyle: TextStyle(
-                                      color: Theme.of(context).textTheme.bodyMedium?.color,
-                                    ),
-                                    suffixIcon: IconButton(
-                                      icon: Icon(
-                                        _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    child: Text(
+                                      'OR',
+                                      style: TextStyle(
                                         color: Theme.of(context).textTheme.bodyMedium?.color,
                                       ),
-                                      onPressed: () {
-                                        setState(() {
-                                          _obscurePassword = !_obscurePassword;
-                                        });
-                                      },
                                     ),
-                                    border: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Theme.of(context).dividerColor,
-                                      ),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Theme.of(context).dividerColor,
-                                      ),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Theme.of(context).primaryColor,
-                                        width: 2,
-                                      ),
-                                    ),
-                                    filled: true,
-                                    fillColor: Theme.of(context).cardColor,
                                   ),
-                                  validator: (val) => val == null || val.isEmpty
-                                      ? 'Enter Password'
-                                      : null,
-                                ),
-                                const SizedBox(height: 16),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Theme.of(context).primaryColor,
-                                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
+                                  Expanded(
+                                    child: Divider(
+                                      color: Theme.of(context).dividerColor,
                                     ),
-                                    onPressed: state.isLoading
-                                        ? null
-                                        : () {
-                                            if (_formKey.currentState!.validate()) {
-                                              context.read<LoginViewModel>().add(
-                                                    LoginUserEvent(
-                                                      username: emailController.text.trim(),
-                                                      password: passwordController.text,
-                                                      context: context,
-                                                    ),
-                                                  );
-                                            }
-                                          },
-                                    child: state.isLoading
-                                        ? CircularProgressIndicator(
-                                            color: Theme.of(context).colorScheme.onPrimary,
-                                          )
-                                        : Text(
-                                            'Login',
-                                            style: TextStyle(
-                                              color: Theme.of(context).colorScheme.onPrimary,
-                                            ),
-                                          ),
                                   ),
-                                ),
-                                const SizedBox(height: 10),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const ForgotPassword(),
-                                      ),
-                                    );
-                                  },
-                                  child: Text(
-                                    "Forgot password?",
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+            
+                            Form(
+                              key: _formKey,
+                              child: Column(
+                                children: [
+                                  TextFormField(
+                                    controller: emailController,
                                     style: TextStyle(
-                                      color: Theme.of(context).primaryColor,
+                                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                                    ),
+                                    decoration: InputDecoration(
+                                      labelText: 'Email',
+                                      labelStyle: TextStyle(
+                                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: Theme.of(context).dividerColor,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: Theme.of(context).dividerColor,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: Theme.of(context).primaryColor,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      filled: true,
+                                      fillColor: Theme.of(context).cardColor,
+                                    ),
+                                    keyboardType: TextInputType.emailAddress,
+                                    validator: (val) => val == null || !isValidEmail(val)
+                                        ? 'Enter valid email'
+                                        : null,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextFormField(
+                                    controller: passwordController,
+                                    obscureText: _obscurePassword,
+                                    style: TextStyle(
+                                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                                    ),
+                                    decoration: InputDecoration(
+                                      labelText: 'Password',
+                                      labelStyle: TextStyle(
+                                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                                      ),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            _obscurePassword = !_obscurePassword;
+                                          });
+                                        },
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: Theme.of(context).dividerColor,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: Theme.of(context).dividerColor,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: Theme.of(context).primaryColor,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      filled: true,
+                                      fillColor: Theme.of(context).cardColor,
+                                    ),
+                                    validator: (val) => val == null || val.isEmpty
+                                        ? 'Enter Password'
+                                        : null,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Theme.of(context).primaryColor,
+                                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                                        padding: const EdgeInsets.symmetric(vertical: 14),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      onPressed: state.isLoading
+                                          ? null
+                                          : () {
+                                              if (_formKey.currentState!.validate()) {
+                                                context.read<LoginViewModel>().add(
+                                                      LoginUserEvent(
+                                                        username: emailController.text.trim(),
+                                                        password: passwordController.text,
+                                                        context: context,
+                                                      ),
+                                                    );
+                                              }
+                                            },
+                                      child: state.isLoading
+                                          ? CircularProgressIndicator(
+                                              color: Theme.of(context).colorScheme.onPrimary,
+                                            )
+                                          : Text(
+                                              'Login',
+                                              style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onPrimary,
+                                              ),
+                                            ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(height: 10),
-                                OutlinedButton(
-                                  style: OutlinedButton.styleFrom(
-                                    side: BorderSide(
-                                      color: Theme.of(context).primaryColor,
+                                  const SizedBox(height: 10),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const ForgotPassword(),
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      "Forgot password?",
+                                      style: TextStyle(
+                                        color: Theme.of(context).primaryColor,
+                                      ),
                                     ),
-                                    foregroundColor: Theme.of(context).primaryColor,
                                   ),
-                                  onPressed: () {
-                                    context.read<LoginViewModel>().add(
-                                          NavigateToSignUpEvent(context: context),
-                                        );
-                                  },
-                                  child: const Text("Create an account"),
-                                ),
-                              ],
+                                  
+                                  // Divider with "OR" for Google Sign-In
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Divider(
+                                          color: Theme.of(context).dividerColor,
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        child: Text(
+                                          'OR',
+                                          style: TextStyle(
+                                            color: Theme.of(context).textTheme.bodyMedium?.color,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Divider(
+                                          color: Theme.of(context).dividerColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  
+                                  const SizedBox(height: 16),
+                                  
+                                  // Google Sign-In button
+                                  const GoogleSignInButton(),
+                                  
+                                  const SizedBox(height: 20),
+                                  
+                                  OutlinedButton(
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                      foregroundColor: Theme.of(context).primaryColor,
+                                    ),
+                                    onPressed: () {
+                                      context.read<LoginViewModel>().add(
+                                            NavigateToSignUpEvent(context: context),
+                                          );
+                                    },
+                                    child: const Text("Create an account"),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         );

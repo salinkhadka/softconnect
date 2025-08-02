@@ -10,4 +10,5 @@ abstract interface class IUserDataSource {
   Future<void> requestPasswordReset(String email);
   Future<void> resetPassword(String token, String newPassword);
   Future<String> verifyPassword(String userId, String currentPassword);
+  Future<Map<String, dynamic>> googleLogin(String idToken);
 }
