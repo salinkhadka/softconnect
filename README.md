@@ -1,6 +1,7 @@
 # SoftConnect – Student Social Media App
 
-**SoftConnect** is a cross-platform social media app built with Flutter and Dart, designed especially for students of Softwarica College. The app enables students to connect through posts, messaging, and real-time notifications, while offering modern features such as offline caching, biometric login, and dynamic theming.
+**SoftConnect** is a cross-platform social media web application built with the MERN stack (MongoDB, Express, React, Node.js), designed especially for students of Softwarica College. The app enables students to connect through posts, messaging, and real-time notifications, while providing an admin panel for managing users, posts, and viewing analytics on user activity and content. The system also supports multiple user roles for access control.
+
 
 ---
 
@@ -37,7 +38,7 @@ To run **SoftConnect** locally, follow these steps:
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/your-github-classroom/softconnect
+   git clone https://github.com/salinkhadka/softconnect
 2.**Navigate into the project directory:**
 
     bash
@@ -61,6 +62,7 @@ To run **SoftConnect** locally, follow these steps:
 https://flutter.dev/
 https://firebase.google.com/docs
 https://pub.dev/documentation/hive/latest/
+
 
 **🤝 Contributing**
 Contributions are welcome! Please open issues and submit pull requests for improvements.
